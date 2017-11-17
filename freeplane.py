@@ -1,13 +1,30 @@
 #!/usr/bin/env python
+#-*- coding: utf-8 -*-
 
+#
+# DESCRIPTION
+#
+# a library holding useful and object-oriented functionalities to interface with
+# a (freeplane) mindmap. using this library, information can easily be extracted
+# and used in a programmatical way without having to browse through the mindmap
+# itself.
+#
+#
+# AUTHOR
+#
+#   - nnako, 2016
+#
+
+
+# generals
 from __future__ import print_function
-
-import xml.etree.ElementTree as ET
-#import html2text
 import argparse
 import os
 import re
 import sys
+
+# xml format
+import xml.etree.ElementTree as ET
 
 
 # MINDMAP
@@ -42,7 +59,7 @@ class Mindmap(object):
                     usage='''%s <command> [<args>]
 
 Possible commands are:
-    getText    return text portion of a node identified by attributes
+    getText    return text portion of a node
     ...               ...''' % os.path.basename(sys.argv[0]))
 
             # define command argument
@@ -153,9 +170,19 @@ class Node(object):
 
     def __init__(self, node):
 
-        # when created initialize with root node reference
+        #
+        # initialize instance
+        #
+
         self.node = node
         self.id = node.attrib['ID']
+        self.attribute = {}
+        _lst = node.findall('attribute')
+        for _attr in _lst:
+            _name = _attr.get('NAME', '')
+            _value = _attr.get('VALUE', '')
+            if not _name == '':
+                self.attribute[_name] = _value
 
 
     @property
@@ -168,8 +195,9 @@ class Node(object):
         return self.id
 
 
-    def Attribute(self, key=''):
-        pass
+    @property
+    def Attributes(self):
+        return self.attribute
 
 
     @property
@@ -433,62 +461,62 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
 # OLD
 
-    # read text paragraph from mindmap
-    def getText(self, strRootAttribute, strTitleText, strPortion):
+# read text paragraph from mindmap
+def getText(self, strRootAttribute, strTitleText, strPortion):
 
-        # get list of all attributes
-        lstAttributes = self.mindmap.getElementsByTagName('attribute')
+    # get list of all attributes
+    lstAttributes = self.mindmap.getElementsByTagName('attribute')
 
-        # search for ROOT ATTRIBUTE NODE
-        for item in lstAttributes:
-            if item.attributes['NAME'].value == 'type' and \
-                    item.attributes['VALUE'].value == strRootAttribute:
-                rootnode = item.parentNode
+    # search for ROOT ATTRIBUTE NODE
+    for item in lstAttributes:
+        if item.attributes['NAME'].value == 'type' and \
+                item.attributes['VALUE'].value == strRootAttribute:
+            rootnode = item.parentNode
 
-        # get list of all nodes below
-        lstNodes = rootnode.getElementsByTagName('node')
+    # get list of all nodes below
+    lstNodes = rootnode.getElementsByTagName('node')
 
-        # look for node containing TITLE STRING
-        for item in lstNodes:
-            if item.hasAttribute('TEXT'):
-                if item.getAttribute('TEXT') == strTitleText:
-                    titlenode = item
+    # look for node containing TITLE STRING
+    for item in lstNodes:
+        if item.hasAttribute('TEXT'):
+            if item.getAttribute('TEXT') == strTitleText:
+                titlenode = item
 
-        # get list of all nodes below
-        lstNodes = titlenode.getElementsByTagName('node')
+    # get list of all nodes below
+    lstNodes = titlenode.getElementsByTagName('node')
 
-        # look for node containing PORTION STRING
-        for item in lstNodes:
-            if item.hasAttribute('TEXT'):
-                if item.getAttribute('TEXT') == strPortion:
-                    portionnode = item
+    # look for node containing PORTION STRING
+    for item in lstNodes:
+        if item.hasAttribute('TEXT'):
+            if item.getAttribute('TEXT') == strPortion:
+                portionnode = item
 
-        # if there is no richtext content ...
-        if not portionnode.getElementsByTagName('richcontent'):
+    # if there is no richtext content ...
+    if not portionnode.getElementsByTagName('richcontent'):
 
-            # get next following single node
-            textnode = portionnode.getElementsByTagName('node')[0]
+        # get next following single node
+        textnode = portionnode.getElementsByTagName('node')[0]
 
-            # get standard TEXT attribute
-            strText = textnode.getAttribute('TEXT')
+        # get standard TEXT attribute
+        strText = textnode.getAttribute('TEXT')
 
-        else:
+    else:
 
-            # look for HTML content
-            richcontents = portionnode.getElementsByTagName('richcontent')
+        # look for HTML content
+        richcontents = portionnode.getElementsByTagName('richcontent')
 
-            # convert content to HTML
-            strHtml = richcontents[0].toxml()
+        # convert content to HTML
+        strHtml = richcontents[0].toxml()
 
-            # convert HTML to MARKDOWN ASCII
-            strText = html2text.html2text(strHtml)
+        # convert HTML to MARKDOWN ASCII
+        strText = html2text.html2text(strHtml)
 
-        # replace cryptic text passages
-        strText = strText.replace('&lt;', '<')
-        strText = strText.replace('&gt;', '>')
+    # replace cryptic text passages
+    strText = strText.replace('&lt;', '<')
+    strText = strText.replace('&gt;', '>')
 
-        # return value back to caller
-        return strText
+    # return value back to caller
+    return strText
 
 
 #
