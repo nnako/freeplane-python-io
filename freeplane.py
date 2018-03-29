@@ -55,7 +55,7 @@ class Mindmap(object):
 
             # define information
             parser = argparse.ArgumentParser(
-                    description='Service for LectureNotes application',
+                    description='Operation on Freeplane mindmap',
                     usage='''%s <command> [<args>]
 
 Possible commands are:
@@ -107,11 +107,17 @@ Possible commands are:
         # path of instance's mindmap file
         self.path = path
 
-        # type, version and mindmap tree
+        # type, version
         self.type = type
         self.version = version
+
+        # read entire etree mindmap
         self.mindmap = ET.parse(self.path)
+
+        # get root of mindmap
         self.root = self.mindmap.getroot()
+
+        # find and get first node element of etree
         self.rootNode = self.root.find('node')
 
 
@@ -216,7 +222,8 @@ class Node(object):
             # read out text content
             text = self.node.attrib['TEXT']
 
-            if text[0] == "=":
+            if len(text) > 0
+                    and text[0] == "=":
 
 
 
