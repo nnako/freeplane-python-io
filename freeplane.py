@@ -222,7 +222,7 @@ class Node(object):
             # read out text content
             text = self.node.attrib['TEXT']
 
-            if len(text) > 0
+            if len(text) > 0 \
                     and text[0] == "=":
 
 
