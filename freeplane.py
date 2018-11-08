@@ -118,8 +118,10 @@ Possible commands are:
         self.root = self.mindmap.getroot()
 
         # find and get first node element of etree
-        self.rootNode = self.root.find('node')
+        self.rootnode = self.root.find('node')
 
+        # build parent map (using ElementTree nodes)
+        self.parentmap = {c:p for p in self.rootnode.iter() for c in p}
 
 # MAP
 
@@ -130,7 +132,7 @@ Possible commands are:
 
     @property
     def RootNode(self):
-        return Node(self.rootNode)
+        return Node(self.rootnode)
 
 
     def findNodes(self,
@@ -165,7 +167,7 @@ Possible commands are:
         # create Node instances
         lstNodesRet = []
         for _node in lstNodes:
-            lstNodesRet.append(Node(_node))
+            lstNodesRet.append(Node(_node, self))
 
         return lstNodesRet
 
@@ -174,12 +176,13 @@ Possible commands are:
 
 class Node(object):
 
-    def __init__(self, node):
+    def __init__(self, node, Map):
 
         #
         # initialize instance
         #
 
+        self.Map = Map
         self.node = node
         self.id = node.attrib['ID']
         self.attribute = {}
@@ -271,10 +274,15 @@ class Node(object):
 
 
     @property
+    def Parent(self):
+        return Node(self.Map.parentmap[self.node], self.Map)
+
+
+    @property
     def Children(self):
         lstNodes = []
         for item in  self.node.findall("./node"):
-            lstNodes.append(Node(item))
+            lstNodes.append(Node(item, self.Map))
         return lstNodes
 
 
@@ -327,7 +335,7 @@ class Node(object):
         # create Node instances
         lstNodesRet = []
         for _node in lstNodes:
-            lstNodesRet.append(Node(_node))
+            lstNodesRet.append(Node(_node, self.Map))
 
         return lstNodesRet
 
@@ -366,7 +374,7 @@ class Node(object):
         # create Node instances
         lstNodesRet = []
         for _node in lstNodes:
-            lstNodesRet.append(Node(_node))
+            lstNodesRet.append(Node(_node, self.Map))
 
         return lstNodesRet
 
