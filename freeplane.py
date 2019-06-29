@@ -333,28 +333,43 @@ class Node(object):
                  exact=False
                  ):
 
+
+
+
         #
-        # find list of nodes in map
+        # find list of nodes below node
         #
 
-        # init
-        lstNodes = []
+        # list all nodes regardless of further properties
+        lstNodes = self._node.findall(".//node")
 
-        # check for ID
+        # check for identical ID
         if id:
+            _lstNodes = []
+            for _node in lstNodes:
+                if id.lower() == _node.attrib.get("ID", "").lower():
+                    _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-            # list nodes matching specific ID
-            lstNodes = self._node.findall(".//*[@ID='" + id + "']")
+        # check for TEXT within a node's CORE
+        if core:
+            _lstNodes = []
+            for _node in lstNodes:
+                if exact:
+                    if core == _node.attrib.get("TEXT", ""):
+                        _lstNodes.append(_node)
+                else:
+                    if core.lower() in _node.attrib.get("TEXT", "").lower():
+                        _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-        # check other properties...
 
-        # nothing given
-        else:
 
-            # list all nodes regardless of further properties
-            lstNodes = self._node.findall(".//node")
 
+        #
         # create Node instances
+        #
+
         lstNodesRet = []
         for _node in lstNodes:
             lstNodesRet.append(Node(_node, self._map))
@@ -372,28 +387,43 @@ class Node(object):
                  exact=False
                  ):
 
+
+
+
         #
-        # find list of nodes in map
+        # find list of nodes below node
         #
 
-        # init
-        lstNodes = []
+        # list all nodes regardless of further properties
+        lstNodes = self._node.findall("./node")
 
-        # check for ID
-        if not id == '':
+        # check for identical ID
+        if id:
+            _lstNodes = []
+            for _node in lstNodes:
+                if id.lower() == _node.attrib.get("ID", "").lower():
+                    _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-            # list nodes matching specific ID
-            lstNodes = self._node.findall("./*[@ID='" + id + "']")
+        # check for TEXT within a node's CORE
+        if core:
+            _lstNodes = []
+            for _node in lstNodes:
+                if exact:
+                    if core == _node.attrib.get("TEXT", ""):
+                        _lstNodes.append(_node)
+                else:
+                    if core.lower() in _node.attrib.get("TEXT", "").lower():
+                        _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-        # check others...
 
-        # nothing given
-        else:
 
-            # list all nodes regardless of further properties
-            lstNodes = self._node.findall("./node")
 
+        #
         # create Node instances
+        #
+
         lstNodesRet = []
         for _node in lstNodes:
             lstNodesRet.append(Node(_node, self._map))
