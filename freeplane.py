@@ -145,6 +145,7 @@ class Mindmap(object):
             details='',
             notes='',
             link='',
+            icon='',
             exact=False
             ):
 
@@ -161,25 +162,19 @@ class Mindmap(object):
         # list all nodes regardless of further properties
         lstNodes = self._root.findall(".//node")
 
-        # check for identical ID
-        if id:
-            _lstNodes = []
-            for _node in lstNodes:
-                if id.lower() == _node.attrib.get("ID", "").lower():
-                    _lstNodes.append(_node)
-            lstNodes = _lstNodes
+        # do the checks on the base of the list
+        lstNodes = reduce_node_list(
+            lstNodes,
+            id,
+            core,
+            attrib,
+            details,
+            notes,
+            link,
+            icon,
+            exact
+        )
 
-        # check for TEXT within a node's CORE
-        if core:
-            _lstNodes = []
-            for _node in lstNodes:
-                if exact:
-                    if core == _node.attrib.get("TEXT", ""):
-                        _lstNodes.append(_node)
-                else:
-                    if core.lower() in _node.attrib.get("TEXT", "").lower():
-                        _lstNodes.append(_node)
-            lstNodes = _lstNodes
 
 
 
@@ -330,6 +325,7 @@ class Node(object):
                  details='',
                  notes='',
                  link='',
+                 icon='',
                  exact=False
                  ):
 
@@ -343,25 +339,18 @@ class Node(object):
         # list all nodes regardless of further properties
         lstNodes = self._node.findall(".//node")
 
-        # check for identical ID
-        if id:
-            _lstNodes = []
-            for _node in lstNodes:
-                if id.lower() == _node.attrib.get("ID", "").lower():
-                    _lstNodes.append(_node)
-            lstNodes = _lstNodes
-
-        # check for TEXT within a node's CORE
-        if core:
-            _lstNodes = []
-            for _node in lstNodes:
-                if exact:
-                    if core == _node.attrib.get("TEXT", ""):
-                        _lstNodes.append(_node)
-                else:
-                    if core.lower() in _node.attrib.get("TEXT", "").lower():
-                        _lstNodes.append(_node)
-            lstNodes = _lstNodes
+        # do the checks on the base of the list
+        lstNodes = reduce_node_list(
+            lstNodes,
+            id,
+            core,
+            attrib,
+            details,
+            notes,
+            link,
+            icon,
+            exact
+        )
 
 
 
@@ -384,6 +373,7 @@ class Node(object):
                  details='',
                  notes='',
                  link='',
+                 icon='',
                  exact=False
                  ):
 
@@ -397,25 +387,18 @@ class Node(object):
         # list all nodes regardless of further properties
         lstNodes = self._node.findall("./node")
 
-        # check for identical ID
-        if id:
-            _lstNodes = []
-            for _node in lstNodes:
-                if id.lower() == _node.attrib.get("ID", "").lower():
-                    _lstNodes.append(_node)
-            lstNodes = _lstNodes
-
-        # check for TEXT within a node's CORE
-        if core:
-            _lstNodes = []
-            for _node in lstNodes:
-                if exact:
-                    if core == _node.attrib.get("TEXT", ""):
-                        _lstNodes.append(_node)
-                else:
-                    if core.lower() in _node.attrib.get("TEXT", "").lower():
-                        _lstNodes.append(_node)
-            lstNodes = _lstNodes
+        # do the checks on the base of the list
+        lstNodes = reduce_node_list(
+            lstNodes,
+            id,
+            core,
+            attrib,
+            details,
+            notes,
+            link,
+            icon,
+            exact
+        )
 
 
 
@@ -524,6 +507,54 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
             text = raw__no_CR.strip()
 
     return text
+
+
+def reduce_node_list(
+        lstNodes=[],
+        id='',
+        core='',
+        attrib='',
+        details='',
+        notes='',
+        link='',
+        icon='',
+        exact=False
+    ):
+
+    # check for identical ID
+    if id:
+        _lstNodes = []
+        for _node in lstNodes:
+            if id.lower() == _node.attrib.get("ID", "").lower():
+                _lstNodes.append(_node)
+        lstNodes = _lstNodes
+
+    # check for TEXT within a node's CORE
+    if core:
+        _lstNodes = []
+        for _node in lstNodes:
+            if exact:
+                if core == _node.attrib.get("TEXT", ""):
+                    _lstNodes.append(_node)
+            else:
+                if core.lower() in _node.attrib.get("TEXT", "").lower():
+                    _lstNodes.append(_node)
+        lstNodes = _lstNodes
+
+    # check for BUILTIN ICON at node
+    if icon: 
+        _lstNodes = []
+        for _node in lstNodes:
+
+            # check for icon node
+            _lstIconNodes = _node.findall("./icon[@BUILTIN='" + icon + "']")
+            if _lstIconNodes:
+                _lstNodes.append(_node)
+
+        lstNodes = _lstNodes
+
+    # and back
+    return lstNodes
 
 
 # OLD
