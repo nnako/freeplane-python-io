@@ -148,32 +148,46 @@ class Mindmap(object):
             exact=False
             ):
 
+
+
+
         #
         # find list of nodes in map
         #
 
-        # init
-        lstNodes = []
+        # start with ALL nodes within the mindmap and strip down to the number
+        # of nodes matching all given arguments
 
-        # check for ID
+        # list all nodes regardless of further properties
+        lstNodes = self._root.findall(".//node")
+
+        # check for identical ID
         if id:
+            _lstNodes = []
+            for _node in lstNodes:
+                if id.lower() == _node.attrib.get("ID", "").lower():
+                    _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-            # list nodes matching specific ID
-            lstNodes = self._root.findall(".//*[@ID='" + id + "']")
-
-        # check for CORE TEXT
+        # check for TEXT within a node's CORE
         if core:
+            _lstNodes = []
+            for _node in lstNodes:
+                if exact:
+                    if core == _node.attrib.get("TEXT", ""):
+                        _lstNodes.append(_node)
+                else:
+                    if core.lower() in _node.attrib.get("TEXT", "").lower():
+                        _lstNodes.append(_node)
+            lstNodes = _lstNodes
 
-            # list nodes matching specific ID
-            lstNodes = self._root.findall(".//*[@ID='" + id + "']")
 
-        # nothing given
-        else:
 
-            # list all nodes regardless of further properties
-            lstNodes = self._root.findall(".//node")
 
+        #
         # create Node instances
+        #
+
         lstNodesRet = []
         for _node in lstNodes:
             lstNodesRet.append(Node(_node, self))
