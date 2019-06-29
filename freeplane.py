@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+
+
+
 #
 # DESCRIPTION
 #
@@ -39,7 +42,7 @@ class Mindmap(object):
 
     """
 
-    num_of_maps = 0
+    _num_of_maps = 0
 
     def __init__(self, path='', type='freeplane', version='1.3', id=''):
 
@@ -58,9 +61,9 @@ class Mindmap(object):
                     description='Operation on Freeplane mindmap',
                     usage='''%s <command> [<args>]
 
-Possible commands are:
-    getText    return text portion of a node
-    ...               ...''' % os.path.basename(sys.argv[0]))
+                    Possible commands are:
+                        getText    return text portion of a node
+                        ...               ...''' % os.path.basename(sys.argv[0]))
 
             # define command argument
             parser.add_argument(
@@ -95,7 +98,7 @@ Possible commands are:
         # access class variables
         #
 
-        Mindmap.num_of_maps += 1
+        Mindmap._num_of_maps += 1
 
 
 
@@ -105,34 +108,34 @@ Possible commands are:
         #
 
         # path of instance's mindmap file
-        self.path = path
+        self._path = path
 
         # type, version
-        self.type = type
-        self.version = version
+        self._type = type
+        self._version = version
 
         # read entire etree mindmap
-        self.mindmap = ET.parse(self.path)
+        self._mindmap = ET.parse(self._path)
 
         # get root of mindmap
-        self.root = self.mindmap.getroot()
+        self._root = self._mindmap.getroot()
 
         # find and get first node element of etree
-        self.rootnode = self.root.find('node')
+        self._rootnode = self._root.find('node')
 
         # build parent map (using ElementTree nodes)
-        self.parentmap = {c:p for p in self.rootnode.iter() for c in p}
+        self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
 
 # MAP
 
     @classmethod
     def getNumOfMaps(cls):
-        return cls.num_of_maps
+        return cls._num_of_maps
 
 
     @property
     def RootNode(self):
-        return Node(self.rootnode)
+        return Node(self._rootnode)
 
 
     def findNodes(self,
@@ -153,16 +156,22 @@ Possible commands are:
         lstNodes = []
 
         # check for ID
-        if not id == '':
+        if id:
 
             # list nodes matching specific ID
-            lstNodes = self.root.findall(".//*[@ID='" + id + "']")
+            lstNodes = self._root.findall(".//*[@ID='" + id + "']")
+
+        # check for CORE TEXT
+        if core:
+
+            # list nodes matching specific ID
+            lstNodes = self._root.findall(".//*[@ID='" + id + "']")
 
         # nothing given
         else:
 
             # list all nodes regardless of further properties
-            lstNodes = self.root.findall(".//node")
+            lstNodes = self._root.findall(".//node")
 
         # create Node instances
         lstNodesRet = []
@@ -176,43 +185,42 @@ Possible commands are:
 
 class Node(object):
 
-    def __init__(self, node, Map):
+    def __init__(self, node, map):
 
         #
         # initialize instance
         #
 
-        self.Map = Map
-        self.node = node
-        self.id = node.attrib['ID']
-        self.attribute = {}
-        _lst = node.findall('attribute')
-        for _attr in _lst:
-            _name = _attr.get('NAME', '')
-            _value = _attr.get('VALUE', '')
-            if not _name == '':
-                self.attribute[_name] = _value
+        self._map = map
+        self._node = node
 
 
     @property
     def PlainText(self):
-        return getCoreTextFromNode(self.node, bOnlyFirstLine=False)
+        return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
 
 
     @property
     def Id(self):
-        return self.id
+        return self._node.attrib['ID']
 
 
     @property
     def Attributes(self):
-        return self.attribute
+        _attribute = {}
+        _lst = self._node.findall('attribute')
+        for _attr in _lst:
+            _name = _attr.get('NAME', '')
+            _value = _attr.get('VALUE', '')
+            if _name:
+                _attribute[_name] = _value
+        return _attribute
 
 
     @property
     def Style(self):
-        if 'STYLE_REF' in self.node.attrib.keys():
-            return self.node.attrib['STYLE_REF']
+        if 'STYLE_REF' in self._node.attrib.keys():
+            return self._node.attrib['STYLE_REF']
         return ""
 
 
@@ -220,10 +228,10 @@ class Node(object):
     def CoreLink(self):
 
         # check for TEXT attribute
-        if not self.node.get('TEXT') is None:
+        if not self._node.get('TEXT') is None:
 
             # read out text content
-            text = self.node.attrib['TEXT']
+            text = self._node.attrib['TEXT']
 
             if len(text) > 0 \
                     and text[0] == "=":
@@ -259,10 +267,10 @@ class Node(object):
     def Comment(self):
 
         # check for existence of child
-        if not self.node.find('node') is None:
+        if not self._node.find('node') is None:
 
             # get first child
-            node = self.node.find('node')
+            node = self._node.find('node')
 
             # check for TEXT attribute
             if not node.get('TEXT') is None:
@@ -275,28 +283,28 @@ class Node(object):
 
     @property
     def Parent(self):
-        return Node(self.Map.parentmap[self.node], self.Map)
+        return Node(self._map._parentmap[self._node], self._map)
 
 
     @property
     def Children(self):
         lstNodes = []
-        for item in  self.node.findall("./node"):
-            lstNodes.append(Node(item, self.Map))
+        for item in  self._node.findall("./node"):
+            lstNodes.append(Node(item, self._map))
         return lstNodes
 
 
     @property
     def isComment(self):
-        if not self.node.get('STYLE_REF') is None \
-                and self.node.attrib['STYLE_REF'] == 'klein und grau':
+        if not self._node.get('STYLE_REF') is None \
+                and self._node.attrib['STYLE_REF'] == 'klein und grau':
             return True
         return False
 
 
     @property
     def hasChildren(self):
-        if not self.node.findall('./node'):
+        if not self._node.findall('./node'):
             return False
         return True
 
@@ -319,10 +327,10 @@ class Node(object):
         lstNodes = []
 
         # check for ID
-        if not id == '':
+        if id:
 
             # list nodes matching specific ID
-            lstNodes = self.node.findall(".//*[@ID='" + id + "']")
+            lstNodes = self._node.findall(".//*[@ID='" + id + "']")
 
         # check other properties...
 
@@ -330,12 +338,12 @@ class Node(object):
         else:
 
             # list all nodes regardless of further properties
-            lstNodes = self.node.findall(".//node")
+            lstNodes = self._node.findall(".//node")
 
         # create Node instances
         lstNodesRet = []
         for _node in lstNodes:
-            lstNodesRet.append(Node(_node, self.Map))
+            lstNodesRet.append(Node(_node, self._map))
 
         return lstNodesRet
 
@@ -361,7 +369,7 @@ class Node(object):
         if not id == '':
 
             # list nodes matching specific ID
-            lstNodes = self.node.findall("./*[@ID='" + id + "']")
+            lstNodes = self._node.findall("./*[@ID='" + id + "']")
 
         # check others...
 
@@ -369,12 +377,12 @@ class Node(object):
         else:
 
             # list all nodes regardless of further properties
-            lstNodes = self.node.findall("./node")
+            lstNodes = self._node.findall("./node")
 
         # create Node instances
         lstNodesRet = []
         for _node in lstNodes:
-            lstNodesRet.append(Node(_node, self.Map))
+            lstNodesRet.append(Node(_node, self._map))
 
         return lstNodesRet
 
@@ -393,7 +401,7 @@ class Node(object):
         if not token == "":
 
             # check for token node
-            tokennode = self.node.findall("./node[@TEXT='" + token + "']")
+            tokennode = self._node.findall("./node[@TEXT='" + token + "']")
             if not tokennode == []:
 
                 # go further to find the comment text
@@ -402,7 +410,7 @@ class Node(object):
         else:
 
             # get first node node as comment node
-            commentnode = self.node.find('./node')
+            commentnode = self._node.find('./node')
 
         #
         # access text portion of target node
@@ -480,7 +488,7 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
 def getText(self, strRootAttribute, strTitleText, strPortion):
 
     # get list of all attributes
-    lstAttributes = self.mindmap.getElementsByTagName('attribute')
+    lstAttributes = self._mindmap.getElementsByTagName('attribute')
 
     # search for ROOT ATTRIBUTE NODE
     for item in lstAttributes:
