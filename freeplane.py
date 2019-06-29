@@ -545,12 +545,26 @@ def reduce_node_list(
     if icon: 
         _lstNodes = []
         for _node in lstNodes:
-
             # check for icon node
             _lstIconNodes = _node.findall("./icon[@BUILTIN='" + icon + "']")
             if _lstIconNodes:
                 _lstNodes.append(_node)
+        lstNodes = _lstNodes
 
+    # check for BUILTIN ICON at node
+    if details: 
+        _lstNodes = []
+        for _node in lstNodes:
+            # check for details node
+            _lstDetailsNodes = _node.findall("./richcontent[@TYPE='DETAILS']")
+            if _lstDetailsNodes:
+                _text = ''.join(_lstDetailsNodes[0].itertext())
+                if exact:
+                    if details in _text:
+                        _lstNodes.append(_node)
+                else:
+                    if details.lower() in _text.lower():
+                        _lstNodes.append(_node)
         lstNodes = _lstNodes
 
     # and back
