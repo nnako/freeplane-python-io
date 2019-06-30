@@ -25,9 +25,11 @@ import argparse
 import os
 import re
 import sys
+import io
 
 # xml format
-import xml.etree.ElementTree as ET
+#import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 
 # MINDMAP
@@ -104,7 +106,7 @@ class Mindmap(object):
 
 
         #
-        # access instance variables and read mindmap
+        # access instance variables
         #
 
         # path of instance's mindmap file
@@ -114,8 +116,18 @@ class Mindmap(object):
         self._type = type
         self._version = version
 
-        # read entire etree mindmap
-        self._mindmap = ET.parse(self._path)
+
+
+
+        #
+        # read mindmap
+        #
+
+        # set encoding to be read
+        xmlparser = ET.XMLParser(encoding='latin1')
+
+        # read entire etree plan
+        self._mindmap = ET.parse(self._path, parser=xmlparser)
 
         # get root of mindmap
         self._root = self._mindmap.getroot()
@@ -125,6 +137,7 @@ class Mindmap(object):
 
         # build parent map (using ElementTree nodes)
         self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
+
 
 # MAP
 
@@ -190,6 +203,26 @@ class Mindmap(object):
         return lstNodesRet
 
 
+    def save(self, strPath, encoding='latin1'):
+
+        # open output file
+        _file = io.open(strPath, "w", encoding=encoding)
+
+        # create output string
+        # and remove first output row
+        # as Freeplane doesn't use strict XML
+        _outputstring = ET.tostring(
+            self._root,
+            pretty_print=True,
+            encoding=encoding).decode(encoding).split('\n', 1)[1]
+
+        # write output string
+        _file.write( _outputstring )
+
+        # close file
+        _file.close()
+
+
 # NODE
 
 class Node(object):
@@ -207,6 +240,21 @@ class Node(object):
     @property
     def PlainText(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
+
+
+    @PlainText.setter
+    def PlainText(self, strText):
+        self._node.attrib['TEXT'] = strText
+
+
+    @property
+    def Link(self):
+        return self._node.attrib.get("LINK","")
+
+
+    @Link.setter
+    def Link(self, strLink):
+        self._node.attrib["LINK"] = strLink
 
 
     @property
@@ -420,6 +468,9 @@ class Node(object):
         text = ""
         commentnode = None
 
+
+
+
         #
         # find node's INTERMEDIATE child node
         #
@@ -439,6 +490,9 @@ class Node(object):
             # get first node node as comment node
             commentnode = self._node.find('./node')
 
+
+
+
         #
         # access text portion of target node
         #
@@ -455,6 +509,47 @@ class Node(object):
             text = ""
 
         return text
+
+
+    def addChild(self, iPos=-1, strPlainText='', style='', NodeType='node'):
+        """
+        This functions adds a Freeplane-Node as a child to this Node. Further
+        more a XML-node ist added to the XML-Tree
+        """
+        # create Wrapper and et.element Object
+        _node = ET.Element(NodeType)
+        node = Node(_node, self._map)
+
+        if iPos == -1:
+            self._node.append(_node)
+        else:
+            self._node.insert(iPos, _node)
+
+        # set values
+        node.PlainText = strPlainText
+        #tmp.Style = style
+
+        return node
+
+
+    def addSibling(self, iPos=-1, strPlainText="", style=None):
+        """
+        This functions adds a Freeplane-Node as a Sibling. Further more a
+        XML-node ist added to the XML-Tree at the corresponding position
+        """
+        _node = et.Element('node')
+        node = Node(_node, self._map)
+        
+        if iPos == -1:
+            self._node.getparent().append(_node)
+        else:
+            self._node.getparent().insert(iPos, _node)
+
+        # set values
+        node.PlainText = strPlainText
+        #tmp.Style = style
+        
+        return node
 
 
 # FUNCTIONS
