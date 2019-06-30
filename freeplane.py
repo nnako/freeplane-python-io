@@ -521,18 +521,49 @@ class Node(object):
         more a XML-node ist added to the XML-Tree
         """
 
-        # create Wrapper and et.element Object
+
+
+
+        #
+        # create and init element
+        #
+
         _node = ET.Element('node')
         node = Node(_node, self._map)
+        node.PlainText = core
+
+
+
+
+        #
+        # set node's position within children
+        #
 
         if pos == -1:
             self._node.append(_node)
         else:
             self._node.insert(pos, _node)
 
-        # set values
-        node.PlainText = core
+
+
+
+        #
+        # set style
+        #
+
         #tmp.Style = style
+
+
+
+
+        #
+        # update parent dict
+        #
+
+        self._map._parentmap[_node] = self._node
+
+
+
 
         return node
 
@@ -547,17 +578,48 @@ class Node(object):
         XML-node ist added to the XML-Tree at the corresponding position
         """
 
+
+
+        #
+        # create and init element
+        #
+
         _node = ET.Element('node')
         node = Node(_node, self._map)
+        node.PlainText = core
+
+
+
+
+        #
+        # set node's position within siblings
+        #
 
         if pos == -1:
             self._node.getparent().append(_node)
         else:
             self._node.getparent().insert(pos, _node)
 
-        # set values
-        node.PlainText = core
+
+
+
+        #
+        # set style
+        #
+
         #tmp.Style = style
+
+
+
+
+        #
+        # update parent dict
+        #
+
+        self._map._parentmap[_node] = self._node.getparent()
+
+
+
 
         return node
 
