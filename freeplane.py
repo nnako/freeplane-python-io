@@ -511,44 +511,54 @@ class Node(object):
         return text
 
 
-    def addChild(self, iPos=-1, strPlainText='', style='', NodeType='node'):
+    def addChild(self,
+                 pos=-1,
+                 core='',
+                 style='',
+                 ):
         """
         This functions adds a Freeplane-Node as a child to this Node. Further
         more a XML-node ist added to the XML-Tree
         """
+
         # create Wrapper and et.element Object
-        _node = ET.Element(NodeType)
+        _node = ET.Element('node')
         node = Node(_node, self._map)
 
-        if iPos == -1:
+        if pos == -1:
             self._node.append(_node)
         else:
-            self._node.insert(iPos, _node)
+            self._node.insert(pos, _node)
 
         # set values
-        node.PlainText = strPlainText
+        node.PlainText = core
         #tmp.Style = style
 
         return node
 
 
-    def addSibling(self, iPos=-1, strPlainText="", style=None):
+    def addSibling(self,
+                   pos=-1,
+                   core="",
+                   style=None,
+                   ):
         """
         This functions adds a Freeplane-Node as a Sibling. Further more a
         XML-node ist added to the XML-Tree at the corresponding position
         """
-        _node = et.Element('node')
+
+        _node = ET.Element('node')
         node = Node(_node, self._map)
-        
-        if iPos == -1:
+
+        if pos == -1:
             self._node.getparent().append(_node)
         else:
-            self._node.getparent().insert(iPos, _node)
+            self._node.getparent().insert(pos, _node)
 
         # set values
-        node.PlainText = strPlainText
+        node.PlainText = core
         #tmp.Style = style
-        
+
         return node
 
 
@@ -637,7 +647,7 @@ def reduce_node_list(
         lstNodes = _lstNodes
 
     # check for BUILTIN ICON at node
-    if icon: 
+    if icon:
         _lstNodes = []
         for _node in lstNodes:
             # check for icon node
@@ -647,7 +657,7 @@ def reduce_node_list(
         lstNodes = _lstNodes
 
     # check for BUILTIN ICON at node
-    if details: 
+    if details:
         _lstNodes = []
         for _node in lstNodes:
             # check for details node
