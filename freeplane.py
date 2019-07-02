@@ -32,6 +32,16 @@ import io
 import lxml.etree as ET
 
 
+# BUILTIN ICONS
+ICON_EXCLAMATION = 'yes'
+ICON_LIST = 'list'
+ICON_QUESTION = 'help'
+ICON_CHECKED = 'button_ok'
+ICON_BOOKMARK = 'bookmark'
+ICON_PRIO1 = 'full-1'
+ICON_PRIO2 = 'full-2'
+
+
 # MINDMAP
 
 class Mindmap(object):
@@ -45,6 +55,7 @@ class Mindmap(object):
     """
 
     _num_of_maps = 0
+
 
     def __init__(self, path='', type='freeplane', version='1.3', id=''):
 
@@ -346,10 +357,10 @@ class Node(object):
         # check for details node
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
-            _text = ''.join(_lstDetailsNodes[0].itertext())
-            _text = _text.replace('\n\n', '[xox]')
-            _text = _text.replace('\n', '')
-            _text = _text.replace('[xox]', '\n')
+            _text = ''.join(_lstDetailsNodes[0].itertext()).strip()
+            #_text = _text.replace('\n\n', '[xox]')
+            #_text = _text.replace('\n', '')
+            #_text = _text.replace('[xox]', '\n')
 
         return _text
 
