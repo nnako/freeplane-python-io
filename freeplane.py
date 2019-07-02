@@ -373,6 +373,72 @@ class Node(object):
 
 
     @property
+    def Icons(self):
+        _icons = []
+        _lst = self._node.findall('icon')
+        for _icon in _lst:
+            _name = _icon.get('BUILTIN', '')
+            if _name:
+                _icons.append(_name)
+        return _icons
+
+
+    def addIcon(self,
+                icon='',
+                ):
+        """
+        This functions adds a Freeplane-Icon to a node
+        """
+
+
+
+
+        #
+        # add icon to node
+        #
+
+        if icon:
+
+            _icon = ET.Element('icon')
+            _icon.attrib['BUILTIN'] = icon
+
+            self._node.append(_icon)
+
+
+    def delIcon(self,
+                icon='',
+                ):
+        """
+        This functions removes a Freeplane-Icon from a node
+        """
+
+
+
+
+        #
+        # search for icon
+        #
+
+        if icon:
+
+            _icons = []
+            _lst = self._node.findall('icon')
+            for _icon in _lst:
+
+                if _icon.get('BUILTIN', '').lower() == icon.lower():
+
+
+
+
+                    #
+                    # remove icon from node's icon list
+                    #
+
+                    self._node.remove(_icon)
+                    break
+
+
+    @property
     def Children(self):
         lstNodes = []
         for item in  self._node.findall("./node"):
