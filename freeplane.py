@@ -339,6 +339,35 @@ class Node(object):
 
 
     @property
+    def Details(self):
+
+        _text = ''
+
+        # check for details node
+        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        if _lstDetailsNodes:
+            _text = ''.join(_lstDetailsNodes[0].itertext())
+            _text = _text.replace('\n\n', '[xox]')
+            _text = _text.replace('\n', '')
+            _text = _text.replace('[xox]', '\n')
+
+        return _text
+
+
+    @Details.setter
+    def Details(self, strDetails):
+
+        # check for existing details
+        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        if _lstDetailsNodes:
+            _lstDetailsNodes[0].text = strDetails
+        else:
+            _node = self._node.append('richcontent')
+            _node.attrib["TYPE"] = 'DETAILS'
+            _node.text = strDetails
+
+
+    @property
     def Parent(self):
         return Node(self._map._parentmap[self._node], self._map)
 
@@ -429,7 +458,7 @@ class Node(object):
 
 
         #
-        # find list of nodes below node
+        # find list of nodes directly below node
         #
 
         # list all nodes regardless of further properties
@@ -718,7 +747,7 @@ def reduce_node_list(
                 _lstNodes.append(_node)
         lstNodes = _lstNodes
 
-    # check for BUILTIN ICON at node
+    # check for node's DETAILS
     if details:
         _lstNodes = []
         for _node in lstNodes:
