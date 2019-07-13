@@ -22,6 +22,7 @@
 # generals
 from __future__ import print_function
 import argparse
+import datetime
 import os
 import re
 import sys
@@ -293,16 +294,52 @@ class Node(object):
 
 
     @property
+    def CreationDate(self):
+
+        # check for TEXT attribute
+        if self._node.get('CREATED'):
+
+            # read out text content
+            text = self._node.attrib['CREATED']
+
+            # convert to float time value
+            time = float(text)/1000
+
+            # return datetime value
+            return datetime.datetime.fromtimestamp(time).timetuple()
+
+        return tuple()
+
+
+    @property
+    def ModificationDate(self):
+
+        # check for TEXT attribute
+        if self._node.get('MODIFIED'):
+
+            # read out text content
+            text = self._node.attrib['MODIFIED']
+
+            # convert to float time value
+            time = float(text)/1000
+
+            # return datetime value
+            return datetime.datetime.fromtimestamp(time).timetuple()
+
+        return tuple()
+
+
+    @property
     def CoreLink(self):
 
         # check for TEXT attribute
-        if not self._node.get('TEXT') is None:
+        if self._node.get('TEXT'):
 
             # read out text content
             text = self._node.attrib['TEXT']
 
-            if len(text) > 0 \
-                    and text[0] == "=":
+            # check for formula identifier
+            if text[0] == "=":
 
 
 
@@ -317,11 +354,10 @@ class Node(object):
 
 
                 #
-                # check for reference to internal node
+                # check for reference to internal node content
                 #
 
                 _match=re.match(r'^.*ID_([\d]+)\.text.*', text)
-                # valid match found?
                 if _match:
                     return 'ID_' + _match.group(1)
 
@@ -368,10 +404,12 @@ class Node(object):
     @Details.setter
     def Details(self, strDetails):
 
-        # check for existing details
+        # replace existing details
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
             _lstDetailsNodes[0].text = strDetails
+
+        # create new details
         else:
             _node = self._node.append('richcontent')
             _node.attrib["TYPE"] = 'DETAILS'
