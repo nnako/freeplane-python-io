@@ -32,6 +32,8 @@ import io
 #import xml.etree.ElementTree as ET
 import lxml.etree as ET
 
+# html format
+import html2text
 
 # BUILTIN ICONS
 ICON_EXCLAMATION = 'yes'
