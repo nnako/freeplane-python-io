@@ -513,6 +513,24 @@ class Node(object):
         return lstNodes
 
 
+    def getChildByIndex(self, idx=0):
+        # check if node has children
+        _children = self._node.findall("./node")
+        if len(_children):
+            # run through all child nodes
+            for _i, _child in  enumerate(_children):
+                # check for matching index
+                if _i == idx:
+                    return Node(_child, self._map)
+                    break
+            # index not found
+            else:
+                return None
+        # no children present
+        else:
+            return None
+
+
     @property
     def isComment(self):
         if not self._node.get('STYLE_REF') is None \
