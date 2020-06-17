@@ -420,7 +420,23 @@ class Node(object):
 
     @property
     def Parent(self):
-        return Node(self._map._parentmap[self._node], self._map)
+
+        # ensure existing parent
+        if self._node in self._map._parentmap.keys():
+            return Node(self._map._parentmap[self._node], self._map)
+        else:
+            return None
+
+
+    @property
+    def Next(self):
+
+        # ensure existing parent
+        _next = self._node.getnext()
+        if _next is not None:
+            return Node(_next, self._map)
+        else:
+            return None
 
 
     @property
@@ -777,6 +793,9 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
     # initialize text content
     text = ""
 
+
+
+
     #
     # get TEXT attribute of node if present
     #
@@ -785,6 +804,9 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
         # read out text content
         text = node.attrib['TEXT']
+
+
+
 
     #
     # strip text from RICHTEXT content if present
@@ -803,6 +825,9 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
         # filter out plain text content
         raw = "".join([x for x in htmltext.itertext()])
+
+
+
 
         #
         # filter first line if desired
