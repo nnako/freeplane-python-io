@@ -422,9 +422,6 @@ class Node(object):
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
             _text = ''.join(_lstDetailsNodes[0].itertext()).strip()
-            #_text = _text.replace('\n\n', '[xox]')
-            #_text = _text.replace('\n', '')
-            #_text = _text.replace('[xox]', '\n')
 
         return _text
 
@@ -432,36 +429,33 @@ class Node(object):
     @Details.setter
     def Details(self, strDetails):
 
-        # replace existing details
+        # remove existing details element
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
-            _lstDetailsNodes[0].text = strDetails
+            self._node.remove(_lstDetailsNodes[0])
 
-        # create new details
-        else:
+        # create new details element
+        _element = ET.Element("richcontent", TYPE='DETAILS')
+        _html = ET.SubElement(_element, "html")
+        _head = ET.SubElement(_html, "head")
+        _body = ET.SubElement(_html, "body")
+        _p    = ET.SubElement(_body, "p")
+        _p.text = strDetails
+        # _element.text = \
+            # '\n' + \
+            # '<html>\n' + \
+            # '  <head>\n' + \
+            # '\n' + \
+            # '  </head>\n' + \
+            # '  <body>\n' + \
+            # '    <p>\n' + \
+            # '      ' + strDetails + '\n' + \
+            # '    </p>\n' + \
+            # '  </body>\n' + \
+            # '</html>\n'
 
-            # create element
-            _element = ET.Element("richcontent", TYPE='DETAILS')
-            _html = ET.SubElement(_element, "html")
-            _head = ET.SubElement(_html, "head")
-            _body = ET.SubElement(_html, "body")
-            _p    = ET.SubElement(_body, "p")
-            _p.text = strDetails
-            # _element.text = \
-                # '\n' + \
-                # '<html>\n' + \
-                # '  <head>\n' + \
-                # '\n' + \
-                # '  </head>\n' + \
-                # '  <body>\n' + \
-                # '    <p>\n' + \
-                # '      ' + strDetails + '\n' + \
-                # '    </p>\n' + \
-                # '  </body>\n' + \
-                # '</html>\n'
-
-            # append element
-            _node = self._node.append(_element)
+        # append element
+        _node = self._node.append(_element)
 
         # return self.Details
 
