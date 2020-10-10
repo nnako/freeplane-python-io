@@ -288,6 +288,32 @@ class Node(object):
         return _attribute
 
 
+    def addAttribute(self,
+                key='',
+                value='',
+                ):
+        """
+        This functions adds an attribute to a node
+        """
+
+
+
+
+        #
+        # create new attribute within node
+        #
+
+        if key:
+
+            # create element
+            _attrib = ET.Element("attribute", NAME=key, VALUE=value)
+
+            # append element
+            _node = self._node.append(_attrib)
+
+        # return self.Attributes
+
+
     @property
     def Style(self):
         if 'STYLE_REF' in self._node.attrib.keys():
@@ -417,6 +443,8 @@ class Node(object):
             _node.attrib["TYPE"] = 'DETAILS'
             _node.text = strDetails
 
+        # return self.Details
+
 
     @property
     def Parent(self):
@@ -471,6 +499,8 @@ class Node(object):
 
             self._node.append(_icon)
 
+        # return self.Icons
+
 
     def delIcon(self,
                 icon='',
@@ -503,6 +533,8 @@ class Node(object):
 
                     self._node.remove(_icon)
                     break
+
+        # return self.Icons
 
 
     @property
