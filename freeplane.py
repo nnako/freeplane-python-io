@@ -162,7 +162,7 @@ class Mindmap(object):
 
     @property
     def RootNode(self):
-        return Node(self._rootnode)
+        return Node(self._rootnode, self)
 
 
     def findNodes(self,
