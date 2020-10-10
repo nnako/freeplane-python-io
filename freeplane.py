@@ -439,9 +439,29 @@ class Node(object):
 
         # create new details
         else:
-            _node = self._node.append('richcontent')
-            _node.attrib["TYPE"] = 'DETAILS'
-            _node.text = strDetails
+
+            # create element
+            _element = ET.Element("richcontent", TYPE='DETAILS')
+            _html = ET.SubElement(_element, "html")
+            _head = ET.SubElement(_html, "head")
+            _body = ET.SubElement(_html, "body")
+            _p    = ET.SubElement(_body, "p")
+            _p.text = strDetails
+            # _element.text = \
+                # '\n' + \
+                # '<html>\n' + \
+                # '  <head>\n' + \
+                # '\n' + \
+                # '  </head>\n' + \
+                # '  <body>\n' + \
+                # '    <p>\n' + \
+                # '      ' + strDetails + '\n' + \
+                # '    </p>\n' + \
+                # '  </body>\n' + \
+                # '</html>\n'
+
+            # append element
+            _node = self._node.append(_element)
 
         # return self.Details
 
