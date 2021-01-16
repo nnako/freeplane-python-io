@@ -449,18 +449,76 @@ class Mindmap(object):
         return lstNodesRet
 
 
-    def save(self, strPath, encoding='latin1'):
+    def save(self, strPath, encoding=''):
 
-        # open output file
-        _file = io.open(strPath, "w", encoding=encoding)
+
+
+
+        #
+        # auto-determine and set encoding
+        #
+
+        # check for fitting encoding
+        if not encoding:
+            encoding = get_version_specific_file_encoding(self._version)
+
+
+
+
+        #
+        # create XML formatted output string
+        #
 
         # create output string
-        # and remove first output row
-        # as Freeplane doesn't use strict XML
         _outputstring = ET.tostring(
             self._root,
             pretty_print=True,
-            encoding=encoding).decode(encoding).split('\n', 1)[1]
+            method='xml',
+            encoding=encoding,
+            ).decode(encoding)
+
+
+
+
+        #
+        # sanitize string content
+        #
+
+        # prior to v1.8.0 the mindmap file was not a real XML and also not
+        # consequently encoded in a specific code format. rather the encoding
+        # is a mixture between "latin1" and "windows-1252". thus, in Germany,
+        # at least the german special characters must be corrected to be
+        # properly displayed within freeplane.
+
+        _version = self._version.split('.')
+        if int(_version[0]) == 1 and int(_version[1]) < 8:
+
+            # #160 characters representing <SPACE>
+            _outputstring = _outputstring.replace( chr(160),' ')
+
+            # german special characters
+            _outputstring = _outputstring.replace( 'ä','&#xe4;') # &#228
+            _outputstring = _outputstring.replace( 'ö','&#xf6;') # &#246
+            _outputstring = _outputstring.replace( 'ü','&#xfc;') # &#252
+            _outputstring = _outputstring.replace( 'Ä','&#xc4;')
+            _outputstring = _outputstring.replace( 'Ö','&#xd6;')
+            _outputstring = _outputstring.replace( 'Ü','&#xdc;')
+            _outputstring = _outputstring.replace( 'ß','&#xdf;')
+
+
+
+
+        #
+        # write content into file
+        #
+
+        # remove first line if not starting with "<map"
+        # as Freeplane doesn't use strict XML
+        if not _outputstring.startswith("<map"):
+            _outputstring = _outputstring.split('\n', 1)[1]
+
+        # open output file
+        _file = io.open(strPath, "w", encoding=encoding)
 
         # write output string
         _file.write( _outputstring )
