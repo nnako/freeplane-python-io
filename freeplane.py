@@ -865,7 +865,23 @@ class Node(object):
         return node
 
 
-# FUNCTIONS
+# VERSION-SPECIFICS
+
+def get_version_specific_file_encoding(version):
+
+    # file encoding was changed from "latin1" or "windows-1252"
+    # to "utf-8" with Freeplane version 1.8.0
+
+    lstVersionItems = version.split('.')
+    if len(lstVersionItems)>=2:
+        if int(lstVersionItems[0]) == 1 and int(lstVersionItems[1]) <= 6:
+            # return "latin1"
+            return "windows-1252"
+        elif int(lstVersionItems[0]) == 1 and int(lstVersionItems[1]) > 6:
+            return "utf-8"
+
+
+# CONVENIENCE FUNCTIONS
 
 def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
