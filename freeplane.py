@@ -111,7 +111,7 @@ class Mindmap(object):
 
 
         #
-        # access class variables
+        # update class variables
         #
 
         Mindmap._num_of_maps += 1
@@ -163,6 +163,119 @@ class Mindmap(object):
     @property
     def RootNode(self):
         return Node(self._rootnode, self)
+
+
+    @property
+    def Styles(self):
+        _style = {}
+
+        _stylenode_user = self._mindmap.find('.//stylenode[@LOCALIZED_TEXT="styles.user-defined"]')
+        _lst = _stylenode_user.findall('./stylenode[@TEXT]')
+        for _sty in _lst:
+            _item = {}
+
+            # style name
+            _name = _sty.get('TEXT', '')
+
+            # foreground color
+            _color = _sty.get('COLOR', '')
+            if _color:
+                _item['color'] = _color
+
+            # background color
+            _bgcolor = _sty.get('BACKGROUND_COLOR', '')
+            if _bgcolor:
+                _item['bgcolor'] = _bgcolor
+
+            # font
+            _sty_sub = _sty.find('./font')
+            if _sty_sub is not None:
+                # font name
+                _fontname = _sty_sub.get('NAME', '')
+                _item['fontname'] = _fontname
+                # font size
+                _fontsize = _sty_sub.get('SIZE', '')
+                _item['fontsize'] = _fontsize
+
+            # ...
+
+            # add to dict
+            _style[_name] = _item
+
+        return _style
+
+
+    def addStyle(self,
+                name='',
+                settings={},
+                ):
+        """
+        This functions adds a style to a mindmap
+        """
+
+
+
+
+        #
+        # create new style within mindmap
+        #
+
+        if name:
+
+
+
+            #
+            # check validity of requests
+            #
+
+            # look for parent element
+            _stylenode_user = self._mindmap.find('.//stylenode[@LOCALIZED_TEXT="styles.user-defined"]')
+
+            # get list of existing style elements
+            _lst = _stylenode_user.findall('./stylenode[@TEXT]')
+
+            # leave function if style is already existing
+            for _sty in _lst:
+                if name.lower() == _sty.get('TEXT').lower():
+                    return False
+
+            # create element
+            _sty = ET.Element("stylenode", TEXT=name)
+
+            # append element to list of styles
+            _stylenode_user.append(_sty)
+
+
+
+
+            #
+            # set attributes
+            #
+
+            # foreground color
+            _check = 'color'
+            if _check in settings.keys():
+                _sty.set('COLOR', settings[_check])
+
+            # background color
+            _check = 'bgcolor' 
+            if _check in settings.keys():
+                _sty.set('BACKGROUND_COLOR', settings[_check])
+
+            # font name
+            _check = 'fontname'
+            if _check in settings.keys():
+                _item = ET.Element('font', NAME=settings[_check])
+                # add item to style
+                _sty.append(_item)
+            # font size
+            _check = 'fontsize'
+            if _check in settings.keys():
+                _item.set("SIZE", settings[_check])
+
+            return True
+
+        return False
 
 
     def findNodes(self,
