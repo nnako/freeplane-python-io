@@ -127,30 +127,149 @@ class Mindmap(object):
         self._path = path
 
         # type, version
-        self._type = type
+        self._type = mtype
+
+
+
+
+        #
+        # read mindmap in case path is given
+        #
+
+        # check for validity of file
+        if os.path.isfile(self._path):
+
+
+
+
+            #
+            # determine file's map version
+            #
+
+            with io.open(self._path, "r", encoding="utf-8") as fpMap:
+                strFirstLine = fpMap.readline()
+
+            # detect from '<map version="freeplane 1.3.0">'
+            idxFpToken    = strFirstLine.find("freeplane")
+            idxSpace      = strFirstLine[idxFpToken:].find(" ") + idxFpToken
+            idxVer        = idxSpace+1
+            idxClQuote    = strFirstLine[idxVer:].find('"') + idxVer
+            self._version = strFirstLine[idxVer:idxClQuote]
+
+
+
+
+            #
+            # set parser encoding due to map version
+            #
+
+            # check for fitting encoding
+            encoding = get_version_specific_file_encoding(self._version)
+
+            # set encoding to be read
+            xmlparser = ET.XMLParser(encoding=encoding)
+            # xmlparser = ET.XMLParser(encoding="latin1")
+            # xmlparser = ET.XMLParser(encoding="utf-8")
+
+
+
+
+            #
+            # read entire mindmap and evaluate structure
+            #
+
+            self._mindmap = ET.parse(self._path, parser=xmlparser)
+
+            # get root of mindmap
+            self._root = self._mindmap.getroot()
+
+            # find and get first node element of etree
+            self._rootnode = self._root.find('node')
+
+            # build parent map (using ElementTree nodes)
+            self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
+
+
+
+
+            return
+
+
+
+
+        #
+        # create mindmap if path is invalid or empty
+        #
+
+        # set version
         self._version = version
 
+        # build parent map (using ElementTree nodes)
+        self._parentmap = {}
 
-
-
-        #
-        # read mindmap
-        #
-
-        # set encoding to be read
-        xmlparser = ET.XMLParser(encoding='latin1')
-
-        # read entire etree plan
-        self._mindmap = ET.parse(self._path, parser=xmlparser)
+        # create map element
+        self._mindmap = ET.Element('map') 
+        self._mindmap.attrib['version'] = 'freeplane ' + self._version
 
         # get root of mindmap
-        self._root = self._mindmap.getroot()
+        self._root = self._mindmap
 
-        # find and get first node element of etree
-        self._rootnode = self._root.find('node')
+        # some attributes
+        _node = ET.Element('attribute_registry') 
+        _node.attrib['SHOW_ATTRIBUTES'] = 'hide'
+        self._mindmap.append(_node)
 
-        # build parent map (using ElementTree nodes)
-        self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
+        # 1st node element
+        self._rootnode = ET.Element('node') 
+        self._rootnode.attrib["LOCALIZED_TEXT"] = "new_mindmap"
+        self._rootnode.attrib["FOLDED"] = "false"
+        self._mindmap.append(self._rootnode)
+
+        # some styles
+        _node = ET.Element('edge') 
+        _node.attrib['STYLE'] = 'horizontal'
+        _node.attrib['COLOR'] = '#cccccc'
+        self._mindmap.append(_node)
+
+        #
+        # create hook element
+        #
+
+        _hook = ET.Element('hook') 
+        _hook.attrib["NAME"] = "MapStyle"
+        _hook.attrib["zoom"] = "0.62"
+        self._mindmap.append(_hook)
+        # sub element properties
+        _node = ET.Element('properties')
+        _node.attrib["show_icon_for_attributes"] = "false"
+        _node.attrib["show_note_icons"] = "false"
+        _hook.append(_node)
+        # sub element map styles
+        _mapstyles = ET.Element('map_styles')
+        _hook.append(_mapstyles)
+        # sub sub element stylenode
+        _stylenode = ET.Element('stylenode')
+        _stylenode.attrib["LOCALIZED_TEXT"] = "styles.root_node"
+        _mapstyles.append(_stylenode)
+        # sub sub sub element stylenode
+        _node = ET.Element('stylenode')
+        _node.attrib["LOCALIZED_TEXT"] = "styles.predefined"
+        _node.attrib["POSITION"] = "right"
+        _stylenode.append(_node)
+        # sub sub sub element stylenode
+        _node = ET.Element('stylenode')
+        _node.attrib["LOCALIZED_TEXT"] = "default"
+        _node.attrib["MAX_WIDTH"] = "600"
+        _node.attrib["COLOR"] = "#000000"
+        _node.attrib["STYLE"] = "as_parent"
+        _stylenode.append(_node)
+        # sub sub sub element stylenode
+        _node = ET.Element('font')
+        _node.attrib["NAME"] = "Segoe UI"
+        _node.attrib["SIZE"] = "12"
+        _node.attrib["BOLD"] = "false"
+        _node.attrib["ITALIC"] = "false"
+        _stylenode.append(_node)
 
 
 # MAP
