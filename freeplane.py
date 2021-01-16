@@ -405,6 +405,7 @@ class Mindmap(object):
     def createNode(cls,
             core='',
             link='',
+            id='',
             style=''
             ):
 
@@ -417,9 +418,20 @@ class Mindmap(object):
         node = Node(_node, None)
         node.PlainText = core
 
+        # create temporary branch with local (empty) parent_map reference
+        # node._parentmap = {}
+        node._branch = Branch()
+
+        # check own id choice
+        if id:
+            node.Id = id
+            if not node.Id == id:
+                # print("[ WARNING: node id must follow Freplane's format rules. nothing done. ]")
+                return None
+
         # link
         if link:
-            print("[ WARNING: link attribute not implemented, yet ]")
+            node.Link = link
 
         # style
         if style:
@@ -995,10 +1007,26 @@ class Node(object):
     @property
     def Parent(self):
 
-        # ensure existing parent
-        if self._node in self._map._parentmap.keys():
-            return Node(self._map._parentmap[self._node], self._map)
+        # if non-detached node
+        if self._map is not None:
+            # ensure existing parent
+            if self._node in self._map._parentmap.keys():
+                return Node(self._map._parentmap[self._node], self._map)
+            else:
+                return None
+
+        # if detached node, read from branch object
+        elif hasattr(self, "_branch") and len(self._branch._parentmap.keys()):
+            if self._node in self._branch._parentmap.keys():
+                return Node(self._branch._parentmap[self._node], self._map)
+
+        # if detached branch head
+        elif hasattr(self, "_branch"):
+            print("[ INFO   : a detached branch head has no other parent. ]")
+            return None
+
         else:
+            print("[ WARNING: local parentmap has not been created for detached node. ]")
             return None
 
 
@@ -1269,9 +1297,102 @@ class Node(object):
         return text
 
 
+    def attachAsChild(self,
+            node=None,
+            pos=-1,
+            ):
+        """
+        This functions appends an existing but previously detached
+        Freeplane-Node as a child to this node object.
+        """
+
+
+
+
+        #
+        # check if node is valid
+        #
+
+        if node is None:
+            print("[ WARNING: no node given to be attached. ]")
+            return False
+
+
+
+
+        #
+        # check if node is already attached
+        #
+
+        # check if object is child within map
+        if self._map is not None:
+            if node._node in self._map._parentmap.keys():
+                print("[ WARNING: node already attached to a map. ]")
+                return False
+        # check if object is part of detached branch
+        elif hasattr(self, "_branch"):
+            if node._node in self._branch._parentmap.keys():
+                print("[ WARNING: node attached to a detached branch. please attach the branch head. ]")
+                return False
+
+
+
+
+        #
+        # set node's position within children
+        #
+
+        if pos == -1:
+            self._node.append(node._node)
+        else:
+            self._node.insert(pos, node._node)
+
+
+
+
+        #
+        # update tree's _map member
+        #
+
+        # the pointer to the map object of the attached node
+        # is to be the same as the map object attached to
+
+        node._map = self._map
+
+        # walk across tree and adjust further _map entries
+
+        # lstNodes = node._node.findall('.//node')
+        # for _nd in lstNodes:
+            # pass
+
+
+
+
+        #
+        # update map's parentmap dict
+        #
+
+        self._map._parentmap[node._node] = self._node
+
+
+
+
+        #
+        # append local parent dict for children
+        #
+
+        self._map._parentmap.update(node._branch._parentmap)
+
+
+
+
+        return node
+
+
     def addChild(self,
                  core='',
                  link='',
+                 id='',
                  pos=-1,
                  style='',
                  ):
@@ -1290,6 +1411,15 @@ class Node(object):
         _node = ET.Element('node')
         node = Node(_node, self._map)
         node.PlainText = core
+
+
+
+
+        # overwrite standard id
+        if id:
+            node.Id = id
+            if not node.Id == id:
+                return None
 
 
 
@@ -1317,19 +1447,22 @@ class Node(object):
 
 
         #
-        # set style
+        # update parentmap dict
         #
 
-        #tmp.Style = style
+        # check if this node is attached to a map
+        if self._map is not None:
 
+            # add this object as parent to new object
+            self._map._parentmap[_node] = self._node
 
+        else:
 
+            # create _branch and _parentmap nodes in new child
+            node._branch = self._branch
 
-        #
-        # update parent dict
-        #
-
-        self._map._parentmap[_node] = self._node
+            # add this object as parent to new object within detached branch
+            self._branch._parentmap[_node] = self._node
 
 
 
@@ -1340,6 +1473,7 @@ class Node(object):
     def addSibling(self,
                    core="",
                    link="",
+                   id='',
                    pos=-1,
                    style=None,
                    ):
@@ -1357,6 +1491,16 @@ class Node(object):
         _node = ET.Element('node')
         node = Node(_node, self._map)
         node.PlainText = core
+
+
+
+
+        # overwrite standard id
+        if id:
+            node.Id = id
+            if not node.Id == id:
+                # print("[ WARNING: node id must follow Freplane's format rules. nothing done. ]")
+                return None
 
 
 
@@ -1384,19 +1528,24 @@ class Node(object):
 
 
         #
-        # set style
+        # update parentmap dict
         #
 
-        #tmp.Style = style
+        # check if this node is attached to a map
+        if self._map is not None:
 
+            # add this object as parent to new object
+            self._map._parentmap[_node] = self._node.getparent()
 
+        # check if this node is attached to a branch
+        elif self._node in self._branch._parentmap.keys():
+            self._branch._parentmap[_node] = self._node.getparent()
 
+        else:
 
-        #
-        # update parent dict
-        #
-
-        self._map._parentmap[_node] = self._node.getparent()
+            # output warning
+            print("[ WARNING: it is not possible to add a sibling to a detached node. please use the createNode function. ]")
+            return None
 
 
 
