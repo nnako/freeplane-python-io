@@ -29,7 +29,6 @@ import sys
 import io
 
 # xml format
-#import xml.etree.ElementTree as ET
 import lxml.etree as ET
 
 # html format
@@ -60,13 +59,13 @@ class Mindmap(object):
     _num_of_maps = 0
 
 
-    def __init__(self, path='', type='freeplane', version='1.3', id=''):
+    def __init__(self, path='', mtype='freeplane', version='1.3.0', id=''):
 
 
 
 
         #
-        # define main command line arguments
+        # check for command line arguments
         #
 
         # do this only if called from the command line
@@ -79,6 +78,7 @@ class Mindmap(object):
 
                     Possible commands are:
                         getText    return text portion of a node
+                        test       test this library
                         ...               ...''' % os.path.basename(sys.argv[0]))
 
             # define command argument
@@ -235,6 +235,18 @@ class Mindmap(object):
 
         # close file
         _file.close()
+
+
+    def test(self):
+
+        strExamplePath = "example__code2mm__v1_8_11.mm"
+        # strExamplePath = "example__code2mm.mm"
+        mm = Mindmap(strExamplePath)
+        dicStyles = mm.Styles
+        print(dicStyles)
+        mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__save.mm')
+
+
 
 
 # NODE
@@ -979,6 +991,8 @@ def reduce_node_list(
 # OLD
 
 # read text paragraph from mindmap
+# CLI FUNCTIONS
+
 def getText(self, strRootAttribute, strTitleText, strPortion):
 
     # get list of all attributes
@@ -1042,5 +1056,6 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
 
 if __name__ == "__main__":
 
-    # execute class init with command line environment
+    # create execute class init with command line environment
     Mindmap(id='cli')
+
