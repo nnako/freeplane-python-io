@@ -56,7 +56,16 @@ class Mindmap(object):
 
     """
 
+    # number of available map objects this session
     _num_of_maps = 0
+
+    # global node id per session and incremented
+    # each time a node is created will be used to
+    # increment a session date. this gives 10000
+    # possible new nodes before the id string is
+    # added another digit (initially 10 digits).
+    _global_node_id_incr = 0
+    _global_node_id_seed = datetime.datetime.now().strftime('%y%m%d')
 
 
     def __init__(self, path='', mtype='freeplane', version='1.3.0', id=''):
@@ -577,6 +586,19 @@ class Node(object):
     def Id(self):
         return self._node.attrib['ID']
 
+    @Id.setter
+    def Id(self, strId):
+
+        # check required format
+        if strId.lower().startswith('id_') \
+                and strId[len('id_'):].isnumeric():
+            # set new ID
+            self._node.attrib["ID"] = strId
+        else:
+            print('[ WARNING: in Freeplane, an ID must start with "ID_" and contain a number string. ignoring ID change request.')
+            return False
+
+        return True
 
     @property
     def Attributes(self):
