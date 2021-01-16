@@ -678,12 +678,72 @@ class Mindmap(object):
 
     def test(self):
 
-        strExamplePath = "example__code2mm__v1_8_11.mm"
+        # strExamplePath = "example__code2mm__v1_8_11.mm"
         # strExamplePath = "example__code2mm__v1_3_15.mm"
-        mm = Mindmap(strExamplePath)
-        dicStyles = mm.Styles
-        print(dicStyles)
-        mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__saved.mm')
+        # mm = Mindmap(strExamplePath)
+        # dicStyles = mm.Styles
+        # print(dicStyles)
+        # mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__saved.mm')
+
+
+
+
+        # create new mindmap
+        mm=Mindmap()
+
+        # get and print root node
+        rn=mm.RootNode
+        print(rn)
+
+        # change root node plain text
+        rn.PlainText = "ROOT NODE"
+        print(rn)
+
+
+
+
+        #
+        # detached nodes
+        #
+
+        # create detached node
+        detach=mm.createNode("DETACHED")
+        print(detach)
+
+        # create detached node
+        detach2=mm.createNode("DETACHED2")
+        print(detach2)
+
+        # add node into 2nd detached branch
+        nd=detach2.addChild("ADDED_TO_DETACHED2_AS_CHILD")
+        print(nd)
+
+        # check parent node within branch
+        print(nd.Parent)
+
+        # attach single node to root node
+        rn.attachAsChild(detach)
+
+        # attach branch node to root node at 1st position
+        rn.attachAsChild(detach2, pos=0)
+
+        # check attachment further node
+
+
+
+
+
+# BRANCH
+
+class Branch(object):
+
+    def __init__(self):
+
+        #
+        # initialize instance
+        #
+
+        self._parentmap = {}
 
 
 
