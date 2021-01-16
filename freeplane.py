@@ -230,8 +230,9 @@ class Mindmap(object):
 
         # 1st node element
         self._rootnode = ET.Element('node') 
-        self._rootnode.attrib["LOCALIZED_TEXT"] = "new_mindmap"
+        self._rootnode.attrib["TEXT"] = "new_mindmap"
         self._rootnode.attrib["FOLDED"] = "false"
+        self._rootnode.attrib["ID"] = Mindmap.get_new_node_id()
         self._mindmap.append(self._rootnode)
 
         # some styles
@@ -286,6 +287,43 @@ class Mindmap(object):
     @classmethod
     def getNumOfMaps(cls):
         return cls._num_of_maps
+
+    @classmethod
+    def get_new_node_id(cls):
+
+        # increment future part of node id
+        cls._global_node_id_incr += 1
+
+        # return current node id
+        return 'ID_' + \
+                cls._global_node_id_seed + \
+                '{:04}'.format(cls._global_node_id_incr)
+
+    @classmethod
+    def createNode(cls,
+            core='',
+            link='',
+            style=''
+            ):
+
+        #
+        # create and init element
+        #
+
+        # core
+        _node = ET.Element('node')
+        node = Node(_node, None)
+        node.PlainText = core
+
+        # link
+        if link:
+            print("[ WARNING: link attribute not implemented, yet ]")
+
+        # style
+        if style:
+            print("[ WARNING: style attribute not implemented, yet ]")
+
+        return node
 
 
     @property
@@ -407,12 +445,12 @@ class Mindmap(object):
 
 
     def findNodes(self,
-            id='',
             core='',
+            link='',
+            id='',
             attrib='',
             details='',
             notes='',
-            link='',
             icon='',
             exact=False
             ):
@@ -432,15 +470,15 @@ class Mindmap(object):
 
         # do the checks on the base of the list
         lstNodes = reduce_node_list(
-            lstNodes,
-            id,
-            core,
-            attrib,
-            details,
-            notes,
-            link,
-            icon,
-            exact
+            lstNodes=lstNodes,
+            id=id,
+            core=core,
+            attrib=attrib,
+            details=details,
+            notes=notes,
+            link=link,
+            icon=icon,
+            exact=exact,
         )
 
 
@@ -539,11 +577,11 @@ class Mindmap(object):
     def test(self):
 
         strExamplePath = "example__code2mm__v1_8_11.mm"
-        # strExamplePath = "example__code2mm.mm"
+        # strExamplePath = "example__code2mm__v1_3_15.mm"
         mm = Mindmap(strExamplePath)
         dicStyles = mm.Styles
         print(dicStyles)
-        mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__save.mm')
+        mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__saved.mm')
 
 
 
@@ -561,11 +599,17 @@ class Node(object):
         self._map = map
         self._node = node
 
+        #
+        # create unique session node id
+        #
+
+        self._node.set('ID',
+                Mindmap.get_new_node_id()
+                )
 
     @property
     def PlainText(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
-
 
     @PlainText.setter
     def PlainText(self, strText):
@@ -575,7 +619,6 @@ class Node(object):
     @property
     def Link(self):
         return self._node.attrib.get("LINK","")
-
 
     @Link.setter
     def Link(self, strLink):
@@ -920,12 +963,12 @@ class Node(object):
 
 
     def findNodes(self,
-                 id='',
                  core='',
+                 link='',
+                 id='',
                  attrib='',
                  details='',
                  notes='',
-                 link='',
                  icon='',
                  exact=False
                  ):
@@ -942,15 +985,15 @@ class Node(object):
 
         # do the checks on the base of the list
         lstNodes = reduce_node_list(
-            lstNodes,
-            id,
-            core,
-            attrib,
-            details,
-            notes,
-            link,
-            icon,
-            exact
+            lstNodes=lstNodes,
+            id=id,
+            core=core,
+            attrib=attrib,
+            details=details,
+            notes=notes,
+            link=link,
+            icon=icon,
+            exact=exact,
         )
 
 
@@ -968,12 +1011,12 @@ class Node(object):
 
 
     def findChildren(self,
-                 id='',
                  core='',
+                 link='',
+                 id='',
                  attrib='',
                  details='',
                  notes='',
-                 link='',
                  icon='',
                  exact=False
                  ):
@@ -990,15 +1033,15 @@ class Node(object):
 
         # do the checks on the base of the list
         lstNodes = reduce_node_list(
-            lstNodes,
-            id,
-            core,
-            attrib,
-            details,
-            notes,
-            link,
-            icon,
-            exact
+            lstNodes=lstNodes,
+            id=id,
+            core=core,
+            attrib=attrib,
+            details=details,
+            notes=notes,
+            link=link,
+            icon=icon,
+            exact=exact,
         )
 
 
@@ -1065,8 +1108,9 @@ class Node(object):
 
 
     def addChild(self,
-                 pos=-1,
                  core='',
+                 link='',
+                 pos=-1,
                  style='',
                  ):
         """
@@ -1084,6 +1128,16 @@ class Node(object):
         _node = ET.Element('node')
         node = Node(_node, self._map)
         node.PlainText = core
+
+
+
+
+        #
+        # set link portion
+        #
+
+        if link:
+            node.Link = link
 
 
 
@@ -1122,8 +1176,9 @@ class Node(object):
 
 
     def addSibling(self,
-                   pos=-1,
                    core="",
+                   link="",
+                   pos=-1,
                    style=None,
                    ):
         """
@@ -1140,6 +1195,16 @@ class Node(object):
         _node = ET.Element('node')
         node = Node(_node, self._map)
         node.PlainText = core
+
+
+
+
+        #
+        # set link portion
+        #
+
+        if link:
+            node.Link = link
 
 
 
@@ -1263,7 +1328,7 @@ def reduce_node_list(
         notes='',
         link='',
         icon='',
-        exact=False
+        exact=False,
     ):
 
     # check for identical ID
