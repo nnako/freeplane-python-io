@@ -222,50 +222,62 @@ class Mindmap(object):
         # create mindmap if path is invalid or empty
         #
 
+        # if there was no path given or the path does not correspond to a valid
+        # file, a mindmap structure is created within memory. the basis is a
+        # XML structure containing a lot of standard settings identified within
+        # the normal freeplane files.
+
         # set version
         self._version = version
 
-        # build parent map (using ElementTree nodes)
+        # init parentmap dictionary in order to facilitate quick identification
+        # of parent nodes of valid node objects (using ElementTree nodes as
+        # keys and values)
         self._parentmap = {}
 
-        # create map element
+        # create map element as XML node containing the version information
         self._mindmap = ET.Element('map') 
         self._mindmap.attrib['version'] = 'freeplane ' + self._version
 
-        # get root of mindmap
+        # get root of mindmap (necessary for save operation)
         self._root = self._mindmap
 
-        # some attributes
+        # set some attributes for visibility within freeplane editor
         _node = ET.Element('attribute_registry') 
         _node.attrib['SHOW_ATTRIBUTES'] = 'hide'
         self._mindmap.append(_node)
 
-        # 1st node element
+        # create 1st visible node element containing standard TEXT
         self._rootnode = ET.Element('node') 
         self._rootnode.attrib["TEXT"] = "new_mindmap"
         self._rootnode.attrib["FOLDED"] = "false"
         self._rootnode.attrib["ID"] = Mindmap.get_new_node_id()
         self._mindmap.append(self._rootnode)
 
-        # some styles
+        # create some standard edge styles
         _node = ET.Element('edge') 
         _node.attrib['STYLE'] = 'horizontal'
         _node.attrib['COLOR'] = '#cccccc'
-        self._mindmap.append(_node)
+        self._rootnode.append(_node)
 
         #
-        # create hook element
+        # hook element and properties
         #
 
         _hook = ET.Element('hook') 
         _hook.attrib["NAME"] = "MapStyle"
-        _hook.attrib["zoom"] = "0.62"
-        self._mindmap.append(_hook)
+        _hook.attrib["zoom"] = "1.00"
+        self._rootnode.append(_hook)
         # sub element properties
         _node = ET.Element('properties')
         _node.attrib["show_icon_for_attributes"] = "false"
         _node.attrib["show_note_icons"] = "false"
         _hook.append(_node)
+
+        #
+        # map styles
+        #
+
         # sub element map styles
         _mapstyles = ET.Element('map_styles')
         _hook.append(_mapstyles)
@@ -273,26 +285,104 @@ class Mindmap(object):
         _stylenode = ET.Element('stylenode')
         _stylenode.attrib["LOCALIZED_TEXT"] = "styles.root_node"
         _mapstyles.append(_stylenode)
+
+        #
+        # predefined styles
+        #
+
         # sub sub sub element stylenode
         _node = ET.Element('stylenode')
         _node.attrib["LOCALIZED_TEXT"] = "styles.predefined"
         _node.attrib["POSITION"] = "right"
         _stylenode.append(_node)
         # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "default"
+        _node2.attrib["MAX_WIDTH"] = "600"
+        _node2.attrib["COLOR"] = "#000000"
+        _node2.attrib["STYLE"] = "as_parent"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('font')
+        _node3.attrib["NAME"] = "Segoe UI"
+        _node3.attrib["SIZE"] = "12"
+        _node3.attrib["BOLD"] = "false"
+        _node3.attrib["ITALIC"] = "false"
+        _node2.append(_node3)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.details"
+        _node.append(_node2)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.note"
+        _node.append(_node2)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.floating"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('edge')
+        _node3.attrib["STYLE"] = "hide edge"
+        _node2.append(_node3)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('cloud')
+        _node3.attrib["COLOR"] = "#0f0f0f"
+        _node3.attrib["SHAPE"] = "ROUND_RECT"
+        _node2.append(_node3)
+
+        #
+        # user styles
+        #
+
+        # sub sub sub element stylenode
         _node = ET.Element('stylenode')
-        _node.attrib["LOCALIZED_TEXT"] = "default"
-        _node.attrib["MAX_WIDTH"] = "600"
-        _node.attrib["COLOR"] = "#000000"
-        _node.attrib["STYLE"] = "as_parent"
+        _node.attrib["LOCALIZED_TEXT"] = "styles.user-defined"
+        _node.attrib["POSITION"] = "right"
         _stylenode.append(_node)
         # sub sub sub element stylenode
-        _node = ET.Element('font')
-        _node.attrib["NAME"] = "Segoe UI"
-        _node.attrib["SIZE"] = "12"
-        _node.attrib["BOLD"] = "false"
-        _node.attrib["ITALIC"] = "false"
-        _stylenode.append(_node)
-
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "styles.topic"
+        _node2.attrib["COLOR"] = "#18898b"
+        _node2.attrib["STYLE"] = "fork"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('font')
+        _node3.attrib["NAME"] = "Liberation Sans"
+        _node3.attrib["SIZE"] = "12"
+        _node3.attrib["BOLD"] = "true"
+        _node2.append(_node3)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "styles.subtopic"
+        _node2.attrib["COLOR"] = "#cc3300"
+        _node2.attrib["STYLE"] = "fork"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('font')
+        _node3.attrib["NAME"] = "Liberation Sans"
+        _node3.attrib["SIZE"] = "12"
+        _node3.attrib["BOLD"] = "true"
+        _node2.append(_node3)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "styles.subsubtopic"
+        _node2.attrib["COLOR"] = "#669900"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('font')
+        _node3.attrib["NAME"] = "Liberation Sans"
+        _node3.attrib["SIZE"] = "12"
+        _node3.attrib["BOLD"] = "true"
+        _node2.append(_node3)
+        # sub sub sub element stylenode
+        _node2 = ET.Element('stylenode')
+        _node2.attrib["LOCALIZED_TEXT"] = "styles.important"
+        _node.append(_node2)
+        # sub sub sub sub element stylenode
+        _node3 = ET.Element('icon')
+        _node3.attrib["BUILTIN"] = "yes"
+        _node2.append(_node3)
 
 # MAP
 
