@@ -393,6 +393,13 @@ class Mindmap(object):
     @classmethod
     def get_new_node_id(cls):
 
+        # create a valid node id. this node id is incremented automatically,
+        # whenever a new XML node is created. even if it is discarded later.
+        # the node id, here consists of three parts: the id tiken "ID_" which
+        # is used for all nodes directly created within freeplane editor, a
+        # kind of session seed which is the current date, and a standard
+        # 4-digit integer value incremented as already said.
+
         # increment future part of node id
         cls._global_node_id_incr += 1
 
@@ -780,6 +787,9 @@ class Node(object):
         self._node.set('ID',
                 Mindmap.get_new_node_id()
                 )
+
+    def __str__(self):
+        return self.PlainText
 
     @property
     def PlainText(self):
@@ -1435,6 +1445,15 @@ class Node(object):
 
 
         #
+        # set style
+        #
+
+        #tmp.Style = style
+
+
+
+
+        #
         # set node's position within children
         #
 
@@ -1511,6 +1530,15 @@ class Node(object):
 
         if link:
             node.Link = link
+
+
+
+
+        #
+        # set style
+        #
+
+        #tmp.Style = style
 
 
 
