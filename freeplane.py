@@ -145,6 +145,10 @@ class Mindmap(object):
         # read mindmap in case path is given
         #
 
+        # when a file name was given as CLI argument, it will be checked if an
+        # appropriate file is present. if so, the mindmap will be loaded into
+        # memory.
+
         # check for validity of file
         if os.path.isfile(self._path):
 
@@ -155,6 +159,12 @@ class Mindmap(object):
             # determine file's map version
             #
 
+            # before load of the actual mindmap into memory, the file version
+            # is to be determined. this is due to the fact that the character
+            # encoding of older freeplane files was not stable. so, detecting
+            # the encoding before load prevents some errors.
+
+            # open mindmap file and read it
             with io.open(self._path, "r", encoding="utf-8") as fpMap:
                 strFirstLine = fpMap.readline()
 
@@ -171,6 +181,8 @@ class Mindmap(object):
             #
             # set parser encoding due to map version
             #
+
+            # now use the freeplane file version to determine the encoding.
 
             # check for fitting encoding
             encoding = get_version_specific_file_encoding(self._version)
