@@ -740,11 +740,24 @@ class Mindmap(object):
         # check parent node within branch
         print(nd.Parent)
 
+        # add style to mindmap
+        mm.addStyle(
+                "klein und grau",
+                {
+                    'color': '#999999',
+                })
+
+        # check for style to be applied to detached node
+        nd.Style = "groß und grau"
+
         # attach single node to root node
         rn.attachAsChild(detach)
 
         # attach branch node to root node at 1st position
-        rn.attachAsChild(detach2, pos=0)
+        rn.attachAsChild(detach2)
+
+        # check for style to be applied to detached node
+        nd.Style = "klein und grau"
 
         # check attachment further node
 
@@ -763,6 +776,7 @@ class Branch(object):
         #
 
         self._parentmap = {}
+        self._map = None
 
 
 
@@ -870,6 +884,61 @@ class Node(object):
         if 'STYLE_REF' in self._node.attrib.keys():
             return self._node.attrib['STYLE_REF']
         return ""
+
+    @Style.setter
+    def Style(self, strStyle):
+
+        #
+        # find reference to mindmap
+        #
+
+        # when calling this method from a detached node, the _map reference is
+        # missing. so, for detached nodes, the check of validity for a
+        # particularly requested style name is not possible as it is the
+        # mindmap itself that holds them. when a former detached node has been
+        # attached to a proper mindmap tree, there might still be an invalid
+        # _map reference for its branch trees as they are not updated
+        # automatically. in these cases, the _map member can be updated, here,
+        # for the user to have a corrected object reference. 
+
+        # check if node seems detached
+        if self._map is None:
+ 
+            # check if node is still detached
+            if self._branch._map is None:
+
+                print("[ WARNING: trying to set a style for a detached node. make sure, style exists. ]")
+
+            else:
+
+                # 
+                # update reference to mindmap
+                #
+
+                # update node's map reference
+                self._map = self._branch._map
+
+
+
+
+        #
+        # set style reference
+        #
+
+        # check when map exists
+        if self._map is not None:
+
+            # check with existing styles
+            for _stylename in self._map.Styles.keys():
+                if _stylename.lower() == strStyle.lower():
+                    break
+            else:
+                print('[ WARNING: style "' + strStyle + '" not found in mindmap. make sure, style exists. ]')
+
+        # set style reference in XML node
+        self._node.attrib["STYLE_REF"] = strStyle
+
+        return True
 
 
     @property
@@ -1308,7 +1377,7 @@ class Node(object):
 
 
     def attachAsChild(self,
-            node=None,
+            attached_node=None,
             pos=-1,
             ):
         """
@@ -1320,28 +1389,28 @@ class Node(object):
 
 
         #
-        # check if node is valid
+        # check if attached node is valid
         #
 
-        if node is None:
-            print("[ WARNING: no node given to be attached. ]")
+        if attached_node is None:
+            print("[ WARNING: no attached_node given to be attached. ]")
             return False
 
 
 
 
         #
-        # check if node is already attached
+        # check if attached node is already attached somewhere
         #
 
         # check if object is child within map
         if self._map is not None:
-            if node._node in self._map._parentmap.keys():
+            if attached_node._node in self._map._parentmap.keys():
                 print("[ WARNING: node already attached to a map. ]")
                 return False
         # check if object is part of detached branch
         elif hasattr(self, "_branch"):
-            if node._node in self._branch._parentmap.keys():
+            if attached_node._node in self._branch._parentmap.keys():
                 print("[ WARNING: node attached to a detached branch. please attach the branch head. ]")
                 return False
 
@@ -1349,31 +1418,28 @@ class Node(object):
 
 
         #
-        # set node's position within children
+        # set attached node's position within children
         #
 
         if pos == -1:
-            self._node.append(node._node)
+            self._node.append(attached_node._node)
         else:
-            self._node.insert(pos, node._node)
+            self._node.insert(pos, attached_node._node)
 
 
 
 
         #
-        # update tree's _map member
+        # update branch's and tree's _map member
         #
 
         # the pointer to the map object of the attached node
         # is to be the same as the map object attached to
+        attached_node._map = self._map
 
-        node._map = self._map
-
-        # walk across tree and adjust further _map entries
-
-        # lstNodes = node._node.findall('.//node')
-        # for _nd in lstNodes:
-            # pass
+        # store the new map reference within the old branch object
+        # for later reference
+        attached_node._branch._map = self._map
 
 
 
@@ -1382,21 +1448,21 @@ class Node(object):
         # update map's parentmap dict
         #
 
-        self._map._parentmap[node._node] = self._node
+        self._map._parentmap[attached_node._node] = self._node
 
 
 
 
         #
-        # append local parent dict for children
+        # append local parent dict for new children
         #
 
-        self._map._parentmap.update(node._branch._parentmap)
+        self._map._parentmap.update(attached_node._branch._parentmap)
 
 
 
 
-        return node
+        return attached_node
 
 
     def addChild(self,
