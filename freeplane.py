@@ -1458,7 +1458,7 @@ class Node(object):
         return text
 
 
-    def attachAsChild(self,
+    def attach(self,
             attached_node=None,
             pos=-1,
             ):
