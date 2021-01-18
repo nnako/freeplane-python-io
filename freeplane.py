@@ -827,6 +827,7 @@ class Node(object):
 
         self._map = map
         self._node = node
+        self._branch = None
 
         #
         # create unique session node id
@@ -1466,6 +1467,15 @@ class Node(object):
         This functions appends an existing but previously detached
         Freeplane-Node as a child to this node object.
         """
+
+        # CAUTION
+        #
+        # after using this function, node references targetting the attached
+        # branch will not be valid anymore. this is due to changes which
+        # currently cannot be updated within the reference objects on the user
+        # side. so, please, ensure that after using the attach function, all
+        # needed node references are re-created e.g. by using find() on the
+        # map.
 
 
 
