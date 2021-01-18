@@ -722,7 +722,7 @@ class Mindmap(object):
 
 
         #
-        # detached nodes
+        # create some nodes and branches
         #
 
         # create detached node
@@ -734,11 +734,23 @@ class Mindmap(object):
         print(detach2)
 
         # add node into 2nd detached branch
-        nd=detach2.addChild("ADDED_TO_DETACHED2_AS_CHILD")
-        print(nd)
+        nd2=detach2.addChild("ADDED_TO_DETACHED2_AS_CHILD")
+        print(nd2)
+
+        # create detached node
+        detach3=mm.createNode("DETACHED3")
+        print(detach3)
+
+        # add node into 2nd detached branch
+        nd3=detach3.addChild("ADDED_TO_DETACHED3_AS_CHILD")
+        print(nd3)
 
         # check parent node within branch
-        print(nd.Parent)
+        print(nd2.Parent)
+
+        #
+        # create and attach some styles
+        #
 
         # add style to mindmap
         mm.addStyle(
@@ -747,20 +759,42 @@ class Mindmap(object):
                     'color': '#999999',
                 })
 
-        # check for style to be applied to detached node
-        nd.Style = "groß und grau"
+        # WARNING: apply non-existing style to detached branch node
+        nd2.Style = "groß und grau"
 
-        # attach single node to root node
-        rn.attachAsChild(detach)
+        #
+        # attach some nodes and styles
+        #
 
-        # attach branch node to root node at 1st position
-        rn.attachAsChild(detach2)
+        # attach detached3 branch head to detached node nd2
+        nd2.attach(detach3)
 
-        # check for style to be applied to detached node
-        nd.Style = "klein und grau"
+        # WARNING: attach detached branch node to root node
+        rn.attach(nd2)
 
-        # check attachment further node
+        # attach single detached head to root node
+        rn.attach(detach)
 
+        # WARNING: apply existing style to detached branch node
+        detach2.Style = "klein und grau"
+
+        # attach detached branch head to root node
+        rn.attach(detach2)
+
+        # apply existing style to map node
+        nd2.Style = "klein und grau"
+
+        # WARNING: attach already attached branch head
+        rn.attach(detach)
+
+        # WARNING: attach already attached branch head to already attached former branch node
+        nd2.attach(detach)
+
+        #
+        # save mindmap into file
+        #
+
+        mm.save("example101.mm")
 
 
 
