@@ -1169,25 +1169,25 @@ class Node(object):
     def Parent(self):
 
         # if non-detached node
-        if self._map is not None:
+        if self.is_map_node:
             # ensure existing parent
             if self._node in self._map._parentmap.keys():
                 return Node(self._map._parentmap[self._node], self._map)
             else:
                 return None
 
-        # if detached node, read from branch object
-        elif hasattr(self, "_branch") and len(self._branch._parentmap.keys()):
-            if self._node in self._branch._parentmap.keys():
-                return Node(self._branch._parentmap[self._node], self._map)
+        # if detached node
+        elif self.is_detached_node:
+            # read from branch object
+            return Node(self._branch._parentmap[self._node], self._map)
 
         # if detached branch head
-        elif hasattr(self, "_branch"):
-            print("[ INFO   : a detached branch head has no other parent. ]")
+        elif self.is_detached_head:
+            print("[ WARNING: a detached branch head has no other parent. ]")
             return None
 
         else:
-            print("[ WARNING: local parentmap has not been created for detached node. ]")
+            print("[ ERROR  : local parentmap has not been created for detached node. ]")
             return None
 
 
@@ -1482,69 +1482,145 @@ class Node(object):
 
 
         #
-        # check if attached node is already attached somewhere
+        # check if to-be-attached-node is already attached
         #
 
+        # in case, the node-to-be-attached is already part of the target
+        # branch, this activity is to be aborted as it would lead to confusion
+        # of the XML structure and the user's references.
+
         # check if object is child within map
-        if self._map is not None:
+        if self.is_map_node or self.is_root_node:
             if attached_node._node in self._map._parentmap.keys():
                 print("[ WARNING: node already attached to a map. ]")
                 return False
-        # check if object is part of detached branch
-        elif hasattr(self, "_branch"):
-            if attached_node._node in self._branch._parentmap.keys():
-                print("[ WARNING: node attached to a detached branch. please attach the branch head. ]")
-                return False
+        elif attached_node.is_detached_node:
+            print("[ WARNING: node attached to a branch. please only attach branch head. ]")
+            return False
 
 
 
 
         #
-        # set attached node's position within children
+        # DIFFERENT CASES
         #
 
-        if pos == -1:
-            self._node.append(attached_node._node)
-        else:
-            self._node.insert(pos, attached_node._node)
-
-
-
-
-        #
-        # update branch's and tree's _map member
-        #
-
-        # the pointer to the map object of the attached node
-        # is to be the same as the map object attached to
-        attached_node._map = self._map
-
-        # store the new map reference within the old branch object
-        # for later reference
-        attached_node._branch._map = self._map
+        # in order to leave the nodes in a consistent status, there are
+        # different cases to be evaluated. as there are different kind of nodes
+        # and the necessary operations differ depending on the node types
+        # involved during attachment, there must be a kind of
+        # "Fallunterscheidung".
 
 
 
 
         #
-        # update map's parentmap dict
+        # handle attach of detached head to map node
         #
 
-        self._map._parentmap[attached_node._node] = self._node
+        if (self.is_map_node or self.is_root_node) and attached_node.is_detached_head:
+
+            #
+            # update old branch head's _map member
+            #
+
+            # the pointer to the map object of the attached node
+            # is to be the same as the map object attached to
+            attached_node._map = self._map
+
+            #
+            # set parent node within map's parentmap
+            #
+
+            self._map._parentmap[attached_node._node] = self._node
+
+            #
+            # append map's parent dict from branch's dict
+            #
+
+            self._map._parentmap.update(attached_node._branch._parentmap)
+
+            #
+            # save new map reference in old branch object
+            #
+
+            # store the new map reference within the old branch object
+            # for later reference when one of the former branch nodes is
+            # to be checked. thus, the _map member can be corrected.
+            attached_node._branch._map = self._map
+
+            #
+            # insert appropriate XML nodes
+            #
+
+            if pos == -1:
+                self._node.append(attached_node._node)
+            else:
+                self._node.insert(pos, attached_node._node)
+
+            # leave function
+            # return attached_node
+            return True
 
 
 
 
         #
-        # append local parent dict for new children
+        # handle attach of detached head to detached branch
         #
 
-        self._map._parentmap.update(attached_node._branch._parentmap)
+        if (self.is_detached_node or self.is_detached_head) and attached_node.is_detached_head:
+
+            #
+            # update old branch head's _branch member
+            #
+
+            # the pointer to the map object of the attached node
+            # is to be the same as the map object attached to
+            attached_node._branch = self._branch
+
+            #
+            # set parent node within new branch's parentmap
+            #
+
+            self._branch._parentmap[attached_node._node] = self._node
+
+            #
+            # append new branch's parent dict from branch's dict
+            #
+
+            self._branch._parentmap.update(attached_node._branch._parentmap)
+
+            #
+            # insert appropriate XML nodes
+            #
+
+            if pos == -1:
+                self._node.append(attached_node._node)
+            else:
+                self._node.insert(pos, attached_node._node)
+
+            # leave function
+            return True
 
 
 
 
-        return attached_node
+        #
+        # handle attach of detached head to detached branch
+        #
+
+        if attached_node.is_detached_node:
+            print('[ WARNING: attach of "' \
+                    + str(attached_node) \
+                    + '" not possible. generally, only the heads of detached branches attachable.]')
+            return False
+
+
+
+
+        print('[ ERROR  : host / child configuration for attach is not defined. ]')
+        return False
 
 
     def addChild(self,
