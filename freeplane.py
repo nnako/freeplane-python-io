@@ -839,6 +839,54 @@ class Node(object):
     def __str__(self):
         return self.PlainText
 
+
+    @property
+    def is_detached_head(self):
+        """
+        check if node is the head node of a detached branch.
+        """
+        # is not associated with a map
+        # and has no parent within the branch
+        if self._map is None \
+                and not self._node in self._branch._parentmap.keys():
+            return True
+        return False
+
+    @property
+    def is_detached_node(self):
+        """
+        check if node is belonging to a detached branch.
+        """
+        # is not associated with a map
+        # and has a parent within the branch
+        if self._map is None \
+                and self._node in self._branch._parentmap.keys():
+            return True
+        return False
+
+    @property
+    def is_map_node(self):
+        """
+        check if node is belonging to a map, but not being the root node.
+        """
+        # is associated with a map
+        if self._map is not None \
+                and not self._node == self._map._rootnode:
+            return True
+        return False
+
+    @property
+    def is_root_node(self):
+        """
+        check if node is the map's root node.
+        """
+        # is associated with a map
+        if self._map is not None \
+                and self._node == self._map._rootnode:
+            return True
+        return False
+
+
     @property
     def PlainText(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
