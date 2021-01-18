@@ -1694,7 +1694,7 @@ class Node(object):
         #
 
         # check if this node is attached to a map
-        if self._map is not None:
+        if self.is_root_node or self.is_map_node:
 
             # add this object as parent to new object
             self._map._parentmap[_node] = self._node
