@@ -920,15 +920,22 @@ class Node(object):
     @Id.setter
     def Id(self, strId):
 
+        # ensure type
+        if not type(strId) == 'str':
+            strId = str(strId)
+
         # check required format
-        if strId.lower().startswith('id_') \
-                and strId[len('id_'):].isnumeric():
-            # set new ID
-            self._node.attrib["ID"] = strId
-        else:
-            print('[ WARNING: in Freeplane, an ID must start with "ID_" and contain a number string. ignoring ID change request.')
+        if not strId.lower().startswith('id_'):
+            print('[ INFO   : in Freeplane, an ID must start with "ID_" and contain a number string.')
+            # correct ID format
+            strId = "ID_"+strId
+
+        if not strId[len('id_'):].isnumeric():
+            print('[ WARNING: in Freeplane, an ID must have a certain format. ignoring ID change request.')
             return False
 
+        # set new ID
+        self._node.attrib["ID"] = strId
         return True
 
     @property
