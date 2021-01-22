@@ -587,11 +587,11 @@ class Mindmap(object):
         # of nodes matching all given arguments
 
         # list all nodes regardless of further properties
-        lstNodes = self._root.findall(".//node")
+        lstXmlNodes = self._root.findall(".//node")
 
         # do the checks on the base of the list
-        lstNodes = reduce_node_list(
-            lstNodes=lstNodes,
+        lstXmlNodes = reduce_node_list(
+            lstXmlNodes=lstXmlNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -611,7 +611,12 @@ class Mindmap(object):
         #
 
         lstNodesRet = []
-        for _node in lstNodes:
+        for _node in lstXmlNodes:
+
+            # create reference to parent lxml node
+            #...
+
+            # apend to list
             lstNodesRet.append(Node(_node, self))
 
         return lstNodesRet
@@ -1333,11 +1338,11 @@ class Node(object):
         #
 
         # list all nodes regardless of further properties
-        lstNodes = self._node.findall(".//node")
+        lstXmlNodes = self._node.findall(".//node")
 
         # do the checks on the base of the list
-        lstNodes = reduce_node_list(
-            lstNodes=lstNodes,
+        lstXmlNodes = reduce_node_list(
+            lstXmlNodes=lstXmlNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -1381,11 +1386,11 @@ class Node(object):
         #
 
         # list all nodes regardless of further properties
-        lstNodes = self._node.findall("./node")
+        lstXmlNodes = self._node.findall("./node")
 
         # do the checks on the base of the list
-        lstNodes = reduce_node_list(
-            lstNodes=lstNodes,
+        lstXmlNodes = reduce_node_list(
+            lstXmlNodes=lstXmlNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -1893,7 +1898,7 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
 
 def reduce_node_list(
-        lstNodes=[],
+        lstXmlNodes=[],
         id='',
         core='',
         attrib='',
@@ -1907,37 +1912,37 @@ def reduce_node_list(
     # check for identical ID
     if id:
         _lstNodes = []
-        for _node in lstNodes:
+        for _node in lstXmlNodes:
             if id.lower() == _node.attrib.get("ID", "").lower():
                 _lstNodes.append(_node)
-        lstNodes = _lstNodes
+        lstXmlNodes = _lstNodes
 
     # check for TEXT within a node's CORE
     if core:
         _lstNodes = []
-        for _node in lstNodes:
+        for _node in lstXmlNodes:
             if exact:
                 if core == _node.attrib.get("TEXT", ""):
                     _lstNodes.append(_node)
             else:
                 if core.lower() in _node.attrib.get("TEXT", "").lower():
                     _lstNodes.append(_node)
-        lstNodes = _lstNodes
+        lstXmlNodes = _lstNodes
 
     # check for BUILTIN ICON at node
     if icon:
         _lstNodes = []
-        for _node in lstNodes:
+        for _node in lstXmlNodes:
             # check for icon node
             _lstIconNodes = _node.findall("./icon[@BUILTIN='" + icon + "']")
             if _lstIconNodes:
                 _lstNodes.append(_node)
-        lstNodes = _lstNodes
+        lstXmlNodes = _lstNodes
 
     # check for node's DETAILS
     if details:
         _lstNodes = []
-        for _node in lstNodes:
+        for _node in lstXmlNodes:
             # check for details node
             _lstDetailsNodes = _node.findall("./richcontent[@TYPE='DETAILS']")
             if _lstDetailsNodes:
@@ -1948,10 +1953,10 @@ def reduce_node_list(
                 else:
                     if details.lower() in _text.lower():
                         _lstNodes.append(_node)
-        lstNodes = _lstNodes
+        lstXmlNodes = _lstNodes
 
     # and back
-    return lstNodes
+    return lstXmlNodes
 
 
 # OLD
