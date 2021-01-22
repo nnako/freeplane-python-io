@@ -838,7 +838,9 @@ class Node(object):
         # create unique session node id
         #
 
-        self._node.set('ID',
+        # only when there is no node id
+        if not node.get('ID', ''):
+            self._node.set('ID',
                 Mindmap.get_new_node_id()
                 )
 
