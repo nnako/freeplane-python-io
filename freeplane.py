@@ -550,7 +550,7 @@ class Mindmap(object):
                 _sty.set('BACKGROUND_COLOR', settings[_check])
 
             # font name
-            _check = 'fontname'
+            _check = 'font'
             if _check in settings.keys():
                 _item = ET.Element('font', NAME=settings[_check])
                 # add item to style
