@@ -1638,6 +1638,89 @@ class Node(object):
         return False
 
 
+    def addArrowLink(self,
+                 node=None,
+                 style='',
+                 shape='',
+                 color='',
+                 width='',
+                 transparency='',
+                 dash='',
+                 fontsize='',
+                 font='',
+                 startinclination='',
+                 endinclination='',
+                 startarrow='NONE',
+                 endarrow='DEFAULT',
+                 ):
+        """
+        add an arrow link to a node. the arrow starts at the host object and extends to an arbitrary node.
+        """
+
+
+
+
+        #
+        # create, append and init arrowlink element
+        #
+
+        if node:
+
+            # create
+            _node = ET.Element('arrowlink')
+
+            # append
+            self._node.append(_node)
+
+            # evaluate named settings
+            if style:
+                pass
+
+            # evaluate individual settings
+            else:
+
+                # default settings
+                if not shape:
+                    _node.set('SHAPE', 'CUBIC_CURVE')
+                if not color:
+                    _node.set('COLOR', '#000000')
+                if not width:
+                    _node.set('WIDTH', '2')
+                if not transparency:
+                    _node.set('TRANSPARENCY', '80')
+                if not dash:
+                    _node.set('DASH', '3 3')
+                if not fontsize:
+                    _node.set('FONT_SIZE', '9')
+                if not font:
+                    _node.set('FONT_FAMILY', 'SansSerif')
+                if not startinclination:
+                    _node.set('STARTINCLINATION', '131;0;')
+                if not endinclination:
+                    _node.set('ENDINCLINATION', '131;0;')
+                if not startarrow:
+                    _node.set('STARTARROW', 'NONE')
+                if not endtarrow:
+                    _node.set('ENDARROW', 'DEFAULT')
+
+            # destination
+            _node.set('DESTINATION', node.Id)
+
+
+
+
+        #
+        # set style
+        #
+
+        #tmp.Style = style
+
+
+
+
+        return False
+
+
     def addChild(self,
                  core='',
                  link='',
