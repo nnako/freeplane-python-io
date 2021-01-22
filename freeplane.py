@@ -1203,7 +1203,17 @@ class Node(object):
         # ensure existing parent
         _next = self._node.getnext()
         if _next is not None:
-            return Node(_next, self._map)
+
+            # create Node instance
+            fpnode = Node(_next, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            return fpnode
         else:
             return None
 
@@ -1280,10 +1290,21 @@ class Node(object):
 
     @property
     def Children(self):
-        lstNodes = []
-        for item in  self._node.findall("./node"):
-            lstNodes.append(Node(item, self._map))
-        return lstNodes
+        lstNodesRet = []
+        for _node in  self._node.findall("./node"):
+
+            # create Node instance
+            fpnode = Node(_node, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            lstNodesRet.append(fpnode)
+
+        return lstNodesRet
 
 
     def getChildByIndex(self, idx=0):
@@ -1291,11 +1312,21 @@ class Node(object):
         _children = self._node.findall("./node")
         if len(_children):
             # run through all child nodes
-            for _i, _child in  enumerate(_children):
+            for _i, _child in enumerate(_children):
                 # check for matching index
                 if _i == idx:
-                    return Node(_child, self._map)
-                    break
+
+                    # create Node instance
+                    fpnode = Node(_child, self._map)
+
+                    # update branch reference in case of detached node
+                    if not self.is_root_node and not self.is_map_node:
+                        fpnode._map     = None
+                        fpnode._branch  = self._branch
+
+                    # append node object
+                    return fpnode
+
             # index not found
             else:
                 return None
@@ -1361,8 +1392,18 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstNodes:
-            lstNodesRet.append(Node(_node, self._map))
+        for _node in lstXmlNodes:
+
+            # create Node instance
+            fpnode = Node(_node, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
@@ -1409,8 +1450,18 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstNodes:
-            lstNodesRet.append(Node(_node, self._map))
+        for _node in lstXmlNodes:
+
+            # create Node instance
+            fpnode = Node(_node, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
@@ -1507,10 +1558,12 @@ class Node(object):
         # check if object is child within map
         if self.is_map_node or self.is_root_node:
             if attached_node._node in self._map._parentmap.keys():
-                print("[ WARNING: node already attached to a map. ]")
+                print('[ WARNING: node "' + str(attached_node) + \
+                        '" already attached to a map. NOTHING DONE. ]')
                 return False
         elif attached_node.is_detached_node:
-            print("[ WARNING: node attached to a branch. please only attach branch head. ]")
+            print('[ WARNING: node "' + str(attached_node) + \
+                    '" is part of a detached branch. NOTHING DONE. please only attach branch head. ]')
             return False
 
 
@@ -1882,7 +1935,7 @@ class Node(object):
         #
 
         # check if this node is attached to a map
-        if self._map is not None:
+        if self.is_root_node or self.is_map_node:
 
             # add this object as parent to new object
             self._map._parentmap[_node] = self._node.getparent()
