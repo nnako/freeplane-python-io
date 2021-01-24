@@ -669,7 +669,9 @@ class Mindmap(object):
             # #160 characters representing <SPACE>
             _outputstring = _outputstring.replace( chr(160),' ')
 
-            # german special characters
+            # at least substitute encoded german special characters
+            # with characters fitting to the UTF-8 HTML encoding
+
             _outputstring = _outputstring.replace( 'ä','&#xe4;') # &#228
             _outputstring = _outputstring.replace( 'ö','&#xf6;') # &#246
             _outputstring = _outputstring.replace( 'ü','&#xfc;') # &#252
