@@ -13,6 +13,46 @@
 # itself.
 #
 #
+# internally, the following object model is used, where the symbols follow this
+# definition:
+#
+#   M   Mindmap object        - holding general map information
+#   R   root Node object      - the first user-accessible Node within a mindmap
+#   N   Node object           - any Node attached to a mindmap
+#   B   Branch object         - a separate information structure organizing detached elements
+#   DH  Detached Head object  - the head of a detached branch
+#   DN  Detached Node object  - any branch node below a detached head
+#   XMLNODE object            - an lxml node element representing a real node in Freeplane 
+#
+#
+#  _path
+#  _type          .---------------------------- .  _map                .-----------.
+#  _version       |                             .  _node ------------->| XMLNODE   |
+#  _mindmap       |                             .  _branch ---|        '-----------'
+#  _root          |                                                          ^
+#  _parentmap     |                                |                         |
+#                 v                                |                         |
+#  |            .---.  .----.   .----. .----. .--------.                     |
+#  '----------- | M |  | R  +-+-+ N  +-+ N  +-+ N      +- ...                |
+#               '---'  '----' | '----' '----' '--------'                     |
+#                 ^           |                                              |
+#                 |           | .----. .----.                                |
+#                 |           '-+ N  +-+ N  +- ...                           |
+#                 |             '----' '----'               |--- .  _map     |
+#                 |                                              .  _node ---'
+#                 |  .------------------------------------------ .  _branch
+#     _map -------'  |
+#     _parentmap     |                                              |
+#                    v                                              |
+#     |            .---.  .----.   .----. .----. .----. .----. .-------.
+#     '----------- | B |  | DH +-+-+ DN +-+ DN +-+ DN +-+ DN +-+ DN    +- ...
+#                  '---'  '----' | '----' '----' '----' '----' '-------'
+#                                |
+#                                | .----. .----.
+#                                '-+ DN +-+ DN +- ...
+#                                  '----' '----'
+#
+#
 # AUTHOR
 #
 #   - nnako, 2016
