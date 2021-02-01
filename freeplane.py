@@ -74,6 +74,10 @@ import lxml.etree as ET
 # html format
 import html2text
 
+
+# version
+__version__ = '1.1.0'
+
 # BUILTIN ICONS
 ICON_EXCLAMATION = 'yes'
 ICON_LIST = 'list'
@@ -91,8 +95,9 @@ class Mindmap(object):
     """
     Freeplane interfacing class
 
-    Access Freeplane mindmap file and do various search, read and write
-    operations to retrieve or modify text passages within the mindmap.
+    access Freeplane mindmap file and do various search, read and write
+    operations to retrieve or modify text passages, design and structures
+    within the mindmap.
 
     """
 
@@ -860,6 +865,35 @@ class Branch(object):
         self._map = None
 
 
+
+
+# ARROW STYLES
+
+# currently, Freeplane stores arrow link foot points as xmlnodes directly below
+# a content node. unlike the user-defined node styles which are stored
+# centrally at a top position of the map, there is no built-in way to manage
+# "named" arrow link definitions e.g. in order to re-use them. thus, here we
+# define a structure to externally provide named arrow link styles. these can
+# be set an retrieved when creating arrow links.
+
+class ArrayStyles(object):
+
+    def __init__(self):
+
+        self._styles = {}
+
+    @property
+    def Styles(self):
+        return self._styles
+
+    def addStyle(self,
+            name='',
+            settings={},
+            ):
+        self._styles.update({
+            strName: dicStyles
+            })
+        return True
 
 
 # NODE
@@ -1743,81 +1777,123 @@ class Node(object):
 
 
     def addArrowLink(self,
-                 node=None,
-                 style='',
-                 shape='',
-                 color='',
-                 width='',
-                 transparency='',
-                 dash='',
-                 fontsize='',
-                 font='',
-                 startinclination='',
-                 endinclination='',
-                 startarrow='NONE',
-                 endarrow='DEFAULT',
-                 ):
+            node=None,
+            style='',
+            shape='',
+            color='',
+            width='',
+            transparency='',
+            dash='',
+            fontsize='',
+            font='',
+            startinclination='',
+            endinclination='',
+            startarrow='NONE',
+            endarrow='DEFAULT',
+            ):
         """
         add an arrow link to a node. the arrow starts at the host object and extends to an arbitrary node.
         """
 
-
-
-
-        #
-        # create, append and init arrowlink element
-        #
-
         if node:
 
-            # create
+
+
+
+            #
+            # create arrow link node
+            #
+
             _node = ET.Element('arrowlink')
 
-            # append
+
+
+
+            #
+            # append arrow link node to node object
+            #
+
             self._node.append(_node)
 
-            # evaluate named settings
+
+
+
+            #
+            # IF named style definition was given
+            #
+
             if style:
+
+
+
+
+                #
+                # set style according to style definition
+                #
+
                 pass
 
-            # evaluate individual settings
+
+
+
+            #
+            # ELSE
+            #
+
             else:
 
-                # default settings
+
+
+
+                #
+                # set individual style members
+                #
+
                 if not shape:
                     _node.set('SHAPE', 'CUBIC_CURVE')
+                else:
+                    _node.set('SHAPE', shape)
                 if not color:
                     _node.set('COLOR', '#000000')
+                else:
+                    _node.set('COLOR', color)
                 if not width:
                     _node.set('WIDTH', '2')
+                else:
+                    _node.set('WIDTH', width)
                 if not transparency:
                     _node.set('TRANSPARENCY', '80')
-                if not dash:
-                    _node.set('DASH', '3 3')
+                else:
+                    _node.set('TRANSPARENCY', transparency)
+                if dash:
+                    _node.set('DASH', dash)
                 if not fontsize:
                     _node.set('FONT_SIZE', '9')
+                else:
+                    _node.set('FONT_SIZE', fontsize)
                 if not font:
                     _node.set('FONT_FAMILY', 'SansSerif')
+                else:
+                    _node.set('FONT_FAMILY', font)
                 if not startinclination:
                     _node.set('STARTINCLINATION', '131;0;')
+                else:
+                    _node.set('STARTINCLINATION', startinclination)
                 if not endinclination:
                     _node.set('ENDINCLINATION', '131;0;')
+                else:
+                    _node.set('ENDINCLINATION', endinclination)
                 if not startarrow:
                     _node.set('STARTARROW', 'NONE')
-                if not endtarrow:
+                else:
+                    _node.set('STARTARROW', startarrow)
+                if not endarrow:
                     _node.set('ENDARROW', 'DEFAULT')
+                else:
+                    _node.set('ENDARROW', endarrow)
 
             # destination
             _node.set('DESTINATION', node.Id)
-
-
-
-
-        #
-        # set style
-        #
-
-        #tmp.Style = style
 
 
 
