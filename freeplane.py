@@ -207,11 +207,30 @@ class Mindmap(object):
             # before load of the actual mindmap into memory, the file version
             # is to be determined. this is due to the fact that the character
             # encoding of older freeplane files was not stable. so, detecting
-            # the encoding before load prevents some errors.
+            # the encoding before load prevents some encoding errors.
 
-            # open mindmap file and read it
-            with io.open(self._path, "r", encoding="utf-8") as fpMap:
-                strFirstLine = fpMap.readline()
+            # open mindmap file and read first row
+            retry = False
+            try:
+                with io.open(self._path, "r", encoding="utf-8") as fpMap:
+                    strFirstLine = fpMap.readline()
+            except:
+                print("[ WARNING: format mismatch in mindmap file vw. UTF-8 ]")
+                retry = True
+
+            # in case there are wrong encodings when trying to read as UTF-8,
+            # it is tried to use Window's native encoding scheme to read the
+            # file. this will be most likely the case and might be a good
+            # workaround
+
+            if retry:
+                with io.open(self._path, "r", encoding="windows-1252") as fpMap:
+                    strFirstLine = fpMap.readline()
+
+
+            # now, analyze the characters in the first line of the mindmap file
+            # and try to find the "freeplane" token which will contain the
+            # version information.
 
             # detect from '<map version="freeplane 1.3.0">'
             idxFpToken    = strFirstLine.find("freeplane")
