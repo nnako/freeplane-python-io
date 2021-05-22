@@ -745,6 +745,18 @@ class Mindmap(object):
             _outputstring = _outputstring.replace( 'Ü','&#xdc;')
             _outputstring = _outputstring.replace( 'ß','&#xdf;')
 
+            # by copy/paste from other applications into the mindmap, there
+            # might be further character sequences not wanted within this file
+
+            # alternative double quotes
+            # _outputstring = _outputstring.replace( '&#x201c;','&quot;')
+            # _outputstring = _outputstring.replace( '&#x201e;','&quot;')
+
+            # three subsequent dots (e.g. from EXCEL's auto chars)
+            # _outputstring = _outputstring.replace( '&#x2026;','...')
+            # _outputstring = _outputstring.replace( chr(0x2026);','...')
+            # _outputstring = _outputstring.replace( chr(133),'...')
+
 
 
 
@@ -1082,7 +1094,7 @@ class Node(object):
     def Style(self, strStyle):
 
         #
-        # find reference to mindmap
+        # try to re-connect to a valid mindmap
         #
 
         # when calling this method from a detached node, the _map reference is
@@ -1947,7 +1959,10 @@ class Node(object):
 
 
 
+        #
         # overwrite standard id
+        #
+
         if id:
             node.Id = id
             if not node.Id == id:
