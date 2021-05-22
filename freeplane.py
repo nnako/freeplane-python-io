@@ -569,6 +569,7 @@ class Mindmap(object):
             # leave function if style is already existing
             for _sty in _lst:
                 if name.lower() == _sty.get('TEXT').lower():
+                    print('[ WARNING: style "' + name + '" is already existing. ignoring request. ]')
                     return False
 
             # create element
@@ -891,7 +892,7 @@ class ArrayStyles(object):
             settings={},
             ):
         self._styles.update({
-            strName: dicStyles
+            name: settings
             })
         return True
 
@@ -1950,7 +1951,8 @@ class Node(object):
         # set style
         #
 
-        #tmp.Style = style
+        if style:
+            node.Style = style
 
 
 
