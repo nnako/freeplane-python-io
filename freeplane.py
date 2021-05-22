@@ -156,7 +156,7 @@ class Mindmap(object):
 
                 print( 'Unrecognized command' )
                 parser.print_help()
-                exit(1)
+                sys.exit(1)
 
             # use dispatch pattern to invoke method with same name
             getattr(self, args.command)()
