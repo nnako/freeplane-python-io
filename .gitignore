@@ -1,3 +1,10 @@
 build
 dist
 MANIFEST
+__pycache__/
+_stuff/
+_test/
+*.bak
+*.pyc
+*.c
+.session.vim
