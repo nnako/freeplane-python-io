@@ -1511,6 +1511,14 @@ class Node(object):
 
 
     @property
+    def isRootNode(self):
+        if self._map._rootnode == self._node \
+                and not self._branch:
+            return True
+        return False
+
+
+    @property
     def isComment(self):
         if not self._node.get('STYLE_REF') is None \
                 and self._node.attrib['STYLE_REF'] == 'klein und grau':
