@@ -1413,6 +1413,21 @@ class Node(object):
         # return self.Icons
 
 
+    def remove(self,
+                ):
+        """
+        This functions removes the current Freeplane node from a branch
+        """
+
+        # get parent element
+        parent = self.Parent
+
+        # remove the current node
+        parent._node.remove(self._node)
+
+        return True
+
+
     def delIcon(self,
                 icon='',
                 ):
