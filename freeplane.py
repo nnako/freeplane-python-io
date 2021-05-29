@@ -1058,6 +1058,49 @@ class Node(object):
         return _attribute
 
 
+    def setAttribute(self,
+                key='',
+                value='',
+                ):
+        """
+        This functions sets an attribute for a node
+        """
+
+
+
+
+        #
+        # IF attribute key already exists
+        #
+
+        if key.lower() in [ _.lower() for _ in self.Attributes.keys() ]:
+
+            #
+            # overwrite existing value
+            #
+
+            _lst = self._node.findall('attribute')
+            for _attr in _lst:
+                _name = _attr.get('NAME', '')
+                if key.lower() == _name.lower():
+                    _attr.set('VALUE', value)
+
+        #
+        # ELSE
+        #
+
+        else:
+
+            #
+            # create new attribute
+            #
+
+            _attrib = ET.Element("attribute", NAME=key, VALUE=value)
+
+            # append element
+            _node = self._node.append(_attrib)
+
+
     def addAttribute(self,
                 key='',
                 value='',
