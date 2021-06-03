@@ -1509,6 +1509,43 @@ class Node(object):
         else:
             return None
 
+    def getIndexChainUntil(self, node):
+        """
+        determine the list of index values which have to be used in order to
+        find the given node. the process is started from the self object and
+        continued until the given node was found. the actual implementation
+        works from backwards. starting at the given node and determining its
+        parents until the base node (self) was found. then reversing the list
+        order.
+        """
+
+        # default and error return
+        lstIdxValues = []
+
+        # init
+        _run = node
+
+        # check if given node (or it's parents) is not RootNode
+        while not _run.isRootNode:
+
+            # break loop if start of chain reached
+            if self.Id == _run.Id:
+                break
+
+            # get parent of current node (go back one level)
+            parent = _run.Parent
+
+            # determine node's child idx below it's parent
+            for _i, child in enumerate(parent.Children):
+                if child.Id == _run.Id:
+                    lstIdxValues.append(_i)
+                    break
+
+            # next loop
+            _run = parent
+
+        # reverse results
+        return list(reversed(lstIdxValues))
 
     @property
     def isRootNode(self):
