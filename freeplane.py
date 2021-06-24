@@ -1228,14 +1228,16 @@ class Node(object):
     @property
     def CoreLink(self):
 
-        # check for TEXT attribute
-        if self._node.get('TEXT'):
+        # as the link can be present within the node's core or the node's
+        # richtext section, here both should be checked. this is done using the
+        # PlainText function.
 
-            # read out text content
-            text = self._node.attrib['TEXT']
+        # check for TEXT attribute
+        _text = self.PlainText
+        if _text:
 
             # check for formula identifier
-            if text[0] == "=":
+            if _text[0] == "=":
 
 
 
@@ -1253,7 +1255,7 @@ class Node(object):
                 # check for reference to internal node content
                 #
 
-                _match=re.match(r'^.*ID_([\d]+)\.text.*', text)
+                _match=re.match(r'^.*ID_([\d]+)\.text.*', _text)
                 if _match:
                     return 'ID_' + _match.group(1)
 
