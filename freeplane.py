@@ -1009,7 +1009,14 @@ class Node(object):
 
     @PlainText.setter
     def PlainText(self, strText):
+
+        # set plain text content
         self._node.attrib['TEXT'] = strText
+
+        # remove node's richcontent if present
+        _richcontentnode = self._node.find('richcontent')
+        if _richcontentnode is not None:
+            self._node.remove(_richcontentnode)
 
 
     @property
