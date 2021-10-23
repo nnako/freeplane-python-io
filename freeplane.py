@@ -1010,6 +1010,10 @@ class Node(object):
     @PlainText.setter
     def PlainText(self, strText):
 
+        # check if there is textual content to be set (other than None)
+        if strText is None:
+            return None
+
         # set plain text content
         self._node.attrib['TEXT'] = strText
 
