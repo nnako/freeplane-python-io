@@ -459,7 +459,7 @@ class Mindmap(object):
 
         # create a valid node id. this node id is incremented automatically,
         # whenever a new XML node is created. even if it is discarded later.
-        # the node id, here consists of three parts: the id tiken "ID_" which
+        # the node id, here consists of three parts: the id token "ID_" which
         # is used for all nodes directly created within freeplane editor, a
         # kind of session seed which is the current date, and a standard
         # 4-digit integer value incremented as already said.
@@ -1276,10 +1276,10 @@ class Node(object):
             text = self._node.attrib['CREATED']
 
             # convert to float time value
-            time = float(text)/1000
+            _time = float(text)/1000
 
             # return datetime value
-            return datetime.datetime.fromtimestamp(time).timetuple()
+            return datetime.datetime.fromtimestamp(_time).timetuple()
 
         return tuple()
 
@@ -1294,10 +1294,10 @@ class Node(object):
             text = self._node.attrib['MODIFIED']
 
             # convert to float time value
-            time = float(text)/1000
+            _time = float(text)/1000
 
             # return datetime value
-            return datetime.datetime.fromtimestamp(time).timetuple()
+            return datetime.datetime.fromtimestamp(_time).timetuple()
 
         return tuple()
 
