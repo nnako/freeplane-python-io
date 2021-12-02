@@ -477,7 +477,9 @@ class Mindmap(object):
             core='',
             link='',
             id='',
-            style=''
+            style='',
+            modified='',  # timestamp format, milliseconds since 1.1.1970
+            created='',   # timestamp format, milliseconds since 1.1.1970
             ):
 
         #
@@ -489,8 +491,35 @@ class Mindmap(object):
         node = Node(_node, None)
         node.PlainText = core
 
+
+
+
+        #
+        # set creation and modification dates
+        #
+
+        # calculate current date in milliseconds
+        _current_time = datetime.datetime.now()
+        _current_timestamp = str(int(_current_time.timestamp()*1000))
+
+        # set creation date
+        if created:
+            _node.set('MODIFIED', created)
+        else:
+            # set current date
+            _node.set('MODIFIED', _current_timestamp)
+
+        # set modification date
+        if modified:
+            _node.set('MODIFIED', modified)
+        else:
+            # set current date
+            _node.set('MODIFIED', _current_timestamp)
+
+
+
+
         # create temporary branch with local (empty) parent_map reference
-        # node._parentmap = {}
         node._branch = Branch()
 
         # check own id choice
@@ -1007,8 +1036,9 @@ class Node(object):
     def PlainText(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
 
+
     @PlainText.setter
-    def PlainText(self, strText):
+    def PlainText(self, strText, modified=''):
 
         # check if there is textual content to be set (other than None)
         if strText is None:
@@ -1023,13 +1053,49 @@ class Node(object):
             self._node.remove(_richcontentnode)
 
 
+
+
+        #
+        # set creation and modification dates
+        #
+
+        # calculate current date in milliseconds
+        _current_time = datetime.datetime.now()
+        _current_timestamp = str(int(_current_time.timestamp()*1000))
+
+        # set modification date
+        if modified:
+            self._node.set('MODIFIED', modified)
+        else:
+            # set current date
+            self._node.set('MODIFIED', _current_timestamp)
+
+
     @property
     def Link(self):
         return self._node.attrib.get("LINK","")
 
     @Link.setter
-    def Link(self, strLink):
+    def Link(self, strLink, modified=''):
         self._node.attrib["LINK"] = strLink
+
+
+
+
+        #
+        # set creation and modification dates
+        #
+
+        # calculate current date in milliseconds
+        _current_time = datetime.datetime.now()
+        _current_timestamp = str(int(_current_time.timestamp()*1000))
+
+        # set modification date
+        if modified:
+            self._node.set('MODIFIED', modified)
+        else:
+            # set current date
+            self._node.set('MODIFIED', _current_timestamp)
 
 
     @property
