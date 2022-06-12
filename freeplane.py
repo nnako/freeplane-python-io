@@ -2301,7 +2301,33 @@ class Node(object):
         return node
 
 
-# VERSION-SPECIFICS
+#
+# HELPERS
+#
+
+def update_date_attribute_in_node(
+            node=None,
+            date="",
+            key="MODIFIED",
+            ):
+
+    # leave if inappropriate arguments
+    if node is None:
+        return False
+
+    # calculate current date in milliseconds
+    _current_time = datetime.datetime.now()
+    _current_timestamp = str(int(_current_time.timestamp()*1000))
+
+    # set modification date
+    if date:
+        node.set(key, date)
+    else:
+        # set current date
+        node.set(key, _current_timestamp)
+
+    return True
+
 
 def get_version_specific_file_encoding(version):
 
