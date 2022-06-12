@@ -76,16 +76,16 @@ import html2text
 
 
 # version
-__version__ = '1.1.0'
+__version__         = '1.2.0'
 
 # BUILTIN ICONS
-ICON_EXCLAMATION = 'yes'
-ICON_LIST = 'list'
-ICON_QUESTION = 'help'
-ICON_CHECKED = 'button_ok'
-ICON_BOOKMARK = 'bookmark'
-ICON_PRIO1 = 'full-1'
-ICON_PRIO2 = 'full-2'
+ICON_EXCLAMATION    = 'yes'
+ICON_LIST           = 'list'
+ICON_QUESTION       = 'help'
+ICON_CHECKED        = 'button_ok'
+ICON_BOOKMARK       = 'bookmark'
+ICON_PRIO1          = 'full-1'
+ICON_PRIO2          = 'full-2'
 
 
 # MINDMAP
@@ -954,6 +954,9 @@ class ArrayStyles(object):
 class Node(object):
 
     def __init__(self, node, map):
+
+
+
 
         #
         # initialize instance
