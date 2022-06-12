@@ -2258,7 +2258,8 @@ class Node(object):
         # set style
         #
 
-        #tmp.Style = style
+        if style:
+            node.Style = style
 
 
 
