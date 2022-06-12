@@ -963,15 +963,30 @@ class Node(object):
         self._node = node
         self._branch = None
 
+
+
+
         #
         # create unique session node id
         #
 
-        # only when there is no node id
         if not node.get('ID', ''):
             self._node.set('ID',
                 Mindmap.get_new_node_id()
                 )
+
+
+
+
+        #
+        # create date entries
+        #
+
+        if not node.get('CREATED', ''):
+            update_date_attribute_in_node(node, key="CREATED")
+        if not node.get('MODIFIED', ''):
+            update_date_attribute_in_node(node, key="MODIFIED")
+
 
     def __str__(self):
         return self.PlainText
