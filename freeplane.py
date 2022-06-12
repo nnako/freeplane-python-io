@@ -495,26 +495,18 @@ class Mindmap(object):
 
 
         #
-        # set creation and modification dates
+        # set current creation and modification dates
         #
 
-        # calculate current date in milliseconds
-        _current_time = datetime.datetime.now()
-        _current_timestamp = str(int(_current_time.timestamp()*1000))
+        update_date_attribute_in_node(
+                node=_node,
+                key="MODIFIED",
+                )
 
-        # set creation date
-        if created:
-            _node.set('MODIFIED', created)
-        else:
-            # set current date
-            _node.set('MODIFIED', _current_timestamp)
-
-        # set modification date
-        if modified:
-            _node.set('MODIFIED', modified)
-        else:
-            # set current date
-            _node.set('MODIFIED', _current_timestamp)
+        update_date_attribute_in_node(
+                node=_node,
+                key="CREATED",
+                )
 
 
 
@@ -1056,19 +1048,18 @@ class Node(object):
 
 
         #
-        # set creation and modification dates
+        # set modification date
         #
 
-        # calculate current date in milliseconds
-        _current_time = datetime.datetime.now()
-        _current_timestamp = str(int(_current_time.timestamp()*1000))
+        update_date_attribute_in_node(
+                node=self._node,
+                date=modified,
+                key="MODIFIED",
+                )
 
-        # set modification date
-        if modified:
-            self._node.set('MODIFIED', modified)
-        else:
-            # set current date
-            self._node.set('MODIFIED', _current_timestamp)
+
+
+        return True
 
 
     @property
@@ -1086,17 +1077,13 @@ class Node(object):
         # set creation and modification dates
         #
 
-        # calculate current date in milliseconds
-        _current_time = datetime.datetime.now()
-        _current_timestamp = str(int(_current_time.timestamp()*1000))
+        update_date_attribute_in_node(
+                node=self._node,
+                date=modified,
+                key="MODIFIED",
+                )
 
-        # set modification date
-        if modified:
-            self._node.set('MODIFIED', modified)
-        else:
-            # set current date
-            self._node.set('MODIFIED', _current_timestamp)
-
+        return True
 
     @property
     def Id(self):
