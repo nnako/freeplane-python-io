@@ -996,7 +996,7 @@ class ArrayStyles(object):
 
 class Node(object):
 
-    def __init__(self, node, map):
+    def __init__(self, node, mindmap):
 
 
 
@@ -1005,7 +1005,7 @@ class Node(object):
         # initialize instance
         #
 
-        self._map = map
+        self._map = mindmap
         self._node = node
         self._branch = None
 
@@ -1018,7 +1018,7 @@ class Node(object):
 
         if not node.get('ID', ''):
             self._node.set('ID',
-                Mindmap.get_new_node_id()
+                Mindmap.get_new_node_id(self._map)
                 )
 
 
