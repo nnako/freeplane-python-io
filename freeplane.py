@@ -455,22 +455,65 @@ class Mindmap(object):
         return cls._num_of_maps
 
     @classmethod
-    def get_new_node_id(cls):
+    def get_new_node_id(cls, mindmap=None):
 
         # create a valid node id. this node id is incremented automatically,
         # whenever a new XML node is created. even if it is discarded later.
-        # the node id, here consists of three parts: the id token "ID_" which
-        # is used for all nodes directly created within freeplane editor, a
-        # kind of session seed which is the current date, and a standard
-        # 4-digit integer value incremented as already said.
+        # the node id, here consists of three parts:
+        #
+        #   1. the id token "ID_" which is used for all nodes directly created
+        #      within freeplane editor
+        #
+        #   2. and kind of session seed which is the current date
+        #
+        #   3. and a standard 4-digit integer value constantly incremented
 
         # increment future part of node id
         cls._global_node_id_incr += 1
 
-        # return current node id
-        return 'ID_' + \
+        # set the node id
+        _id = 'ID_' + \
                 cls._global_node_id_seed + \
                 '{:04}'.format(cls._global_node_id_incr)
+
+
+
+
+        #
+        # resolve overlapping ids
+        #
+
+        # check if the originally intended node id is already present within
+        # the mindmap. if it is, increment the node id counter, generate the
+        # node id again and check again. do this until a node id was found
+        # which does not yet exist within the mindmap.
+
+        # only if valid mindmap pointer was given
+        if mindmap is not None:
+
+            bLeave = False
+            while not bLeave:
+
+                # check for calculated id already used
+                lstOfNodesMatchingId = mindmap._root.xpath("//node[@ID='" + _id + "']")
+                if len(lstOfNodesMatchingId):
+
+                    # increment global node id counter
+                    cls._global_node_id_incr += 1
+
+                    # set the node id string
+                    _id = 'ID_' + \
+                            cls._global_node_id_seed + \
+                            '{:04}'.format(cls._global_node_id_incr)
+
+                else:
+                    bLeave = True
+
+
+
+
+        # return new node id
+        return _id
 
     @classmethod
     def createNode(cls,
