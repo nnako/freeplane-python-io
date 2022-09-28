@@ -55,7 +55,7 @@
 #
 # AUTHOR
 #
-#   - nnako, 2016
+#   - nnako, started in 2016
 #
 
 
