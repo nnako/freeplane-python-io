@@ -1,6 +1,7 @@
 build
 dist
 MANIFEST
+LICENSE.txt
 __pycache__/
 _stuff/
 _test/
@@ -8,3 +9,5 @@ _test/
 *.pyc
 *.c
 .session.vim
+_tools/
+freeplane_io.egg-info/
