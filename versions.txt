@@ -1,0 +1,55 @@
+package versions
+
+
+  
+v0.5.2
+ 29.09.2022
+
+  - FIX: last preparations for PyPi and GitHub deployment
+
+v0.5.1 (old v1.2.1)
+ 12.06.2022
+
+  - FIX: some bug fixes (see commit history)
+  
+v0.5.0 (old v1.2.0)
+ 12.06.2022
+
+  - NEW: management of creation and modification dates
+  - FIX: some bug fixes (see commit history)
+  
+
+v0.4.0 (old v1.1.0)
+ 02.12.2021
+
+  - NEW: determination of "descendants index chain"
+  - NEW: check for node type (e.g. root node)
+  - NEW: delete / remove node from map
+  - NEW: set and management of node's attributes
+  - NEW: management of styles for arrow links
+  - FIX: some bug fixes (see commit history)
+  
+
+v0.3.0 (old v1.0)
+ 26.01.2021
+
+  - NEW: creation and management of "detached" nodes
+  - NEW: creation and management of proper node ids
+  - NEW: manage arrow links between nodes
+  - NEW: distinguish between different freeplane versions
+  - NEW: manage node's style
+  - NEW: create mindmap file, in addition to changing existing ones
+  - FIX: some bug fixes (see commit history)
+  
+
+v0.2.0 (old v0.9)
+ 10.10.2020
+
+  - NEW: manage single attributes for a node
+  - FIX: some bug fixes (see commit history)
+
+
+v0.1.0 (old v0.8)
+ 17.06.2020
+
+  - NEW: first operational version used "professionally" within own applications
