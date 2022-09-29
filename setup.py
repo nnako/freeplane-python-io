@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 # do the settings for PyPi
 setup(
     name='freeplane-io',
-    version='0.5.2',
+    version='0.6.0',
     py_modules=['freeplane'],
     author='nnako',
     author_email='nnako@web.de',
