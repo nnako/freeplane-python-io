@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 # get long description for display within PyPi
 with open("README.md", "r") as fh:
