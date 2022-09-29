@@ -76,7 +76,7 @@ import html2text
 
 
 # version
-__version__         = '1.2.0'
+__version__         = '0.6.0'  # was v1.2.0 before deployment to PyPi
 
 # BUILTIN ICONS
 ICON_EXCLAMATION    = 'yes'
@@ -315,7 +315,7 @@ class Mindmap(object):
         self._rootnode = ET.Element('node') 
         self._rootnode.attrib["TEXT"] = "new_mindmap"
         self._rootnode.attrib["FOLDED"] = "false"
-        self._rootnode.attrib["ID"] = Mindmap.get_new_node_id()
+        self._rootnode.attrib["ID"] = Mindmap.create_node_id()
         self._mindmap.append(self._rootnode)
 
         # create some standard edge styles
@@ -451,11 +451,11 @@ class Mindmap(object):
 # MAP
 
     @classmethod
-    def getNumOfMaps(cls):
+    def get_num_of_maps(cls):
         return cls._num_of_maps
 
     @classmethod
-    def get_new_node_id(cls, mindmap=None):
+    def create_node_id(cls, mindmap=None):
 
         # create a valid node id. this node id is incremented automatically,
         # whenever a new XML node is created. even if it is discarded later.
@@ -516,7 +516,7 @@ class Mindmap(object):
         return _id
 
     @classmethod
-    def createNode(cls,
+    def create_node(cls,
             core='',
             link='',
             id='',
@@ -532,7 +532,7 @@ class Mindmap(object):
         # core
         _node = ET.Element('node')
         node = Node(_node, None)
-        node.PlainText = core
+        node.plaintext = core
 
 
 
@@ -559,14 +559,14 @@ class Mindmap(object):
 
         # check own id choice
         if id:
-            node.Id = id
-            if not node.Id == id:
+            node.id = id
+            if not node.id == id:
                 # print("[ WARNING: node id must follow Freplane's format rules. nothing done. ]")
                 return None
 
         # link
         if link:
-            node.Link = link
+            node.hyperlink = link
 
         # style
         if style:
@@ -576,12 +576,12 @@ class Mindmap(object):
 
 
     @property
-    def RootNode(self):
+    def rootnode(self):
         return Node(self._rootnode, self)
 
 
     @property
-    def Styles(self):
+    def styles(self):
         _style = {}
 
         _stylenode_user = self._mindmap.find('.//stylenode[@LOCALIZED_TEXT="styles.user-defined"]')
@@ -620,7 +620,7 @@ class Mindmap(object):
         return _style
 
 
-    def addStyle(self,
+    def add_style(self,
                 name='',
                 settings={},
                 ):
@@ -694,7 +694,7 @@ class Mindmap(object):
         return False
 
 
-    def findNodes(self,
+    def find_nodes(self,
             core='',
             link='',
             id='',
@@ -859,11 +859,11 @@ class Mindmap(object):
         mm=Mindmap()
 
         # get and print root node
-        rn=mm.RootNode
+        rn=mm.rootnode
         print(rn)
 
         # change root node plain text
-        rn.PlainText = "ROOT NODE"
+        rn.plaintext = "ROOT NODE"
         print(rn)
 
 
@@ -874,41 +874,41 @@ class Mindmap(object):
         #
 
         # create detached node
-        detach=mm.createNode("DETACHED")
+        detach=mm.create_node("DETACHED")
         print(detach)
 
         # create detached node
-        detach2=mm.createNode("DETACHED2")
+        detach2=mm.create_node("DETACHED2")
         print(detach2)
 
         # add node into 2nd detached branch
-        nd2=detach2.addChild("ADDED_TO_DETACHED2_AS_CHILD")
+        nd2=detach2.add_child("ADDED_TO_DETACHED2_AS_CHILD")
         print(nd2)
 
         # create detached node
-        detach3=mm.createNode("DETACHED3")
+        detach3=mm.create_node("DETACHED3")
         print(detach3)
 
         # add node into 2nd detached branch
-        nd3=detach3.addChild("ADDED_TO_DETACHED3_AS_CHILD")
+        nd3=detach3.add_child("ADDED_TO_DETACHED3_AS_CHILD")
         print(nd3)
 
         # check parent node within branch
-        print(nd2.Parent)
+        print(nd2.parent)
 
         #
         # create and attach some styles
         #
 
         # add style to mindmap
-        mm.addStyle(
+        mm.add_style(
                 "klein und grau",
                 {
                     'color': '#999999',
                 })
 
         # WARNING: apply non-existing style to detached branch node
-        nd2.Style = "groß und grau"
+        nd2.style = "groß und grau"
 
         #
         # attach some nodes and styles
@@ -924,13 +924,13 @@ class Mindmap(object):
         rn.attach(detach)
 
         # WARNING: apply existing style to detached branch node
-        detach2.Style = "klein und grau"
+        detach2.style = "klein und grau"
 
         # attach detached branch head to root node
         rn.attach(detach2)
 
         # apply existing style to map node
-        nd2.Style = "klein und grau"
+        nd2.style = "klein und grau"
 
         # WARNING: attach already attached branch head
         rn.attach(detach)
@@ -979,10 +979,10 @@ class ArrayStyles(object):
         self._styles = {}
 
     @property
-    def Styles(self):
+    def styles(self):
         return self._styles
 
-    def addStyle(self,
+    def add_style(self,
             name='',
             settings={},
             ):
@@ -1018,7 +1018,7 @@ class Node(object):
 
         if not node.get('ID', ''):
             self._node.set('ID',
-                Mindmap.get_new_node_id(self._map)
+                Mindmap.create_node_id(self._map)
                 )
 
 
@@ -1034,8 +1034,12 @@ class Node(object):
             update_date_attribute_in_node(node, key="MODIFIED")
 
 
+    def __repr__(self):
+        return self.plaintext
+
+
     def __str__(self):
-        return self.PlainText
+        return self.plaintext
 
 
     @property
@@ -1086,12 +1090,12 @@ class Node(object):
 
 
     @property
-    def PlainText(self):
+    def plaintext(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
 
 
-    @PlainText.setter
-    def PlainText(self, strText, modified=''):
+    @plaintext.setter
+    def plaintext(self, strText, modified=''):
 
         # check if there is textual content to be set (other than None)
         if strText is None:
@@ -1124,11 +1128,11 @@ class Node(object):
 
 
     @property
-    def Link(self):
+    def hyperlink(self):
         return self._node.attrib.get("LINK","")
 
-    @Link.setter
-    def Link(self, strLink, modified=''):
+    @hyperlink.setter
+    def hyperlink(self, strLink, modified=''):
         self._node.attrib["LINK"] = strLink
 
 
@@ -1147,11 +1151,11 @@ class Node(object):
         return True
 
     @property
-    def Id(self):
+    def id(self):
         return self._node.attrib['ID']
 
-    @Id.setter
-    def Id(self, strId):
+    @id.setter
+    def id(self, strId):
 
         # ensure type
         if not type(strId) == 'str':
@@ -1172,7 +1176,7 @@ class Node(object):
         return True
 
     @property
-    def Attributes(self):
+    def attributes(self):
         _attribute = {}
         _lst = self._node.findall('attribute')
         for _attr in _lst:
@@ -1183,7 +1187,7 @@ class Node(object):
         return _attribute
 
 
-    def setAttribute(self,
+    def set_attribute(self,
                 key='',
                 value='',
                 ):
@@ -1198,7 +1202,7 @@ class Node(object):
         # IF attribute key already exists
         #
 
-        if key.lower() in [ _.lower() for _ in self.Attributes.keys() ]:
+        if key.lower() in [ _.lower() for _ in self.attributes.keys() ]:
 
             #
             # overwrite existing value
@@ -1226,7 +1230,7 @@ class Node(object):
             _node = self._node.append(_attrib)
 
 
-    def addAttribute(self,
+    def add_attribute(self,
                 key='',
                 value='',
                 ):
@@ -1249,17 +1253,17 @@ class Node(object):
             # append element
             _node = self._node.append(_attrib)
 
-        # return self.Attributes
+        # return self.attributes
 
 
     @property
-    def Style(self):
+    def style(self):
         if 'STYLE_REF' in self._node.attrib.keys():
             return self._node.attrib['STYLE_REF']
         return ""
 
-    @Style.setter
-    def Style(self, strStyle):
+    @style.setter
+    def style(self, strStyle):
 
         #
         # try to re-connect to a valid mindmap
@@ -1302,7 +1306,7 @@ class Node(object):
         if self._map is not None:
 
             # check with existing styles
-            for _stylename in self._map.Styles.keys():
+            for _stylename in self._map.styles.keys():
                 if _stylename.lower() == strStyle.lower():
                     break
             else:
@@ -1315,7 +1319,7 @@ class Node(object):
 
 
     @property
-    def CreationDate(self):
+    def creationdate(self):
 
         # check for TEXT attribute
         if self._node.get('CREATED'):
@@ -1333,7 +1337,7 @@ class Node(object):
 
 
     @property
-    def ModificationDate(self):
+    def modificationdate(self):
 
         # check for TEXT attribute
         if self._node.get('MODIFIED'):
@@ -1351,14 +1355,14 @@ class Node(object):
 
 
     @property
-    def CoreLink(self):
+    def corelink(self):
 
         # as the link can be present within the node's core or the node's
         # richtext section, here both should be checked. this is done using the
-        # PlainText function.
+        # plaintext function.
 
         # check for TEXT attribute
-        _text = self.PlainText
+        _text = self.plaintext
         if _text:
 
             # check for formula identifier
@@ -1391,7 +1395,7 @@ class Node(object):
 
 
     @property
-    def Comment(self):
+    def comment(self):
 
         # check for existence of child
         if not self._node.find('node') is None:
@@ -1409,7 +1413,7 @@ class Node(object):
 
 
     @property
-    def Details(self):
+    def details(self):
 
         _text = ''
 
@@ -1421,8 +1425,8 @@ class Node(object):
         return _text
 
 
-    @Details.setter
-    def Details(self, strDetails):
+    @details.setter
+    def details(self, strDetails):
 
         # remove existing details element
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
@@ -1455,11 +1459,11 @@ class Node(object):
             # append element
             _node = self._node.append(_element)
 
-        # return self.Details
+        # return self.details
 
 
     @property
-    def Parent(self):
+    def parent(self):
 
         # if non-detached node
         if self.is_map_node:
@@ -1485,7 +1489,7 @@ class Node(object):
 
 
     @property
-    def Next(self):
+    def next(self):
 
         # ensure existing parent
         _next = self._node.getnext()
@@ -1506,7 +1510,7 @@ class Node(object):
 
 
     @property
-    def Icons(self):
+    def icons(self):
         _icons = []
         _lst = self._node.findall('icon')
         for _icon in _lst:
@@ -1516,7 +1520,7 @@ class Node(object):
         return _icons
 
 
-    def addIcon(self,
+    def add_icon(self,
                 icon='',
                 ):
         """
@@ -1537,7 +1541,7 @@ class Node(object):
 
             self._node.append(_icon)
 
-        # return self.Icons
+        # return self.icons
 
 
     def remove(self,
@@ -1547,7 +1551,7 @@ class Node(object):
         """
 
         # get parent element
-        parent = self.Parent
+        parent = self.parent
 
         # remove the current node
         parent._node.remove(self._node)
@@ -1555,7 +1559,7 @@ class Node(object):
         return True
 
 
-    def delIcon(self,
+    def del_icon(self,
                 icon='',
                 ):
         """
@@ -1587,11 +1591,11 @@ class Node(object):
                     self._node.remove(_icon)
                     break
 
-        # return self.Icons
+        # return self.icons
 
 
     @property
-    def Children(self):
+    def children(self):
         lstNodesRet = []
         for _node in  self._node.findall("./node"):
 
@@ -1609,7 +1613,7 @@ class Node(object):
         return lstNodesRet
 
 
-    def getChildByIndex(self, idx=0):
+    def get_child_by_index(self, idx=0):
         # check if node has children
         _children = self._node.findall("./node")
         if len(_children):
@@ -1636,7 +1640,7 @@ class Node(object):
         else:
             return None
 
-    def getIndexChainUntil(self, node):
+    def get_indexchain_until(self, node):
         """
         determine the list of index values which have to be used in order to
         find the given node. the process is started from the self object and
@@ -1652,19 +1656,19 @@ class Node(object):
         # init
         _run = node
 
-        # check if given node (or it's parents) is not RootNode
-        while not _run.isRootNode:
+        # check if given node (or it's parents) is not rootnode
+        while not _run.is_rootnode:
 
             # break loop if start of chain reached
-            if self.Id == _run.Id:
+            if self.id == _run.id:
                 break
 
             # get parent of current node (go back one level)
-            parent = _run.Parent
+            parent = _run.parent
 
             # determine node's child idx below it's parent
-            for _i, child in enumerate(parent.Children):
-                if child.Id == _run.Id:
+            for _i, child in enumerate(parent.children):
+                if child.id == _run.id:
                     lstIdxValues.append(_i)
                     break
 
@@ -1675,7 +1679,7 @@ class Node(object):
         return list(reversed(lstIdxValues))
 
     @property
-    def isRootNode(self):
+    def is_rootnode(self):
         if self._map._rootnode == self._node \
                 and not self._branch:
             return True
@@ -1683,7 +1687,7 @@ class Node(object):
 
 
     @property
-    def isComment(self):
+    def is_comment(self):
         if not self._node.get('STYLE_REF') is None \
                 and self._node.attrib['STYLE_REF'] == 'klein und grau':
             return True
@@ -1691,13 +1695,13 @@ class Node(object):
 
 
     @property
-    def hasChildren(self):
+    def has_children(self):
         if not self._node.findall('./node'):
             return False
         return True
 
 
-    def findNodes(self,
+    def find_nodes(self,
                  core='',
                  link='',
                  id='',
@@ -1755,7 +1759,7 @@ class Node(object):
         return lstNodesRet
 
 
-    def findChildren(self,
+    def find_children(self,
                  core='',
                  link='',
                  id='',
@@ -2038,7 +2042,7 @@ class Node(object):
         return False
 
 
-    def addArrowLink(self,
+    def add_arrowlink(self,
             node=None,
             style='',
             shape='',
@@ -2155,7 +2159,7 @@ class Node(object):
                     _node.set('ENDARROW', endarrow)
 
             # destination
-            _node.set('DESTINATION', node.Id)
+            _node.set('DESTINATION', node.id)
 
 
 
@@ -2163,7 +2167,7 @@ class Node(object):
         return False
 
 
-    def addChild(self,
+    def add_child(self,
                  core='',
                  link='',
                  id='',
@@ -2184,7 +2188,7 @@ class Node(object):
 
         _node = ET.Element('node')
         node = Node(_node, self._map)
-        node.PlainText = core
+        node.plaintext = core
 
 
 
@@ -2194,8 +2198,8 @@ class Node(object):
         #
 
         if id:
-            node.Id = id
-            if not node.Id == id:
+            node.id = id
+            if not node.id == id:
                 return None
 
 
@@ -2206,7 +2210,7 @@ class Node(object):
         #
 
         if link:
-            node.Link = link
+            node.hyperlink = link
 
 
 
@@ -2216,7 +2220,7 @@ class Node(object):
         #
 
         if style:
-            node.Style = style
+            node.style = style
 
 
 
@@ -2257,7 +2261,7 @@ class Node(object):
         return node
 
 
-    def addSibling(self,
+    def add_sibling(self,
                    core="",
                    link="",
                    id='',
@@ -2277,15 +2281,15 @@ class Node(object):
 
         _node = ET.Element('node')
         node = Node(_node, self._map)
-        node.PlainText = core
+        node.plaintext = core
 
 
 
 
         # overwrite standard id
         if id:
-            node.Id = id
-            if not node.Id == id:
+            node.id = id
+            if not node.id == id:
                 # print("[ WARNING: node id must follow Freplane's format rules. nothing done. ]")
                 return None
 
@@ -2297,7 +2301,7 @@ class Node(object):
         #
 
         if link:
-            node.Link = link
+            node.hyperlink = link
 
 
 
@@ -2307,7 +2311,7 @@ class Node(object):
         #
 
         if style:
-            node.Style = style
+            node.style = style
 
 
 
@@ -2341,7 +2345,7 @@ class Node(object):
         else:
 
             # output warning
-            print("[ WARNING: it is not possible to add a sibling to a detached node. please use the createNode function. ]")
+            print("[ WARNING: it is not possible to add a sibling to a detached node. please use the create_node function. ]")
             return None
 
 
