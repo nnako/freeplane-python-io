@@ -8,6 +8,35 @@ this package was designed to implement an application programming interface
 (API) for Python as well as a command line interface (CLI) both to interact
 with Freeplane mindmap files, directly.
 
+## features
+
+These are the main features of the package:
+
+- create, read and modify Freeplane mindmaps<br>at least in theory, this package
+  will not touch anything it does not know within an opened mindmap. so, you
+  can read big maps, change them where you like and save them without any
+  information loss.
+
+- disregard version of Freeplane mindmap<br>even Freemind mindmaps should be
+  usable
+
+- find nodes within a mindmap<br>based on the node's id, core text, attributes,
+  details, notes, link or icons any node can be found within the mindmap
+
+- navigate through the mindmap tree<br>based on parent and children methods it
+  is possible to reach every node
+
+- retrieve from and modify information from arbitrary nodes<br>core text / html, notes,
+  details, ...
+
+- create and modify node's attributes<br>core text / html, notes, details, ...
+
+- manage node links
+
+- set and manage node styles
+
+- create and manage arrow links
+
 ## installation
 
 ```bash
