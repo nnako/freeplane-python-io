@@ -30,6 +30,7 @@ setup(
     extras_require={
         "doc": [
             "sphinx~=5.2.3",
+            "lxml",
             ],
         },
 )
