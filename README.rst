@@ -160,4 +160,5 @@ documentation
 -------------
 
 For more information, please visit our documentation_ at ReadTheDocs.
+
 .. _documentation: https://freeplane-python-io.readthedocs.io/en/latest/
