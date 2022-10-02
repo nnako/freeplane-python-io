@@ -154,55 +154,70 @@ usage
     #
 
     mindmap.save('./example_OUT.mm')
-    ```
 
-    ## the code base
+the code base
+-------------
 
-    ### naming conventions for classes, functions, ... and variables
+naming conventions for classes, functions, ... and variables
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    Using Python, developers are always encouraged to respect e.g. naming
-    conventions as defined in [PEP8](https://peps.python.org/pep-0008/). On the
-    practical side, the `freeplane-io` package is strongly related to the
-    functionalities implemented within the [Freeplane](https://freeplane.org/)
-    project (JAVA language) and accessible by its built-in Groovy scripting
-    environment. In effect, the `freeplane-io` package tries to provide a good
-    external API representation for the features, the Groovy-API provides within
-    the Freeplane editor. Thus, another objective is to keep this package as close
-    as possible to the Groovy-API. The syntax and naming will be some kind of mix.
+Using Python, developers are always encouraged to respect e.g. naming
+conventions as defined in PEP8_. On the practical side, the `freeplane-io`
+package is strongly related to the functionalities implemented within the
+Freeplane_ project (JAVA language) and accessible by its built-in Groovy
+scripting environment. In effect, the `freeplane-io` package tries to
+provide a good external API representation for the features, the Groovy-API
+provides within the Freeplane editor. Thus, another objective is to keep
+this package as close as possible to the Groovy-API. The syntax and naming
+will be some kind of mix.
 
-    ### deliberate deviations from conventions
+.. _PEP8: https://peps.python.org/pep-0008/
+.. _Freeplane: https://freeplane.org/
 
-    When browsing the code base of `freeplane-io`, you will see some deviations from
-    the PEP8 recommendations and from Freeplane's Groovy-API syntax. Some deviations result from the fact that the
-    developer was too inexperienced when he started this project, other deviations
-    are intentional as they help extending the machine-based readability of the
-    code in the way the developer likes it. One eye-catching deviation will be the representation of comments within the code. For the `freeplane-io` package, there are two distinct kinds of comments:
+deliberate deviations from conventions
+++++++++++++++++++++++++++++++++++++++
 
-    - **block comments** -> these comments are used as a kind of heading for the following block of code. It describes in veri few words (one line of text) what is being implemented within the next block of code.
+When browsing the code base of `freeplane-io`, you will see some deviations
+from the PEP8 recommendations and from Freeplane's Groovy-API syntax. Some
+deviations result from the fact that the developer was too inexperienced
+when he started this project, other deviations are intentional as they help
+extending the machine-based readability of the code in the way the developer
+likes it. One eye-catching deviation will be the representation of comments
+within the code. For the `freeplane-io` package, there are two distinct
+kinds of comments:
 
-    - **concept comments** -> these multi-line comments are used to describe the implementation concept. Somtimes, it is not too obvious, how a programmer implements something. So the concept comments might help understanding.
+**block comments**
+  these comments are used as a kind of heading for the following block of code.
+  It describes in veri few words (one line of text) what is being implemented
+  within the next block of code.
+
+**concept comments**
+  these multi-line comments are used to describe the implementation concept.
+  Somtimes, it is not too obvious, how a programmer implements something. So
+  the concept comments might help understanding.
 
 
-    ### developing freeplane-python-io
+developing freeplane-python-io
+++++++++++++++++++++++++++++++
 
-    The following steps should be performed in order to build a working local
-    development environment. for this, the standard dos / bash / ... console should be used.
+The following steps should be performed in order to build a working local
+development environment. for this, the standard dos / bash / ... console
+should be used.
 
-    1. clone this project into a new local project folder
-       ```bash
-       git clone https://...
-       ```
+1. clone this project into a new local project folder
 
-    2. create a Python virtual environment locally (make sure Python v3.x is being used, here)
-       ```bash
-       python -m venv env
-       ```
+.. code:: bash
 
-    3. install all necessary packages using pip
-        ```bash
-       pip install html2text
+   git clone https://github.com/nnako/freeplane-python-io.git
 
-       ```
+2. create a Python virtual environment locally (make sure Python v3.x is being used, here)
 
-    ...
+.. code:: bash
 
+   python -m venv env
+
+3. install all necessary packages using pip
+
+.. code:: bash
+
+   pip install html2text
