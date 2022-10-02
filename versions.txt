@@ -2,9 +2,10 @@ package versions
 
 
   
-v0.5.2
+v0.6.0
  29.09.2022
 
+  - MOD: re-work API for mindmap and node objects
   - FIX: last preparations for PyPi and GitHub deployment
 
 v0.5.1 (old v1.2.1)
