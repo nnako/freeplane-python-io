@@ -1,3 +1,6 @@
+Features
+========
+
 These are the main features of the package:
 
 **create, read and modify Freeplane mindmaps**
