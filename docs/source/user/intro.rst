@@ -17,9 +17,3 @@ especially within recurring processes.
 This user guide is tutorial in nature, introducing concepts along with code
 examples that we hope will allow any reader to learn what is needed while addressing
 the real-life information management challenges based on mindmap sources.
-
-
-freeplane-python-io License
----------------------------
-
-.. include:: ../../../LICENSE.txt
