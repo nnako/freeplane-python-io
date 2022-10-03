@@ -2489,6 +2489,18 @@ def reduce_node_list(
                     _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
+    # check for LINK within a node's LINK TEXT
+    if link:
+        _lstNodes = []
+        for _node in lstXmlNodes:
+            if exact:
+                if link == _node.attrib.get("LINK", ""):
+                    _lstNodes.append(_node)
+            else:
+                if link.lower() in _node.attrib.get("LINK", "").lower():
+                    _lstNodes.append(_node)
+        lstXmlNodes = _lstNodes
+
     # check for BUILTIN ICON at node
     if icon:
         _lstNodes = []
