@@ -972,7 +972,7 @@ class Branch(object):
 # define a structure to externally provide named arrow link styles. these can
 # be set an retrieved when creating arrow links.
 
-class ArrayStyles(object):
+class ArrowStyles(object):
 
     def __init__(self):
 
