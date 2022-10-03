@@ -93,11 +93,8 @@ ICON_PRIO2          = 'full-2'
 class Mindmap(object):
 
     """
-    Freeplane interfacing class
-
-    access Freeplane mindmap file and do various search, read and write
-    operations to retrieve or modify text passages, design and structures
-    within the mindmap.
+    representation of Freeplane mindmap file as a container for nodes. access
+    styles and other general features from here.
 
     """
 
@@ -452,21 +449,28 @@ class Mindmap(object):
 
     @classmethod
     def get_num_of_maps(cls):
+        """
+        return the number of maps already created within the current session
+
+        :returns: integer
+        """
+
         return cls._num_of_maps
 
     @classmethod
     def create_node_id(cls, mindmap=None):
+        """
+        create a valid node id. this node id is incremented automatically,
+        whenever a new XML node is created. even if it is discarded later.
+        the node id, here consists of three parts:
 
-        # create a valid node id. this node id is incremented automatically,
-        # whenever a new XML node is created. even if it is discarded later.
-        # the node id, here consists of three parts:
-        #
-        #   1. the id token "ID_" which is used for all nodes directly created
-        #      within freeplane editor
-        #
-        #   2. and kind of session seed which is the current date
-        #
-        #   3. and a standard 4-digit integer value constantly incremented
+            1. the id token "ID_" which is used for all nodes directly created
+               within freeplane editor
+        
+            2. and kind of session seed which is the current date
+        
+            3. and a standard 4-digit integer value constantly incremented
+        """
 
         # increment future part of node id
         cls._global_node_id_incr += 1
@@ -995,6 +999,10 @@ class ArrowStyles(object):
 # NODE
 
 class Node(object):
+    """
+    representation of Freeplane node elements found within a mindmap. all the
+    node-related features can be accessed from here.
+    """
 
     def __init__(self, node, mindmap):
 
