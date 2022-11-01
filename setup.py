@@ -18,6 +18,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "html2text ~= 2020.1.16",
+        "lxml",
         ],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -30,7 +31,6 @@ setup(
     extras_require={
         "doc": [
             "sphinx~=5.2.3",
-            "lxml",
             ],
         },
 )
