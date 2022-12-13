@@ -76,7 +76,7 @@ import html2text
 
 
 # version
-__version__         = '0.6.0'  # was v1.2.0 before deployment to PyPi
+__version__         = '0.7.0'
 
 # BUILTIN ICONS
 ICON_EXCLAMATION    = 'yes'
