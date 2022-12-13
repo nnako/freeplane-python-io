@@ -1158,6 +1158,88 @@ class Node(object):
 
         return True
 
+
+    @property
+    def imagepath(self):
+
+        # check if node holds no in-line image
+        if self._node.find('hook') is None:
+            # print(f'[ WARNING: the node "{self.id}" does not contain an in-line image. ]')
+            return None
+
+        # get hook node
+        hook = self._node.find('hook')
+
+        # get uri attribute
+        uri = hook.attrib.get("URI", "")
+
+        # sanitize uri
+        uri = uri.replace("file://", "")
+
+        # somehow, freeplane currently stores paths in the image hook with
+        # THREE slashes after the protocol token "file". for Linux, this makes
+        # sense when dealing with absolute file paths (all starting with
+        # another "/"). but for Windows this doesn't make sense as there
+        # remains an additional "/" in front of the drive specification "C:" of
+        # absolute path definitions. this is to be corrected, here, as long it
+        # is not corrected within Freeplane.
+
+        # check for leading slash in front of drive token
+        _match = re.search(r'^(/[A-z]:/)', uri)
+        if _match:
+            # remove leading slash
+            uri = uri[1:]
+
+        return uri
+
+    @property
+    def imagesize(self):
+
+        # check if node holds no in-line image
+        if self._node.find('hook') is None:
+            print(f'[ WARNING: the node "{self._node.id}" does not contain an in-line image. ]')
+            return None
+
+        # get hook node
+        hook = self._node.find('hook')
+
+        # get uri attribute
+        size = hook.attrib.get("SIZE", "")
+
+        return size
+
+    def set_image(self,
+            link="",
+            size="1",
+            modified='',
+            ):
+
+        # localize XML hook element below node
+        hook = self._node.find('hook')
+        if hook is None:
+            hook = ET.Element(
+                    "hook",
+                    URI="file://"+strLink,
+                    SIZE=str(strSize),
+                    NAME='ExternalObject',
+                    )
+            _node.append(hook)
+
+
+
+
+        #
+        # set creation and modification dates
+        #
+
+        update_date_attribute_in_node(
+                node=self._node,
+                date=modified,
+                key="MODIFIED",
+                )
+
+        return True
+
     @property
     def id(self):
         return self._node.attrib['ID']
