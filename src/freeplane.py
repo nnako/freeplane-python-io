@@ -1214,16 +1214,48 @@ class Node(object):
             modified='',
             ):
 
+
+
+
+        #
+        # prepare path string
+        #
+
+        # check for Windows-style absolute path
+        _match = re.search(r'^([A-z]:/)', link)
+
+        # check for absolute linux path
+        if link[0] == "/":
+            link = "file://" + link
+        # check for absolute windows path
+        elif _match:
+            link = "file:///" + link
+        # should be relative path
+        elif link[0] == ".":
+            pass
+        else:
+            link = "./" + link
+
         # localize XML hook element below node
         hook = self._node.find('hook')
         if hook is None:
+
+            # create hook element
             hook = ET.Element(
                     "hook",
-                    URI="file://"+strLink,
-                    SIZE=str(strSize),
+                    URI=link,
+                    SIZE=str(link),
                     NAME='ExternalObject',
                     )
-            _node.append(hook)
+
+            # add hook to node's children
+            self._node.append(hook)
+
+        else:
+
+            # just override attributes
+            hook.set("URI", link)
+            hook.set("SIZE", size)
 
 
 
