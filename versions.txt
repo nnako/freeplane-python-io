@@ -2,11 +2,20 @@ package versions
 
 
   
+v0.7.0
+ 13.12.2022
+ 
+  - NEW: handle in-line images
+  - FIX: add lxml dependency in setup.py (to get installed automatically)
+  - FIX: some bug fixes (see commit history)
+  
+  
 v0.6.0
  29.09.2022
 
   - MOD: re-work API for mindmap and node objects
   - FIX: last preparations for PyPi and GitHub deployment
+
 
 v0.5.1 (old v1.2.1)
  12.06.2022
