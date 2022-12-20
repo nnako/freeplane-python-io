@@ -254,9 +254,11 @@ class Mindmap(object):
             # workaround
 
             if retry:
-                with io.open(self._path, "r", encoding="windows-1252") as fpMap:
-                    strFirstLine = fpMap.readline()
-
+                try:
+                    with io.open(self._path, "r", encoding="windows-1252") as fpMap:
+                        strFirstLine = fpMap.readline()
+                except:
+                    logging.warning("format mismatch in mindmap file vs. windows-1252")
 
             # now, analyze the characters in the first line of the mindmap file
             # and try to find the "freeplane" token which will contain the
