@@ -67,6 +67,7 @@ import os
 import re
 import sys
 import io
+import logging
 
 # xml format
 import lxml.etree as ET
@@ -86,6 +87,13 @@ ICON_CHECKED        = 'button_ok'
 ICON_BOOKMARK       = 'bookmark'
 ICON_PRIO1          = 'full-1'
 ICON_PRIO2          = 'full-2'
+
+
+# logging
+logging.basicConfig(
+        format='%(name)s - %(levelname)-8s - %(message)s',
+        level=logging.WARNING,
+        )
 
 
 # MINDMAP
@@ -110,7 +118,32 @@ class Mindmap(object):
     _global_node_id_seed = datetime.datetime.now().strftime('%y%m%d')
 
 
-    def __init__(self, path='', mtype='freeplane', version='1.3.0', id=''):
+    def __init__(self,
+            path='',
+            mtype='freeplane',
+            version='1.3.0',
+            id='',
+            log_level="warning",
+            ):
+
+
+
+
+        #
+        # adjust logging level to user's wishes
+        #
+
+        if log_level.lower() == "debug":
+            logging.getLogger().setLevel(logging.DEBUG)
+        elif log_level.lower() == "info":
+            logging.getLogger().setLevel(logging.INFO)
+        elif log_level.lower() == "warning":
+            logging.getLogger().setLevel(logging.WARNING)
+        elif log_level.lower() == "error":
+            logging.getLogger().setLevel(logging.ERROR)
+        else:
+            logging.getLogger().setLevel(logging.WARNING)
+            logging.warning("log level mismatch in user arguments. setting to WARNING.")
 
 
 
@@ -151,7 +184,7 @@ class Mindmap(object):
             # check if command is provided in script
             if not hasattr(self, args.command):
 
-                print( 'Unrecognized command' )
+                logging.error('Unrecognized command. EXITING.')
                 parser.print_help()
                 sys.exit(1)
 
@@ -212,7 +245,7 @@ class Mindmap(object):
                 with io.open(self._path, "r", encoding="utf-8") as fpMap:
                     strFirstLine = fpMap.readline()
             except:
-                print("[ WARNING: format mismatch in mindmap file vw. UTF-8 ]")
+                logging.warning("format mismatch in mindmap file vs. UTF-8")
                 retry = True
 
             # in case there are wrong encodings when trying to read as UTF-8,
@@ -574,7 +607,7 @@ class Mindmap(object):
 
         # style
         if style:
-            print("[ WARNING: style attribute not implemented, yet ]")
+            logging.warning("style attribute not implemented, yet")
 
         return node
 
