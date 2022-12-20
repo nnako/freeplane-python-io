@@ -4,10 +4,12 @@ from setuptools import setup
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
+import freeplane
+
 # do the settings for PyPi
 setup(
     name='freeplane-io',
-    version='0.7.0',
+    version=freeplane.__version__,
     py_modules=['freeplane'],
     author='nnako',
     author_email='nnako@web.de',
