@@ -295,7 +295,46 @@ class Mindmap(object):
             # read entire mindmap and evaluate structure
             #
 
-            self._mindmap = ET.parse(self._path, parser=xmlparser)
+            # some Freeplane versions produce invalid XML syntax when writing
+            # the mindmap into file. here, these invalid syntaxes are to be
+            # removed from the file, before using and parsing the file.
+
+            try:
+                self._mindmap = ET.parse(self._path, parser=xmlparser)
+
+            except ET.XMLSyntaxError:
+                logging.warning("invalid XML syntax. will try to fix it temporarily...")
+
+                # write sanitized file into temporary file
+                _basename = "_" + os.path.basename(self._path)
+                _dirname  = os.path.dirname(self._path)
+
+                # ensure temp file is not yet present
+                while os.path.isfile(os.path.join(_dirname, _basename)):
+                    _basename = "_" + _basename
+                _temp_file = os.path.join(_dirname, _basename)
+
+                # read original XML file
+                with io.open(self._path, "r", encoding="utf-8") as _file:
+                    _content = _file.read()
+
+                # sanitize content
+                _content = _content.replace("&nbsp;", "&#160;")
+
+                # create and write temp file
+                with io.open(_temp_file, "w", encoding="utf-8") as _file:
+                    _file.write(_content)
+
+                # repeat open of mindmap
+                self._mindmap = ET.parse(_temp_file, parser=xmlparser)
+
+                # remove temporary file
+                os.remove(_temp_file)
+
+                logging.info("... XML source was successfully sanitized.")
+
+            # now that the XML file has been read in in a valid way, the normal
+            # XML parsing is to take place within the module's functionalities.
 
             # get root of mindmap
             self._root = self._mindmap.getroot()
