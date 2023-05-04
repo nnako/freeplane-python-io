@@ -1637,8 +1637,9 @@ class Node(object):
             _html = ET.SubElement(_element, "html")
             _head = ET.SubElement(_html, "head")
             _body = ET.SubElement(_html, "body")
-            _p    = ET.SubElement(_body, "p")
-            _p.text = strDetails
+            for strLine in strDetails.split('\n'):
+                _p    = ET.SubElement(_body, "p")
+                _p.text = strLine
             # _element.text = \
                 # '\n' + \
                 # '<html>\n' + \
