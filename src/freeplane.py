@@ -77,7 +77,7 @@ import html2text
 
 
 # version
-__version__         = '0.7.1'
+__version__         = '0.7.2'
 
 # BUILTIN ICONS
 ICON_EXCLAMATION    = 'yes'

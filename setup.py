@@ -4,7 +4,11 @@ from setuptools import setup
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
-import freeplane
+# for obtaining current version information,
+# the local freeplane code file is to be consulted,
+# prior to its installation on the local system
+
+import src.freeplane as freeplane
 
 # do the settings for PyPi
 setup(
@@ -27,6 +31,9 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: OS Independent",
         ],

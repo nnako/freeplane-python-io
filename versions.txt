@@ -2,6 +2,18 @@ package versions
 
 
   
+v0.7.2
+ 20.05.2023
+
+  - FIX: creation of own styles now correct
+  - FIX: proper HTML format for multi-lined details
+
+v0.7.1
+ 20.12.2023
+
+  - FIX: determination of mindmap's encoding via try / except
+  - FIX: workaround to neutralize invalid XML usage concerning NBSP
+
 v0.7.0
  13.12.2022
  
