@@ -757,15 +757,23 @@ class Mindmap(object):
                 _sty.set('BACKGROUND_COLOR', settings[_check])
 
             # font name
-            _check = 'font'
+            _check = 'fontname'
             if _check in settings.keys():
                 _item = ET.Element('font', NAME=settings[_check])
                 # add item to style
                 _sty.append(_item)
+
             # font size
             _check = 'fontsize'
             if _check in settings.keys():
-                _item.set("SIZE", settings[_check])
+                _item = _sty.find('./font')
+                if _item is None:
+                    # create new font element
+                    _item = ET.Element('font', SIZE=settings[_check])
+                    _sty.append(_item)
+                else:
+                    # add size attribute to font element
+                    _item.set("SIZE", settings[_check])
 
             return True
 
