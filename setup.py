@@ -8,12 +8,13 @@ with open("README.rst", "r") as fh:
 # the local freeplane code file is to be consulted,
 # prior to its installation on the local system
 
-import src.freeplane as freeplane
+#import src.freeplane as freeplane
 
 # do the settings for PyPi
 setup(
     name='freeplane-io',
-    version=freeplane.__version__,
+    #version=freeplane.__version__,
+    version="0.7.2",
     py_modules=['freeplane'],
     author='nnako',
     author_email='nnako@web.de',
