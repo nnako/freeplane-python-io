@@ -70,10 +70,16 @@ import io
 import logging
 
 # xml format
-import lxml.etree as ET
+try:
+    import lxml.etree as ET
+except:
+    print("at this point, lxml package is not available. shouldn't be a problem, though.")
 
 # html format
-import html2text
+try:
+    import html2text
+except:
+    print("at this point, html2text package is not available. shouldn't be a problem, though.")
 
 
 # version

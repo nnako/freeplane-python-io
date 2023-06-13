@@ -1,20 +1,24 @@
 from setuptools import setup
 
-# get long description for display within PyPi
+# get long description that is used within the README file of this project
+# (available on the GitHub platform) for display within PyPi platform
+
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
-# for obtaining current version information,
-# the local freeplane code file is to be consulted,
-# prior to its installation on the local system
+# for obtaining current version information directly from the source code, the
+# local freeplane code file is to be consulted, prior to its installation on
+# the local system. as it seems that at this point of the operation no LXML
+# package is available (although it had previously been installed), its import
+# statement within freeplane.py must be held in try / except clause.
 
-#import src.freeplane as freeplane
+import src.freeplane as freeplane
 
 # do the settings for PyPi
 setup(
     name='freeplane-io',
-    #version=freeplane.__version__,
-    version="0.7.2",
+    #version="0.7.2",
+    version=freeplane.__version__,
     py_modules=['freeplane'],
     author='nnako',
     author_email='nnako@web.de',
