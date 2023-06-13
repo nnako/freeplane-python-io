@@ -1689,7 +1689,7 @@ class Node(object):
             return None
 
         else:
-            print("[ ERROR  : local parentmap has not been created for detached node. ]")
+            #print("[ ERROR  : local parentmap has not been created for detached node. ]")
             return None
 
 
