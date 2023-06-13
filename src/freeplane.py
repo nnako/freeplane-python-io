@@ -1883,6 +1883,38 @@ class Node(object):
         # reverse results
         return list(reversed(lstIdxValues))
 
+
+    def is_descendant_of(self, node):
+        """
+        determine if the current node object has a direct relational connection
+        to a given node element. so, if the current node object is a child,
+        grand-child, ... of that given node element.
+        """
+
+        # walk up the parent elements until the given element is found or the
+        # search ends with the root node
+
+        # get 1st parent element
+        parent = self.parent
+
+        # loop
+        while parent:
+
+            # check for match
+            if parent.id == node.id:
+                return True
+
+            # leave function if we reached the root node
+            if parent.id == self._map.rootnode:
+                return False
+
+            # get next parent further up
+            parent = parent.parent
+
+        # this statement shouldn't be reached
+        return False
+
+
     @property
     def is_rootnode(self):
         if self._map._rootnode == self._node \
