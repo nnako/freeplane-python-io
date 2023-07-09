@@ -1309,6 +1309,9 @@ class Node(object):
         # prepare path string
         #
 
+        # convert backslashes to slashes
+        link = link.replace("\\", "/")
+
         # check for Windows-style absolute path
         _match = re.search(r'^([A-z]:/)', link)
 
@@ -1332,7 +1335,7 @@ class Node(object):
             hook = ET.Element(
                     "hook",
                     URI=link,
-                    SIZE=str(link),
+                    SIZE=str(size),
                     NAME='ExternalObject',
                     )
 
