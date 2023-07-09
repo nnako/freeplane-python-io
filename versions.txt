@@ -1,7 +1,10 @@
 package versions
 
+  - FIX: prevent from necessity to insert version multiple times (deployment)
+  - NEW: method <node>.is_descendant_of() determines if a given node element
+         is located within a direct line of parents up towards the mindmap root
+  - FIX: correct and stabilize set_image() function
 
-  
 v0.7.2
  20.05.2023
 
