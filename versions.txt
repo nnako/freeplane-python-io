@@ -1,5 +1,8 @@
 package versions
 
+v0.8.0
+ 09.07.2023
+
   - FIX: prevent from necessity to insert version multiple times (deployment)
   - NEW: method <node>.is_descendant_of() determines if a given node element
          is located within a direct line of parents up towards the mindmap root
