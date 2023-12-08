@@ -1371,7 +1371,7 @@ class Node(object):
     def id(self, strId):
 
         # ensure type
-        if not type(strId) == 'str':
+        if not type(strId) == str:
             strId = str(strId)
 
         # check required format
