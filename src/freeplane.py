@@ -1244,8 +1244,15 @@ class Node(object):
             try:
                 # find node
                 _node = self._map.find_nodes(id=_referenced_node_id)[0]
+
                 # create Node instance
                 fpnode = Node(_node._node, self._map)
+
+                # update branch reference in case of detached node
+                if not self.is_root_node and not self.is_map_node:
+                    fpnode._map     = None
+                    fpnode._branch  = self._branch
+
                 # return it to user
                 return fpnode
 
