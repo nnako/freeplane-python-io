@@ -1225,8 +1225,39 @@ class Node(object):
 
 
     @property
+    def has_internal_hyperlink(self):
+        _link = self._node.attrib.get("LINK","")
+        if _link and _link[0] == "#":
+            return True
+        return False
+
+
+    @property
+    def follow_internal_hyperlink(self):
+
+        # check for internal hyperlink
+        if self.has_internal_hyperlink:
+
+            # get target node id by removing leading hash char
+            _referenced_node_id = self._node.attrib.get("LINK","")[1:]
+
+            try:
+                # find node
+                _node = self._map.find_nodes(id=_referenced_node_id)[0]
+                # create Node instance
+                fpnode = Node(_node._node, self._map)
+                # return it to user
+                return fpnode
+
+            except:
+                print(f'[ WARNING: the referenced node "{_referenced_node_id}" was not found in mindmap. please check. ]')
+                return None
+
+
+    @property
     def hyperlink(self):
         return self._node.attrib.get("LINK","")
+
 
     @hyperlink.setter
     def hyperlink(self, strLink, modified=''):
