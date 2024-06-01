@@ -251,7 +251,7 @@ class Mindmap(object):
                 with io.open(self._path, "r", encoding="utf-8") as fpMap:
                     strFirstLine = fpMap.readline()
             except:
-                logging.warning("format mismatch in mindmap file vs. UTF-8")
+                logging.info("format mismatch in mindmap file vs. UTF-8. TRYING WORKAROUND.")
                 retry = True
 
             # in case there are wrong encodings when trying to read as UTF-8,
@@ -263,8 +263,9 @@ class Mindmap(object):
                 try:
                     with io.open(self._path, "r", encoding="windows-1252") as fpMap:
                         strFirstLine = fpMap.readline()
+                    logging.info("format mismatch could be worked around, successfully")
                 except:
-                    logging.warning("format mismatch in mindmap file vs. windows-1252")
+                    logging.warning("format mismatch in mindmap file vs. windows-1252. FURTHER PROBLEMS WILL FOLLOW.")
 
             # now, analyze the characters in the first line of the mindmap file
             # and try to find the "freeplane" token which will contain the
