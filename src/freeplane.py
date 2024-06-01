@@ -1887,6 +1887,15 @@ class Node(object):
         return lstNodesRet
 
 
+    @property
+    def index(self):
+        # valid child index values can be determined in case the node is not a
+        # root node and has a parent
+        if not self.is_root_node and self.parent:
+            return self.parent._node.index(self._node)
+        return 0
+
+
     def get_child_by_index(self, idx=0):
         # check if node has children
         _children = self._node.findall("./node")
