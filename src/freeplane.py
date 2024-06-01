@@ -1735,6 +1735,27 @@ class Node(object):
 
 
     @property
+    def previous(self):
+
+        # ensure existing parent
+        _previous = self._node.getprevious()
+        if _previous is not None:
+
+            # create Node instance
+            fpnode = Node(_previous, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            return fpnode
+        else:
+            return None
+
+
+    @property
     def next(self):
 
         # ensure existing parent
