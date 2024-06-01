@@ -787,7 +787,8 @@ class Mindmap(object):
         return False
 
 
-    def find_nodes(self,
+    def find_nodes(
+            self,
             core='',
             link='',
             id='',
@@ -2016,16 +2017,17 @@ class Node(object):
         return True
 
 
-    def find_nodes(self,
-                 core='',
-                 link='',
-                 id='',
-                 attrib='',
-                 details='',
-                 notes='',
-                 icon='',
-                 exact=False
-                 ):
+    def find_nodes(
+            self,
+            core='',
+            link='',
+            id='',
+            attrib='',
+            details='',
+            notes='',
+            icon='',
+            exact=False
+            ):
 
 
 
