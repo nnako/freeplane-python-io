@@ -2804,6 +2804,28 @@ def reduce_node_list(
                     _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
+    # check for all ATTRIBUTES within a node
+    if attrib:
+        _lstNodes = []
+        # check for current list of nodes
+        for _node in lstXmlNodes:
+            # get attributes of node
+            for _attribnode in _node.findall("./attribute"):
+                _key = _attribnode.attrib.get("NAME", "")
+                _value = ""
+                if _key:
+                    _value = _attribnode.attrib.get("VALUE", "")
+                # check all given attributes
+                iFound = 0
+                for _check_key, _check_value in attrib.items():
+                    # key and value found in node
+                    if _key == _check_key and _value == _check_value:
+                        iFound += 1
+                # check for ALL matches
+                if iFound == len(attrib.items()):
+                    _lstNodes.append(_node)
+        lstXmlNodes = _lstNodes
+
     # check for LINK within a node's LINK TEXT
     if link:
         _lstNodes = []
