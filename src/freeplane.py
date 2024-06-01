@@ -2831,10 +2831,10 @@ def reduce_node_list(
         _lstNodes = []
         for _node in lstXmlNodes:
             if exact:
-                if link == _node.attrib.get("LINK", ""):
+                if link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/"):
                     _lstNodes.append(_node)
             else:
-                if link.lower() in _node.attrib.get("LINK", "").lower():
+                if link.replace("\\", "/").lower() in _node.attrib.get("LINK", "").replace("\\", "/").lower():
                     _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
