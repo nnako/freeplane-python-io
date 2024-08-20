@@ -124,12 +124,14 @@ class Mindmap(object):
     _global_node_id_seed = datetime.datetime.now().strftime('%y%m%d')
 
 
-    def __init__(self,
+    def __init__(
+            self,
             path='',
             mtype='freeplane',
             version='1.3.0',
             id='',
             log_level="warning",
+            logger=None,
             ):
 
 
@@ -139,17 +141,29 @@ class Mindmap(object):
         # adjust logging level to user's wishes
         #
 
-        if log_level.lower() == "debug":
-            logging.getLogger().setLevel(logging.DEBUG)
-        elif log_level.lower() == "info":
-            logging.getLogger().setLevel(logging.INFO)
-        elif log_level.lower() == "warning":
-            logging.getLogger().setLevel(logging.WARNING)
-        elif log_level.lower() == "error":
-            logging.getLogger().setLevel(logging.ERROR)
+        # if logger has not been provided via API
+        if logger is None:
+
+            # create logger and set level according to API
+            if log_level.lower() == "debug":
+                logging.getLogger().setLevel(logging.DEBUG)
+            elif log_level.lower() == "info":
+                logging.getLogger().setLevel(logging.INFO)
+            elif log_level.lower() == "warning":
+                logging.getLogger().setLevel(logging.WARNING)
+            elif log_level.lower() == "error":
+                logging.getLogger().setLevel(logging.ERROR)
+            else:
+                logging.getLogger().setLevel(logging.WARNING)
+                logging.warning("log level mismatch in user arguments. setting to WARNING.")
+
+            # create a usable logger if it was not provided by the function
+            self._logger = logging.getLogger(__name__)
+
+        # else, logger object was given
         else:
-            logging.getLogger().setLevel(logging.WARNING)
-            logging.warning("log level mismatch in user arguments. setting to WARNING.")
+            self._logger = logger
+
 
 
 
@@ -190,7 +204,7 @@ class Mindmap(object):
             # check if command is provided in script
             if not hasattr(self, args.command):
 
-                logging.error('Unrecognized command. EXITING.')
+                self._logger.error('Unrecognized command. EXITING.')
                 parser.print_help()
                 sys.exit(1)
 
@@ -251,7 +265,7 @@ class Mindmap(object):
                 with io.open(self._path, "r", encoding="utf-8") as fpMap:
                     strFirstLine = fpMap.readline()
             except:
-                logging.info("format mismatch in mindmap file vs. UTF-8. TRYING WORKAROUND.")
+                self._logger.info("format mismatch in mindmap file vs. UTF-8. TRYING WORKAROUND.")
                 retry = True
 
             # in case there are wrong encodings when trying to read as UTF-8,
@@ -263,9 +277,9 @@ class Mindmap(object):
                 try:
                     with io.open(self._path, "r", encoding="windows-1252") as fpMap:
                         strFirstLine = fpMap.readline()
-                    logging.info("format mismatch could be worked around, successfully")
+                    self._logger.info("format mismatch could be worked around, successfully")
                 except:
-                    logging.warning("format mismatch in mindmap file vs. windows-1252. FURTHER PROBLEMS WILL FOLLOW.")
+                    self._logger.warning("format mismatch in mindmap file vs. windows-1252. FURTHER PROBLEMS WILL FOLLOW.")
 
             # now, analyze the characters in the first line of the mindmap file
             # and try to find the "freeplane" token which will contain the
@@ -310,7 +324,7 @@ class Mindmap(object):
                 self._mindmap = ET.parse(self._path, parser=xmlparser)
 
             except ET.XMLSyntaxError:
-                logging.warning("invalid XML syntax. will try to fix it temporarily...")
+                self._logger.warning("invalid XML syntax. will try to fix it temporarily...")
 
                 # write sanitized file into temporary file
                 _basename = "_" + os.path.basename(self._path)
@@ -338,7 +352,7 @@ class Mindmap(object):
                 # remove temporary file
                 os.remove(_temp_file)
 
-                logging.info("... XML source was successfully sanitized.")
+                self._logger.info("... XML source was successfully sanitized.")
 
             # now that the XML file has been read in in a valid way, the normal
             # XML parsing is to take place within the module's functionalities.
@@ -655,7 +669,7 @@ class Mindmap(object):
 
         # style
         if style:
-            logging.warning("style attribute not implemented, yet")
+            self._logger.warning("style attribute not implemented, yet")
 
         return node
 
