@@ -810,7 +810,8 @@ class Mindmap(object):
             details='',
             notes='',
             icon='',
-            exact=False
+            exact=False,
+            casesensitive=False,
             ):
 
 
@@ -837,6 +838,7 @@ class Mindmap(object):
             link=link,
             icon=icon,
             exact=exact,
+            casesensitive=casesensitive,
         )
 
 
@@ -2040,7 +2042,8 @@ class Node(object):
             details='',
             notes='',
             icon='',
-            exact=False
+            exact=False,
+            casesensitive=False,
             ):
 
 
@@ -2064,6 +2067,7 @@ class Node(object):
             link=link,
             icon=icon,
             exact=exact,
+            casesensitive=casesensitive,
         )
 
 
@@ -2090,16 +2094,18 @@ class Node(object):
         return lstNodesRet
 
 
-    def find_children(self,
-                 core='',
-                 link='',
-                 id='',
-                 attrib='',
-                 details='',
-                 notes='',
-                 icon='',
-                 exact=False
-                 ):
+    def find_children(
+            self,
+            core='',
+            link='',
+            id='',
+            attrib='',
+            details='',
+            notes='',
+            icon='',
+            exact=False,
+            casesensitive=False,
+            ):
 
 
 
@@ -2122,6 +2128,7 @@ class Node(object):
             link=link,
             icon=icon,
             exact=exact,
+            casesensitive=casesensitive,
         )
 
 
@@ -2798,6 +2805,7 @@ def reduce_node_list(
         link='',
         icon='',
         exact=False,
+        casesensitive=False,
     ):
 
     # check for identical ID
@@ -2813,7 +2821,9 @@ def reduce_node_list(
         _lstNodes = []
         for _node in lstXmlNodes:
             if exact:
-                if core == _node.attrib.get("TEXT", ""):
+                if casesensitive and core == _node.attrib.get("TEXT", ""):
+                    _lstNodes.append(_node)
+                elif not casesensitive and core.lower() == _node.attrib.get("TEXT", "").lower():
                     _lstNodes.append(_node)
             else:
                 if core.lower() in _node.attrib.get("TEXT", "").lower():
@@ -2847,7 +2857,11 @@ def reduce_node_list(
         _lstNodes = []
         for _node in lstXmlNodes:
             if exact:
-                if link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/"):
+                # case-sensitive test
+                if casesensitive and (link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/")):
+                    _lstNodes.append(_node)
+                # case-insensitive test
+                elif not casesensitive and (link.replace("\\","/").lower() == _node.attrib.get("LINK", "").replace("\\", "/").lower()):
                     _lstNodes.append(_node)
             else:
                 if link.replace("\\", "/").lower() in _node.attrib.get("LINK", "").replace("\\", "/").lower():
@@ -2873,7 +2887,9 @@ def reduce_node_list(
             if _lstDetailsNodes:
                 _text = ''.join(_lstDetailsNodes[0].itertext())
                 if exact:
-                    if details in _text:
+                    if casesensitive and details == _text:
+                        _lstNodes.append(_node)
+                    elif not casesensitive and details.lower() == _text.lower():
                         _lstNodes.append(_node)
                 else:
                     if details.lower() in _text.lower():
