@@ -811,7 +811,7 @@ class Mindmap(object):
             notes='',
             icon='',
             exact=False,
-            casesensitive=False,
+            caseinsensitive=False,
             ):
 
 
@@ -838,7 +838,7 @@ class Mindmap(object):
             link=link,
             icon=icon,
             exact=exact,
-            casesensitive=casesensitive,
+            caseinsensitive=caseinsensitive,
         )
 
 
@@ -2080,7 +2080,7 @@ class Node(object):
             notes='',
             icon='',
             exact=False,
-            casesensitive=False,
+            caseinsensitive=False,
             ):
 
 
@@ -2104,7 +2104,7 @@ class Node(object):
             link=link,
             icon=icon,
             exact=exact,
-            casesensitive=casesensitive,
+            caseinsensitive=caseinsensitive,
         )
 
 
@@ -2141,7 +2141,7 @@ class Node(object):
             notes='',
             icon='',
             exact=False,
-            casesensitive=False,
+            caseinsensitive=False,
             ):
 
 
@@ -2165,7 +2165,7 @@ class Node(object):
             link=link,
             icon=icon,
             exact=exact,
-            casesensitive=casesensitive,
+            caseinsensitive=caseinsensitive,
         )
 
 
@@ -2842,7 +2842,7 @@ def reduce_node_list(
         link='',
         icon='',
         exact=False,
-        casesensitive=False,
+        caseinsensitive=False,
     ):
 
     # check for identical ID
@@ -2858,9 +2858,9 @@ def reduce_node_list(
         _lstNodes = []
         for _node in lstXmlNodes:
             if exact:
-                if casesensitive and core == _node.attrib.get("TEXT", ""):
+                if not caseinsensitive and core == _node.attrib.get("TEXT", ""):
                     _lstNodes.append(_node)
-                elif not casesensitive and core.lower() == _node.attrib.get("TEXT", "").lower():
+                elif caseinsensitive and core.lower() == _node.attrib.get("TEXT", "").lower():
                     _lstNodes.append(_node)
             else:
                 if core.lower() in _node.attrib.get("TEXT", "").lower():
@@ -2895,10 +2895,10 @@ def reduce_node_list(
         for _node in lstXmlNodes:
             if exact:
                 # case-sensitive test
-                if casesensitive and (link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/")):
+                if not caseinsensitive and (link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/")):
                     _lstNodes.append(_node)
                 # case-insensitive test
-                elif not casesensitive and (link.replace("\\","/").lower() == _node.attrib.get("LINK", "").replace("\\", "/").lower()):
+                elif caseinsensitive and (link.replace("\\","/").lower() == _node.attrib.get("LINK", "").replace("\\", "/").lower()):
                     _lstNodes.append(_node)
             else:
                 if link.replace("\\", "/").lower() in _node.attrib.get("LINK", "").replace("\\", "/").lower():
@@ -2924,9 +2924,9 @@ def reduce_node_list(
             if _lstDetailsNodes:
                 _text = ''.join(_lstDetailsNodes[0].itertext())
                 if exact:
-                    if casesensitive and details == _text:
+                    if not caseinsensitive and details == _text:
                         _lstNodes.append(_node)
-                    elif not casesensitive and details.lower() == _text.lower():
+                    elif caseinsensitive and details.lower() == _text.lower():
                         _lstNodes.append(_node)
                 else:
                     if details.lower() in _text.lower():
@@ -2942,9 +2942,9 @@ def reduce_node_list(
             if _lstNotesNodes:
                 _text = ''.join(_lstNotesNodes[0].itertext())
                 if exact:
-                    if casesensitive and notes == _text:
+                    if not caseinsensitive and notes == _text:
                         _lstNodes.append(_node)
-                    elif not casesensitive and notes.lower() == _text.lower():
+                    elif caseinsensitive and notes.lower() == _text.lower():
                         _lstNodes.append(_node)
                 else:
                     if notes.lower() in _text.lower():
