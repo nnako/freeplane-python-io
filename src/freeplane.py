@@ -1733,6 +1733,43 @@ class Node(object):
 
 
     @property
+    def notes(self):
+
+        _text = ''
+
+        # check for notes node
+        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        if _lstNotesNodes:
+            _text = ''.join(_lstNotesNodes[0].itertext()).strip()
+
+        return _text
+
+
+    @notes.setter
+    def notes(self, strNotes):
+
+        # remove existing notes element
+        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        if _lstNotesNodes:
+            self._node.remove(_lstNotesNodes[0])
+
+        # create new notes element
+        if strNotes:
+
+            # build html structure
+            _element = ET.Element("richcontent", TYPE='NOTE')
+            _html = ET.SubElement(_element, "html")
+            _head = ET.SubElement(_html, "head")
+            _body = ET.SubElement(_html, "body")
+            for strLine in strNotes.split('\n'):
+                _p    = ET.SubElement(_body, "p")
+                _p.text = strLine
+
+            # append element
+            _node = self._node.append(_element)
+
+
+    @property
     def parent(self):
 
         # if non-detached node
@@ -2893,6 +2930,24 @@ def reduce_node_list(
                         _lstNodes.append(_node)
                 else:
                     if details.lower() in _text.lower():
+                        _lstNodes.append(_node)
+        lstXmlNodes = _lstNodes
+
+    # check for node's NOTES
+    if notes:
+        _lstNodes = []
+        for _node in lstXmlNodes:
+            # check for notes node
+            _lstNotesNodes = _node.findall("./richcontent[@TYPE='NOTE']")
+            if _lstNotesNodes:
+                _text = ''.join(_lstNotesNodes[0].itertext())
+                if exact:
+                    if casesensitive and notes == _text:
+                        _lstNodes.append(_node)
+                    elif not casesensitive and notes.lower() == _text.lower():
+                        _lstNodes.append(_node)
+                else:
+                    if notes.lower() in _text.lower():
                         _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
