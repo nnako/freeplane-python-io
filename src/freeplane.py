@@ -1734,6 +1734,12 @@ class Node(object):
 
     @property
     def notes(self):
+        """
+        get the value of the node's note attribute.
+
+        :returns: the plaintext value of the notes attribute (including newlines)
+        :rtype: string
+        """
 
         _text = ''
 
@@ -1747,6 +1753,12 @@ class Node(object):
 
     @notes.setter
     def notes(self, strNotes):
+        """
+        write a plaintext into the node's notes attribute.
+
+        :param strNotes: the plaintext value to be written
+        :type strNotes: string
+        """
 
         # remove existing notes element
         _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
@@ -2433,7 +2445,20 @@ class Node(object):
             endarrow='DEFAULT',
             ):
         """
-        add an arrow link to a node. the arrow starts at the host object and extends to an arbitrary node.
+        draw an arrow link from the current node to the given one.
+
+        the arrow starts at the host object and extends to an arbitrary node.
+        it's appearance can be configured using the following parameters:
+
+        :param node: the node object an arrow is to be drawn to
+        :type node: freeplane.Node
+        :param shape: the shape of the arrow (e.g. "CUBIC_CURVE")
+        :type shape: string
+        :param color: the color of the arrow (e.g. "#FF0000" for red)
+        :type color: string
+        :param transparency: the transparency of the arrow over the background (e.g. "80" for 80%)
+        :type transparency: string
+
         """
 
         if node:
