@@ -1,5 +1,23 @@
 package versions
 
+
+v0.9.0
+ 26.09.2024
+
+  - NEW: the attribute <node>.notes might be used to get and set a plaintext
+         value to the node's notes. analogous to the details attribute.
+         consequently, the keyword argument "notes" can be used within the
+         methods <mindmap>.find_nodes(), <node>.find_nodes() and
+         <node>.find_children() to look for appropriate nodes.
+
+  - NEW: the keyword argument "caseinsensitive=True" can be used in addition
+         to the argument "exact=True" within the methods <mindmap>.find_nodes(),
+         <node>.find_nodes() and <node>.find_children() to ensure that all
+         textual comparisons will be performed in a case-insensitive way,
+         although the text is expected to be exact. this setting will be
+         relevant for checking the attributes core, link, details and notes.
+
+
 v0.8.0
  09.07.2023
 
@@ -7,6 +25,7 @@ v0.8.0
   - NEW: method <node>.is_descendant_of() determines if a given node element
          is located within a direct line of parents up towards the mindmap root
   - FIX: correct and stabilize set_image() function
+
 
 v0.7.2
  20.05.2023
