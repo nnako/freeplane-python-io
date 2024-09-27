@@ -1735,9 +1735,9 @@ class Node(object):
     @property
     def notes(self):
         """
-        get the value of the node's note attribute.
+        get the value of the node's notes attribute.
 
-        :returns: the plaintext value of the notes attribute (including newlines)
+        :return: the plaintext value of the notes attribute (preserving newlines)
         :rtype: string
         """
 
