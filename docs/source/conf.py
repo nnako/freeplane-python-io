@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 from freeplane import __version__
 
 project = 'freeplane-python-io'
-copyright = '2016 - 2022, nnako'
+copyright = '2016 - 2024, nnako'
 author = 'nnako'
 release = __version__
 version = __version__
@@ -29,6 +29,7 @@ version = __version__
 extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
+    "sphinx_rtd_theme",
 #    "sphinx.ext.inheritance_diagram",
 #    "sphinx.ext.viewcode",
 ]
