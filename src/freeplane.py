@@ -812,6 +812,7 @@ class Mindmap(object):
             icon='',
             exact=False,
             caseinsensitive=False,
+            keep_link_specials=False,
             ):
 
 
@@ -839,6 +840,7 @@ class Mindmap(object):
             icon=icon,
             exact=exact,
             caseinsensitive=caseinsensitive,
+            keep_link_specials=False,
         )
 
 
@@ -2093,6 +2095,7 @@ class Node(object):
             icon='',
             exact=False,
             caseinsensitive=False,
+            keep_link_specials=False,
             ):
 
 
@@ -2117,6 +2120,7 @@ class Node(object):
             icon=icon,
             exact=exact,
             caseinsensitive=caseinsensitive,
+            keep_link_specials=False,
         )
 
 
@@ -2154,6 +2158,7 @@ class Node(object):
             icon='',
             exact=False,
             caseinsensitive=False,
+            keep_link_specials=False,
             ):
 
 
@@ -2178,6 +2183,7 @@ class Node(object):
             icon=icon,
             exact=exact,
             caseinsensitive=caseinsensitive,
+            keep_link_specials=False,
         )
 
 
@@ -2868,6 +2874,7 @@ def reduce_node_list(
         icon='',
         exact=False,
         caseinsensitive=False,
+        keep_link_specials=False,
     ):
 
     # check for identical ID
@@ -2918,16 +2925,32 @@ def reduce_node_list(
     if link:
         _lstNodes = []
         for _node in lstXmlNodes:
+
+            # Freeplane internally, sometimes modifies link strings so that
+            # they contain "fixed" spaces. these can cause a string-based
+            # equality comparison to fail. for this case, strings like "%20"
+            # will by default be replaced with ordinary strings " " before
+            # comparison, here. using the switch "keep_link_specials", equality
+            # comparisons can be made without replacing these special
+            # characters.
+
+            if not keep_link_specials:
+                _link = _node.attrib.get("LINK", "").replace("\\","/").replace("%20", " ")
+            else:
+                _link = _node.attrib.get("LINK", "").replace("\\","/")
+
+            # now do the comparison
             if exact:
                 # case-sensitive test
-                if not caseinsensitive and (link.replace("\\","/") == _node.attrib.get("LINK", "").replace("\\", "/")):
+                if not caseinsensitive and (link.replace("\\","/") == _link):
                     _lstNodes.append(_node)
                 # case-insensitive test
-                elif caseinsensitive and (link.replace("\\","/").lower() == _node.attrib.get("LINK", "").replace("\\", "/").lower()):
+                elif caseinsensitive and (link.replace("\\","/").lower() == _link.lower()):
                     _lstNodes.append(_node)
             else:
-                if link.replace("\\", "/").lower() in _node.attrib.get("LINK", "").replace("\\", "/").lower():
+                if link.replace("\\", "/").lower() in _link.lower():
                     _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for BUILTIN ICON at node
