@@ -2095,6 +2095,7 @@ class Node(object):
             icon='',
             exact=False,
             caseinsensitive=False,
+            find_in_self=False,
             keep_link_specials=False,
             ):
 
@@ -2106,7 +2107,12 @@ class Node(object):
         #
 
         # list all nodes regardless of further properties
+        # starting from below the current node
         lstXmlNodes = self._node.findall(".//node")
+
+        # add self to the list of nodes if desired
+        if find_in_self:
+            lstXmlNodes = [ self._node ] + lstXmlNodes
 
         # do the checks on the base of the list
         lstXmlNodes = reduce_node_list(
