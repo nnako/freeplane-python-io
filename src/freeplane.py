@@ -2579,6 +2579,68 @@ class Node(object):
         return False
 
 
+    @property
+    def arrowlinks(self):
+        lstNodesRet = []
+        for _arrowlink in  self._node.findall("./arrowlink"):
+
+            # get the destination id of target node
+            _nodeid = _arrowlink.attrib.get('DESTINATION', "")
+
+            # find node in local mindmap
+            _xmlnode = self._map._root.find('.//node[@ID="' + _nodeid + '"]')
+
+            # create target Node instance
+            fpnode = Node(_xmlnode, self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            lstNodesRet.append(fpnode)
+
+        return lstNodesRet
+
+
+    def del_arrowlink(self,
+            idx=0,
+            ):
+
+        # arrowlinked nodes
+        fpnodes = self.arrowlinks
+
+        # TODO
+        # implement removal of xmlnode corresponding to indexed one
+
+        return False
+
+
+    @property
+    def arrowlinked(self):
+        lstNodesRet = []
+
+        # find xmlnodes in local mindmap
+        _nodeid = self.id
+        _xmlarrowlinks = self._map._root.findall('.//arrowlink[@DESTINATION="' + _nodeid + '"]')
+
+        for _xmlarrowlink in _xmlarrowlinks:
+
+            # create target Node instance
+            fpnode = Node(_xmlarrowlink.getparent(), self._map)
+
+            # update branch reference in case of detached node
+            if not self.is_root_node and not self.is_map_node:
+                fpnode._map     = None
+                fpnode._branch  = self._branch
+
+            # append node object
+            lstNodesRet.append(fpnode)
+
+        return lstNodesRet
+
+
     def add_child(self,
                  core='',
                  link='',
