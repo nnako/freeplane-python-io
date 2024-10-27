@@ -1,6 +1,24 @@
 package versions
 
 
+v0.10.0
+ 27.10.2024
+
+  - NEW: there are new attributes and methods for the <node> object concerning
+         the use of arrowlinks:
+
+         - <node>.arrowlinks       will return a list of nodes connected
+                                   with outgoing arrowlinks
+
+         - <node>.arrowlinked      will return a list of nodes which connect
+                                   to the <node> arrowlinks (incoming)
+
+         - <node>.del_arrowlink()  will remove one of <node>'s outgoing
+                                   arrowlinks
+
+         the method <node>.add_arrowlink() was implemented already.
+
+
 v0.9.0
  26.09.2024
 
