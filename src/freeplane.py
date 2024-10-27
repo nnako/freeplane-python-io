@@ -2605,16 +2605,32 @@ class Node(object):
 
 
     def del_arrowlink(self,
-            idx=0,
+            ident=0,
             ):
 
         # arrowlinked nodes
         fpnodes = self.arrowlinks
 
-        # TODO
-        # implement removal of xmlnode corresponding to indexed one
+        # provide possibility to use ID or fpnode reference
+        # instead of list index
+        if isinstance(ident, str):
+            _nodeid = ident
+        elif isinstance(ident, int):
+            if ident > len(fpnodes)-1:
+                return False
+            _nodeid = fpnodes[ident].id
+        elif isinstance(ident, Node):
+            _nodeid = ident.id
 
-        return False
+        # check for node id to be removed from arrowlinks
+        _xmlarrowlinks = self._node.findall('./arrowlink[@DESTINATION="' + _nodeid + '"]')
+
+        # remove arrowlink
+        if len(_xmlarrowlinks) <= 0:
+            return False
+        self._node.remove(_xmlarrowlinks[0])
+
+        return True
 
 
     @property
