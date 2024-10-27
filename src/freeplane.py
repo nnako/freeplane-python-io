@@ -2581,6 +2581,11 @@ class Node(object):
 
     @property
     def arrowlinks(self):
+        """
+        get list of nodes connected via outgoing arrowlinks
+
+        :returns:       list of Node elements
+        """
         lstNodesRet = []
         for _arrowlink in  self._node.findall("./arrowlink"):
 
@@ -2607,6 +2612,16 @@ class Node(object):
     def del_arrowlink(self,
             ident=0,
             ):
+        """
+        remove arrowlink from node
+
+        :param ident:   identifier for node to which the arrowlink connection is to be removed
+        :type ident:    Node - the target node reference itself
+                        int - the index of target node according to the return of the arrowlinks method
+                        str - the node id of the target node to which the connection is to be removed
+        :returns:       True - if the desired coonnection was removed
+                        False - if target node could not be found
+        """
 
         # arrowlinked nodes
         fpnodes = self.arrowlinks
@@ -2635,6 +2650,11 @@ class Node(object):
 
     @property
     def arrowlinked(self):
+        """
+        get list of nodes connecting to the node (incoming arrowlinks)
+
+        :returns:       list of Node elements
+        """
         lstNodesRet = []
 
         # find xmlnodes in local mindmap
