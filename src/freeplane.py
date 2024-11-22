@@ -124,7 +124,7 @@ class Mindmap(object):
             path='',
             mtype='freeplane',
             version='1.3.0',
-            id='',
+            _id='',
             log_level="",
             ):
 
@@ -136,7 +136,7 @@ class Mindmap(object):
         #
 
         # do this only if called from the command line
-        if id == 'cli':
+        if _id == 'cli':
 
             # define information
             parser = argparse.ArgumentParser(
@@ -3188,5 +3188,5 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
 if __name__ == "__main__":
 
     # create execute class init with command line environment
-    Mindmap(id='cli')
+    Mindmap(_id='cli')
 
