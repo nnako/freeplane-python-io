@@ -95,11 +95,6 @@ ICON_PRIO1          = 'full-1'
 ICON_PRIO2          = 'full-2'
 
 
-# logging
-logging.basicConfig(
-        format='%(name)s - %(levelname)-8s - %(message)s',
-        level=logging.WARNING,
-        )
 
 
 # MINDMAP
@@ -130,40 +125,8 @@ class Mindmap(object):
             mtype='freeplane',
             version='1.3.0',
             id='',
-            log_level="warning",
-            logger=None,
+            log_level="",
             ):
-
-
-
-
-        #
-        # adjust logging level to user's wishes
-        #
-
-        # if logger has not been provided via API
-        if logger is None:
-
-            # create logger and set level according to API
-            if log_level.lower() == "debug":
-                logging.getLogger().setLevel(logging.DEBUG)
-            elif log_level.lower() == "info":
-                logging.getLogger().setLevel(logging.INFO)
-            elif log_level.lower() == "warning":
-                logging.getLogger().setLevel(logging.WARNING)
-            elif log_level.lower() == "error":
-                logging.getLogger().setLevel(logging.ERROR)
-            else:
-                logging.getLogger().setLevel(logging.WARNING)
-                logging.warning("log level mismatch in user arguments. setting to WARNING.")
-
-            # create a usable logger if it was not provided by the function
-            self._logger = logging.getLogger(__name__)
-
-        # else, logger object was given
-        else:
-            self._logger = logger
-
 
 
 
@@ -195,6 +158,23 @@ class Mindmap(object):
 
 
             #
+            # create logger
+            #
+
+            # TODO
+            # make log-level adjustable via CLI
+
+            # create own logger (as there is no calling application)
+            logging.basicConfig(
+                    format='%(name)s - %(levelname)-8s - %(message)s',
+                    level=logging.WARNING,
+                    )
+            self._logger = logging.getLogger(__name__)
+
+
+
+
+            #
             # read out CLI and execute main command
             #
 
@@ -210,6 +190,38 @@ class Mindmap(object):
 
             # use dispatch pattern to invoke method with same name
             getattr(self, args.command)()
+
+
+
+
+        else:
+
+
+
+
+            #
+            # connect to existing logger
+            #
+
+            # the logging functionality will be used in a way that all settings will be
+            # configured in the calling application's root logger. when there is no calling
+            # application, this module will create its own.
+
+            self._logger = logging.getLogger(__name__)
+
+            # it is expected that the 1st handler of the root logger is the one
+            # used to log onto the command line. so, set the level according to
+            # API input
+            if log_level.lower() == "debug":
+                self._logger.parent.handlers[0].setLevel(logging.DEBUG)
+            elif log_level.lower() == "info":
+                self._logger.parent.handlers[0].setLevel(logging.INFO)
+            elif log_level.lower() == "warning":
+                self._logger.parent.handlers[0].setLevel(logging.WARNING)
+            elif log_level.lower() == "error":
+                self._logger.parent.handlers[0].setLevel(logging.ERROR)
+            else:
+                self._logger.debug("no (valid) log level given when creating object")
 
 
 
