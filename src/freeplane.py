@@ -212,16 +212,19 @@ class Mindmap(object):
             # it is expected that the 1st handler of the root logger is the one
             # used to log onto the command line. so, set the level according to
             # API input
-            if log_level.lower() == "debug":
-                self._logger.parent.handlers[0].setLevel(logging.DEBUG)
-            elif log_level.lower() == "info":
-                self._logger.parent.handlers[0].setLevel(logging.INFO)
-            elif log_level.lower() == "warning":
-                self._logger.parent.handlers[0].setLevel(logging.WARNING)
-            elif log_level.lower() == "error":
-                self._logger.parent.handlers[0].setLevel(logging.ERROR)
+            if len(self._logger.parent.handlers) > 0:
+                if log_level.lower() == "debug":
+                    self._logger.parent.handlers[0].setLevel(logging.DEBUG)
+                elif log_level.lower() == "info":
+                    self._logger.parent.handlers[0].setLevel(logging.INFO)
+                elif log_level.lower() == "warning":
+                    self._logger.parent.handlers[0].setLevel(logging.WARNING)
+                elif log_level.lower() == "error":
+                    self._logger.parent.handlers[0].setLevel(logging.ERROR)
+                else:
+                    self._logger.warning("no (valid) log level given when creating object")
             else:
-                self._logger.debug("no (valid) log level given when creating object")
+                self._logger.warning("no parent logger given by application. settings can not be changed")
 
 
 
