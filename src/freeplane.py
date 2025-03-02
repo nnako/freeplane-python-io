@@ -1427,7 +1427,7 @@ class Node(object):
         # localize XML hook element below node
         #
 
-        hook = self._node.find('hook')
+        hook = self._node.find('./hook[@NAME="ExternalObject"]')
         if hook is None:
 
             # create hook element
