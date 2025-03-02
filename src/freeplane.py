@@ -221,8 +221,8 @@ class Mindmap(object):
                     self._logger.parent.handlers[0].setLevel(logging.WARNING)
                 elif log_level.lower() == "error":
                     self._logger.parent.handlers[0].setLevel(logging.ERROR)
-                else:
-                    self._logger.warning("no (valid) log level given when creating object")
+                elif log_level != "":
+                    self._logger.warning(f'level string "{log_level}" is no valid log level specification. nothing changed')
             else:
                 self._logger.warning("no parent logger given by application. settings can not be changed")
 
