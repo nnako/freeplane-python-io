@@ -68,6 +68,7 @@ import re
 import sys
 import io
 import logging
+import logging.config
 
 # xml format
 try:
@@ -93,6 +94,37 @@ ICON_CHECKED        = 'button_ok'
 ICON_BOOKMARK       = 'bookmark'
 ICON_PRIO1          = 'full-1'
 ICON_PRIO2          = 'full-2'
+
+# LOGGER CONFIGURATION
+LOGGING_CONFIG = {
+    "version"                   : 1,
+    "disable_existing_loggers"  : False,
+    "formatters": {
+        "simple": {
+            "format"            : '[ %(name)-12s ] %(levelname)-8s %(message)s',
+            },
+        "detailed": {
+            "format"            : '%(asctime)s [ %(name)-12s ] %(levelname)-8s L%(lineno)-5d] %(message)s',
+            "datefmt"           : "%Y-%m-%dT%H:%M:%S%z",
+            }
+        },
+    "handlers": {
+        "stderr": {
+            "class"             : "logging.StreamHandler",
+            "level"             : "INFO",
+            "formatter"         : "simple",
+            "stream"            : "ext://sys.stderr",
+            },
+        },
+    "loggers": {
+        "root": {
+            "level"             : "DEBUG",
+            "handlers": [
+                "stderr",
+                ]
+            }
+        }
+    }
 
 
 
@@ -161,15 +193,9 @@ class Mindmap(object):
             # create logger
             #
 
-            # TODO
-            # make log-level adjustable via CLI
-
             # create own logger (as there is no calling application)
-            logging.basicConfig(
-                    format='%(name)s - %(levelname)-8s - %(message)s',
-                    level=logging.WARNING,
-                    )
             self._logger = logging.getLogger(__name__)
+            logging.config.dictConfig(LOGGING_CONFIG)
 
 
 
@@ -212,19 +238,28 @@ class Mindmap(object):
             # it is expected that the 1st handler of the root logger is the one
             # used to log onto the command line. so, set the level according to
             # API input
-            if len(self._logger.parent.handlers) > 0:
-                if log_level.lower() == "debug":
-                    self._logger.parent.handlers[0].setLevel(logging.DEBUG)
-                elif log_level.lower() == "info":
-                    self._logger.parent.handlers[0].setLevel(logging.INFO)
-                elif log_level.lower() == "warning":
-                    self._logger.parent.handlers[0].setLevel(logging.WARNING)
-                elif log_level.lower() == "error":
-                    self._logger.parent.handlers[0].setLevel(logging.ERROR)
-                elif log_level != "":
-                    self._logger.warning(f'level string "{log_level}" is no valid log level specification. nothing changed')
-            else:
-                self._logger.warning("no parent logger given by application. settings can not be changed")
+            if len(self._logger.parent.handlers) == 0:
+
+                # create own logger (as there seems to be no calling application)
+                logging.config.dictConfig(LOGGING_CONFIG)
+
+
+
+
+        #
+        # adjust logging level to user's wishes
+        #
+
+        if log_level.lower() == "debug":
+            self._logger.parent.handlers[0].setLevel(logging.DEBUG)
+        elif log_level.lower() == "info":
+            self._logger.parent.handlers[0].setLevel(logging.INFO)
+        elif log_level.lower() == "warning":
+            self._logger.parent.handlers[0].setLevel(logging.WARNING)
+        elif log_level.lower() == "error":
+            self._logger.parent.handlers[0].setLevel(logging.ERROR)
+        elif log_level != "":
+            self._logger.warning(f'level string "{log_level}" is no valid log level specification. log level not changed')
 
 
 
