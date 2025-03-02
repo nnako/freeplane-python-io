@@ -1,6 +1,18 @@
 package versions
 
 
+v0.10.1
+ 02.03.2025
+
+  - FIX: re-work logging functionality in a way that the freeplane module
+         will use an existing logging configuration provided by the calling
+         application if possible. otherwise it will create its own. the
+         calling application should use the built-in logging package and
+         configure a handler[0] to report to the command line.
+
+  - FIX: node's set_image method now respects specific protocols
+
+
 v0.10.0
  27.10.2024
 
