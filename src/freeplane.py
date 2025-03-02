@@ -1385,22 +1385,48 @@ class Node(object):
         # convert backslashes to slashes
         link = link.replace("\\", "/")
 
-        # check for Windows-style absolute path
-        _match = re.search(r'^([A-z]:/)', link)
+        # check for Windows-style absolute path (drive name is one char long)
+        _match_abs_win_style = re.search(r'^([A-z]:/)', link)
 
-        # check for absolute linux path
+        # check for protocol specification (protocol name at least 2 chars long)
+        _match_specific_protocol = re.search(r'^([A-z]{2,}:/)', link)
+
+
+
+
+        #
+        # build path string
+        #
+
+        # check and eval absolute linux file path
         if link[0] == "/":
             link = "file://" + link
-        # check for absolute windows path
-        elif _match:
+
+        # check and eval absolute windows file path
+        elif _match_abs_win_style:
             link = "file:///" + link
-        # should be relative path
+
+        # check and eval relative file path
+        # relative means relative to the mindmap
+
         elif link[0] == ".":
             pass
+
+        # check and eval other protocols
+        elif _match_specific_protocol:
+            pass
+
+        # in other cases correct to be relative
         else:
             link = "./" + link
 
+
+
+
+        #
         # localize XML hook element below node
+        #
+
         hook = self._node.find('hook')
         if hook is None:
 
