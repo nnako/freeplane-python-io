@@ -59,7 +59,7 @@
 #
 
 
-# generals
+# built-ins
 from __future__ import print_function
 import argparse
 import datetime
@@ -85,6 +85,7 @@ except:
 
 # version
 __version__         = '0.10.0'
+
 
 # BUILTIN ICONS
 ICON_EXCLAMATION    = 'yes'
@@ -164,7 +165,7 @@ class Mindmap(object):
 
 
         #
-        # check for command line arguments
+        # IF directly started from command line
         #
 
         # do this only if called from the command line
@@ -219,6 +220,10 @@ class Mindmap(object):
 
 
 
+
+        #
+        # ELSE module was called from application
+        #
 
         else:
 
