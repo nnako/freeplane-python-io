@@ -1419,7 +1419,7 @@ class Node(object):
 
             # just override attributes
             hook.set("URI", link)
-            hook.set("SIZE", size)
+            hook.set("SIZE", str(size))
 
 
 
