@@ -1664,10 +1664,20 @@ class Node(object):
                 if _stylename.lower() == strStyle.lower():
                     break
             else:
-                print('[ WARNING: style "' + strStyle + '" not found in mindmap. make sure, style exists. ]')
+                if strStyle:
+                    logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
 
         # set style reference in XML node
-        self._node.attrib["STYLE_REF"] = strStyle
+        if strStyle:
+            self._node.attrib["STYLE_REF"] = strStyle
+
+        # on empty string
+        else:
+            # remove style from xmlnode to set to defaults
+            try:
+                del self._node.attrib["STYLE_REF"]
+            except KeyError:
+                pass
 
         return True
 
