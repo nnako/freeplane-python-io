@@ -865,6 +865,7 @@ class Mindmap(object):
             details='',
             notes='',
             icon='',
+            style=[],
             exact=False,
             caseinsensitive=False,
             keep_link_specials=False,
@@ -893,6 +894,7 @@ class Mindmap(object):
             notes=notes,
             link=link,
             icon=icon,
+            style=style,
             exact=exact,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
@@ -2174,6 +2176,7 @@ class Node(object):
             details='',
             notes='',
             icon='',
+            style=[],
             exact=False,
             caseinsensitive=False,
             find_in_self=False,
@@ -2205,6 +2208,7 @@ class Node(object):
             notes=notes,
             link=link,
             icon=icon,
+            style=style,
             exact=exact,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
@@ -2243,6 +2247,7 @@ class Node(object):
             details='',
             notes='',
             icon='',
+            style=[],
             exact=False,
             caseinsensitive=False,
             keep_link_specials=False,
@@ -2268,6 +2273,7 @@ class Node(object):
             notes=notes,
             link=link,
             icon=icon,
+            style=style,
             exact=exact,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
@@ -3057,6 +3063,7 @@ def reduce_node_list(
         notes='',
         link='',
         icon='',
+        style=[],
         exact=False,
         caseinsensitive=False,
         keep_link_specials=False,
@@ -3182,6 +3189,19 @@ def reduce_node_list(
                 else:
                     if notes.lower() in _text.lower():
                         _lstNodes.append(_node)
+        lstXmlNodes = _lstNodes
+
+    # check for node's style(s)
+    if style:
+        # convert to list if not already so
+        if not type(style)==list:
+            style=[style]
+        _lstNodes = []
+        for _node in lstXmlNodes:
+            # check for node style
+            _style = _node.attrib.get("STYLE_REF", "")
+            if _style.lower() in [_.lower() for _ in style]:
+                _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # and back
