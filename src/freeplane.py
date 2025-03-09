@@ -806,7 +806,7 @@ class Mindmap(object):
             # leave function if style is already existing
             for _sty in _lst:
                 if name.lower() == _sty.get('TEXT').lower():
-                    print('[ WARNING: style "' + name + '" is already existing. ignoring request. ]')
+                    logger.warning('style "' + name + '" is already existing. ignoring request.')
                     return False
 
             # create element
@@ -1331,7 +1331,7 @@ class Node(object):
                 return fpnode
 
             except:
-                print(f'[ WARNING: the referenced node "{_referenced_node_id}" was not found in mindmap. please check. ]')
+                logger.warning(f'the referenced node "{_referenced_node_id}" was not found in mindmap. please check.')
                 return None
 
 
@@ -1365,7 +1365,7 @@ class Node(object):
 
         # check if node holds no in-line image
         if self._node.find('hook') is None:
-            # print(f'[ WARNING: the node "{self.id}" does not contain an in-line image. ]')
+            logger.warning(f'the node "{self.id}" does not contain an in-line image.')
             return None
 
         # get hook node
@@ -1398,7 +1398,7 @@ class Node(object):
 
         # check if node holds no in-line image
         if self._node.find('hook') is None:
-            print(f'[ WARNING: the node "{self._node.id}" does not contain an in-line image. ]')
+            logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
             return None
 
         # get hook node
@@ -1515,12 +1515,12 @@ class Node(object):
 
         # check required format
         if not strId.lower().startswith('id_'):
-            print('[ INFO   : in Freeplane, an ID must start with "ID_" and contain a number string.')
+            logger.warning('in Freeplane, an ID must start with "ID_" and contain a number string.')
             # correct ID format
             strId = "ID_"+strId
 
         if not strId[len('id_'):].isnumeric():
-            print('[ WARNING: in Freeplane, an ID must have a certain format. ignoring ID change request.')
+            logger.warning('in Freeplane, an ID must have a certain format. ignoring ID change request.')
             return False
 
         # set new ID
@@ -1636,7 +1636,7 @@ class Node(object):
             # check if node is still detached
             if self._branch._map is None:
 
-                print("[ WARNING: trying to set a style for a detached node. make sure, style exists. ]")
+                logger.warning("trying to set a style for a detached node. please, make sure style exists.")
 
             else:
 
@@ -1882,7 +1882,7 @@ class Node(object):
 
         # if detached branch head
         elif self.is_detached_head:
-            print("[ WARNING: a detached branch head has no other parent. ]")
+            logger.warning("a detached branch head has no other parent.")
             return None
 
         else:
@@ -2372,7 +2372,7 @@ class Node(object):
         #
 
         if attached_node is None:
-            print("[ WARNING: no attached_node given to be attached. ]")
+            logger.warning("no attached_node given to be attached.")
             return False
 
 
@@ -2389,12 +2389,12 @@ class Node(object):
         # check if object is child within map
         if self.is_map_node or self.is_root_node:
             if attached_node._node in self._map._parentmap.keys():
-                print('[ WARNING: node "' + str(attached_node) + \
-                        '" already attached to a map. NOTHING DONE. ]')
+                logger.warning('node "' + str(attached_node) + \
+                        '" already attached to a map. NOTHING DONE.')
                 return False
         elif attached_node.is_detached_node:
-            print('[ WARNING: node "' + str(attached_node) + \
-                    '" is part of a detached branch. NOTHING DONE. please only attach branch head. ]')
+            logger.warning('node "' + str(attached_node) + \
+                    '" is part of a detached branch. NOTHING DONE. please only attach branch head.')
             return False
 
 
@@ -2510,15 +2510,15 @@ class Node(object):
         #
 
         if attached_node.is_detached_node:
-            print('[ WARNING: attach of "' \
+            logger.warning('attach of "' \
                     + str(attached_node) \
-                    + '" not possible. generally, only the heads of detached branches attachable.]')
+                    + '" not possible. generally, only the heads of detached branches attachable.')
             return False
 
 
 
 
-        print('[ ERROR  : host / child configuration for attach is not defined. ]')
+        logger.warning('host / child configuration for attach is not defined.')
         return False
 
 
@@ -2936,7 +2936,7 @@ class Node(object):
         else:
 
             # output warning
-            print("[ WARNING: it is not possible to add a sibling to a detached node. please use the create_node function. ]")
+            logger.warning("it is not possible to add a sibling to a detached node. please use the create_node function.")
             return None
 
 
