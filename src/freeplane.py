@@ -867,6 +867,7 @@ class Mindmap(object):
             icon='',
             style=[],
             exact=False,
+            generalpathsep=False,
             caseinsensitive=False,
             keep_link_specials=False,
             ):
@@ -896,6 +897,7 @@ class Mindmap(object):
             icon=icon,
             style=style,
             exact=exact,
+            generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
         )
@@ -2188,6 +2190,7 @@ class Node(object):
             icon='',
             style=[],
             exact=False,
+            generalpathsep=False,
             caseinsensitive=False,
             find_in_self=False,
             keep_link_specials=False,
@@ -2220,6 +2223,7 @@ class Node(object):
             icon=icon,
             style=style,
             exact=exact,
+            generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
         )
@@ -2259,6 +2263,7 @@ class Node(object):
             icon='',
             style=[],
             exact=False,
+            generalpathsep=False,
             caseinsensitive=False,
             keep_link_specials=False,
             ):
@@ -2285,6 +2290,7 @@ class Node(object):
             icon=icon,
             style=style,
             exact=exact,
+            generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
         )
@@ -3075,6 +3081,7 @@ def reduce_node_list(
         icon='',
         style=[],
         exact=False,
+        generalpathsep=False,
         caseinsensitive=False,
         keep_link_specials=False,
     ):
@@ -3115,10 +3122,38 @@ def reduce_node_list(
                 # check all given attributes
                 iFound = 0
                 for _check_key, _check_value in attrib.items():
-                    # key and value found in node
-                    if _key == _check_key and _value == _check_value:
-                        iFound += 1
-                # check for ALL matches
+
+                    # key found in node
+                    if _key == _check_key:
+
+                        # exact match desired
+                        if exact:
+
+                            # generalized path separator
+                            if generalpathsep:
+
+                                # case-sensitivity desired
+                                if caseinsensitive and _value.replace("\\", "/").lower() == _check_value.replace("\\", "/").lower():
+                                    iFound += 1
+                                # case-insensitivity desired
+                                elif not caseinsensitive and _value.replace("\\", "/") == _check_value.replace("\\", "/"):
+                                    iFound += 1
+
+                            # original path separator
+                            else:
+                                # case-sensitivity desired
+                                if caseinsensitive and _value.lower() == _check_value.lower():
+                                    iFound += 1
+                                # case-insensitivity desired
+                                elif not caseinsensitive and _value == _check_value:
+                                    iFound += 1
+
+                        # approximate match
+                        else:
+                            if _value.lower() in _check_value.lower():
+                                iFound += 1
+
+                # check for matches of ALL given attribute
                 if iFound == len(attrib.items()):
                     _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
