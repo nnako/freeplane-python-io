@@ -1586,6 +1586,46 @@ class Node(object):
             _node = self._node.append(_attrib)
 
 
+    def remove_attribute(self,
+                key='',
+                ):
+        """
+        This functions removes the node's existing attribute
+        """
+
+
+
+
+        #
+        # walk through all of node's xml attributes
+        #
+
+        _lst = self._node.findall('attribute')
+        for _attr in _lst:
+            _name = _attr.get('NAME', '')
+
+
+
+
+            #
+            # remove existing element if corresponding
+            #
+
+            if key.lower() == _name.lower():
+                self._node.remove(_attr)
+
+                # remove entry from user's structure
+                if key in self.attributes.keys():
+                    self.attributes.pop(key)
+
+                return True
+
+
+
+
+        return False
+
+
     def add_attribute(self,
                 key='',
                 value='',
