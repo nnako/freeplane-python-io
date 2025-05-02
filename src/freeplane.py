@@ -1265,6 +1265,26 @@ class Node(object):
 
 
     @property
+    def visibletext(self):
+        """
+        using Groovy scripting or formulas, it is possible to show a distant
+        node's content within the local node by e.g. inserting
+
+        = ID_12345678.text
+
+        into the local node. When using the "plaintext" attribute, this small
+        formula is returned as is, but when using the new "visibletext"
+        attribute, the text string of the distant node with id ID_12345678 (as
+        visible within the local node) is returned.
+
+        In case, there is no core-linked content, this attribute behaves like
+        the "plaintext" attribute.
+        """
+        if self.corelink:
+            return self._map.find_nodes(id=self.corelink)[0].plaintext
+        return self.plaintext
+
+    @property
     def plaintext(self):
         return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
 
