@@ -66,6 +66,7 @@ import datetime
 import os
 import re
 import sys
+import html
 import io
 import logging
 import logging.config
@@ -3104,10 +3105,10 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
         htmlnode = richnode.find('html')
 
         # get html body node
-        htmltext = htmlnode.find('body')
+        html_body = htmlnode.find('body')
 
         # filter out plain text content
-        raw = "".join([x for x in htmltext.itertext()])
+        sanitized_text = extract_sanitized_body_content(html_body)
 
 
 
@@ -3119,15 +3120,46 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
         if bOnlyFirstLine:
 
             # take only first line of text content
-            text = raw.strip().split('\n')[0].strip()
+            text = sanitized_text.strip().split('\n')[0].strip()
 
         else:
 
-            # replace <CR> and leading / trailing <SPACE>
-            raw__no_CR = raw.replace('\n', '')
-            text = raw__no_CR.strip()
+            # remove leading / trailing whitespace
+            text = sanitized_text.strip()
+
 
     return text
+
+
+def extract_sanitized_body_content(body_elem):
+    parts = []
+
+    def process_element(el):
+
+        # process text before children
+        if el.text and el.text.strip():
+            parts.append(html.unescape(el.text))
+
+        # process children recursively
+        for child in el:
+
+            # into child element and evaluate
+            process_element(child)
+
+            # when only whitespace -> discard
+            if child.tail and child.tail.strip():
+                    parts.append(html.unescape(child.tail))
+
+            # add NEWLINE only if on body level
+            if child.tag == "p" and child.tail and child.tail.strip() == "":
+                parts.append("\n")
+
+    process_element(body_elem)
+
+    # join parts, strip trailing whitespace, and preserve non-breaking spaces
+    result = ''.join(parts).strip('\n')
+
+    return result
 
 
 def reduce_node_list(
