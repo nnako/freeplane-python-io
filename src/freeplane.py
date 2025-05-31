@@ -132,7 +132,6 @@ LOGGING_CONFIG = {
 
 
 
-# MINDMAP
 #
 # functions
 #
@@ -149,6 +148,9 @@ def sanitized(text):
 
 
 
+#
+# mindmap class
+#
 
 class Mindmap(object):
 
