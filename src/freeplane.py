@@ -1231,7 +1231,7 @@ class Node(object):
     node-related features can be accessed from here.
     """
 
-    def __init__(self, node, mindmap):
+    def __init__(self, xmlnode, mindmap):
 
 
 
@@ -1240,9 +1240,9 @@ class Node(object):
         # initialize instance
         #
 
-        self._map = mindmap
-        self._node = node
-        self._branch = None
+        self._map = mindmap                 # the reference to the current mindmap object
+        self._node = xmlnode                # the reference to the corresponding node within the xml file
+        self._branch = None                 # a pointer to be set to a detached branch (possibly later)
 
 
 
@@ -1251,7 +1251,7 @@ class Node(object):
         # create unique session node id
         #
 
-        if not node.get('ID', ''):
+        if not xmlnode.get('ID', ''):
             self._node.set('ID',
                 Mindmap.create_node_id(self._map)
                 )
@@ -1263,10 +1263,10 @@ class Node(object):
         # create date entries
         #
 
-        if not node.get('CREATED', ''):
-            update_date_attribute_in_node(node, key="CREATED")
-        if not node.get('MODIFIED', ''):
-            update_date_attribute_in_node(node, key="MODIFIED")
+        if not xmlnode.get('CREATED', ''):
+            update_date_attribute_in_node(xmlnode, key="CREATED")
+        if not xmlnode.get('MODIFIED', ''):
+            update_date_attribute_in_node(xmlnode, key="MODIFIED")
 
 
     def __repr__(self):
