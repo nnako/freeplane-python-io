@@ -1243,6 +1243,8 @@ class Node(object):
         self._map = mindmap                 # the reference to the current mindmap object
         self._node = xmlnode                # the reference to the corresponding node within the xml file
         self._branch = None                 # a pointer to be set to a detached branch (possibly later)
+        if model:
+            self.model = model.Model(self)  # interface to a more user friendly access model
 
 
 
