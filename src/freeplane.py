@@ -1426,6 +1426,32 @@ class Node(object):
 
 
     @property
+    def follow_corelink(self):
+
+        # check for corelink
+        if self.corelink:
+
+            try:
+                # find node
+                _node = self._map.find_nodes(id=self.corelink)[0]
+
+                # create Node instance
+                fpnode = Node(_node._node, self._map)
+
+                # update branch reference in case of detached node
+                if not self.is_root_node and not self.is_map_node:
+                    fpnode._map     = None
+                    fpnode._branch  = self._branch
+
+                # return it to user
+                return fpnode
+
+            except:
+                logger.warning(f'the referenced node "{self.corelink}" was not found in mindmap. please check.')
+                return None
+
+
+    @property
     def hyperlink(self):
         return self._node.attrib.get("LINK","")
 
