@@ -133,6 +133,22 @@ LOGGING_CONFIG = {
 
 
 # MINDMAP
+#
+# functions
+#
+
+def sanitized(text):
+
+    # when reading text from mindmaps, sometimes there will be special
+    # characters representing an ordinary <SPACE> character. especially when
+    # dealing with html or richtext nodes and converting them to plain text.
+    # these are replaced by ordinary <SPACE> characters.
+
+    return text.replace("\xa0", " ").strip()
+
+
+
+
 
 class Mindmap(object):
 
@@ -1330,7 +1346,9 @@ class Node(object):
 
     @property
     def plaintext(self):
-        return getCoreTextFromNode(self._node, bOnlyFirstLine=False)
+        return sanitized(
+            getCoreTextFromNode(self._node, bOnlyFirstLine=False)
+        )
 
 
     @plaintext.setter
