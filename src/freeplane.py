@@ -63,13 +63,14 @@
 from __future__ import print_function
 import argparse
 import datetime
-import os
-import re
-import sys
 import html
+import importlib.util
 import io
 import logging
 import logging.config
+import os
+import re
+import sys
 
 # xml format
 try:
@@ -275,6 +276,23 @@ class Mindmap(object):
         #
 
         Mindmap._num_of_maps += 1
+
+
+
+
+        #
+        # reload specific packages for enhanced functionality
+        #
+
+        # load local modules as packages to enhance functionality to be used
+        # within e.g. the node objects
+
+        _packages= [
+            "model",
+            "grpc",
+        ]
+        for _package in _packages:
+            self._load_package_if_exists(_package)
 
 
 
@@ -1115,6 +1133,31 @@ class Mindmap(object):
         #
 
         mm.save("example101.mm")
+
+
+    def _load_package_if_exists(self, strPackageName):
+        """
+        load a package into memory, accessible as an ordinary package based on its
+        source code present within the current folder
+        """
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        module_path = os.path.join(current_dir, f"{strPackageName}.py")
+
+        if os.path.exists(module_path):
+            spec = importlib.util.spec_from_file_location(strPackageName, module_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            # Inject into both globals() and sys.modules for standard access
+            globals()[strPackageName] = module
+            sys.modules[strPackageName] = module
+
+            self._logger.debug(f'package "{strPackageName}" loaded successfully.')
+
+        else:
+            globals()[strPackageName] = None
+            self._logger.debug(f'NO {strPackageName}.py found – skipping import.')
 
 
 
