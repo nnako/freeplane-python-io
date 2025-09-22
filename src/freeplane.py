@@ -84,6 +84,12 @@ try:
 except:
     print("at this point, html2text package is not available. shouldn't be a problem, though.")
 
+# information model
+try:
+    import model
+except ImportError:
+    model = None
+
 
 # version
 __version__         = '0.10.1'
@@ -305,12 +311,14 @@ class Mindmap(object):
         # load local modules as packages to enhance functionality to be used
         # within e.g. the node objects
 
-        _packages= [
-            "model",
-            "grpc",
-        ]
-        for _package in _packages:
-            self._load_package_if_exists(_package)
+        if False:
+            _packages= [
+                "model",
+                #"grpc",
+                #"test",
+            ]
+            for _package in _packages:
+                self._load_package_if_exists(_package)
 
 
 
