@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # get long description that is used within the README file of this project
 # (available on the GitHub platform) for display within PyPi platform
@@ -25,6 +25,7 @@ setup(
     url="https://github.com/nnako/freeplane-python-io",
     description='provide create, read, update and delete of freeplane nodes via file access',
     package_dir={"": "src"},
+    packages=find_packages(where="src"),
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
