@@ -61,6 +61,7 @@
 
 # built-ins
 from __future__ import print_function
+
 import argparse
 import datetime
 import html
@@ -3260,22 +3261,21 @@ def extract_sanitized_body_content(body_elem):
 
     return result
 
-
 def reduce_node_list(
-        lstXmlNodes=[],
-        id='',
-        core='',
-        attrib='',
-        details='',
-        notes='',
-        link='',
-        icon='',
-        style=[],
-        exact=False,
-        generalpathsep=False,
-        caseinsensitive=False,
-        keep_link_specials=False,
-    ):
+    lstXmlNodes=[],
+    id="",
+    core="",
+    attrib="",
+    details="",
+    notes="",
+    link="",
+    icon="",
+    style=[],
+    exact=False,
+    generalpathsep=False,
+    caseinsensitive=False,
+    keep_link_specials=False,
+):
 
     # check for identical ID
     if id:
@@ -3289,14 +3289,8 @@ def reduce_node_list(
     if core:
         _lstNodes = []
         for _node in lstXmlNodes:
-            if exact:
-                if not caseinsensitive and core == _node.attrib.get("TEXT", ""):
-                    _lstNodes.append(_node)
-                elif caseinsensitive and core.lower() == _node.attrib.get("TEXT", "").lower():
-                    _lstNodes.append(_node)
-            else:
-                if core.lower() in _node.attrib.get("TEXT", "").lower():
-                    _lstNodes.append(_node)
+            if re.search(core, _node.attrib.get("TEXT", "")):
+                _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for all ATTRIBUTES within a node
@@ -3305,48 +3299,24 @@ def reduce_node_list(
         # check for current list of nodes
         for _node in lstXmlNodes:
             # get attributes of node
+            iFound = 0
             for _attribnode in _node.findall("./attribute"):
                 _key = _attribnode.attrib.get("NAME", "")
                 _value = ""
                 if _key:
                     _value = _attribnode.attrib.get("VALUE", "")
                 # check all given attributes
-                iFound = 0
                 for _check_key, _check_value in attrib.items():
 
                     # key found in node
                     if _key == _check_key:
 
-                        # exact match desired
-                        if exact:
+                        if re.search(_check_value, _value):
+                            iFound += 1
 
-                            # generalized path separator
-                            if generalpathsep:
-
-                                # case-sensitivity desired
-                                if caseinsensitive and _value.replace("\\", "/").lower() == _check_value.replace("\\", "/").lower():
-                                    iFound += 1
-                                # case-insensitivity desired
-                                elif not caseinsensitive and _value.replace("\\", "/") == _check_value.replace("\\", "/"):
-                                    iFound += 1
-
-                            # original path separator
-                            else:
-                                # case-sensitivity desired
-                                if caseinsensitive and _value.lower() == _check_value.lower():
-                                    iFound += 1
-                                # case-insensitivity desired
-                                elif not caseinsensitive and _value == _check_value:
-                                    iFound += 1
-
-                        # approximate match
-                        else:
-                            if _value.lower() in _check_value.lower():
-                                iFound += 1
-
-                # check for matches of ALL given attribute
-                if iFound == len(attrib.items()):
-                    _lstNodes.append(_node)
+            # check for matches of ALL given attribute
+            if iFound >= len(attrib.items()):
+                _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for LINK within a node's LINK TEXT
@@ -3363,21 +3333,15 @@ def reduce_node_list(
             # characters.
 
             if not keep_link_specials:
-                _link = _node.attrib.get("LINK", "").replace("\\","/").replace("%20", " ")
+                _link = (
+                    _node.attrib.get("LINK", "").replace("\\", "/").replace("%20", " ")
+                )
             else:
-                _link = _node.attrib.get("LINK", "").replace("\\","/")
+                _link = _node.attrib.get("LINK", "").replace("\\", "/")
 
-            # now do the comparison
-            if exact:
-                # case-sensitive test
-                if not caseinsensitive and (link.replace("\\","/") == _link):
-                    _lstNodes.append(_node)
-                # case-insensitive test
-                elif caseinsensitive and (link.replace("\\","/").lower() == _link.lower()):
-                    _lstNodes.append(_node)
-            else:
-                if link.replace("\\", "/").lower() in _link.lower():
-                    _lstNodes.append(_node)
+
+            if re.search(link, _link):
+                _lstNodes.append(_node)
 
         lstXmlNodes = _lstNodes
 
@@ -3398,15 +3362,9 @@ def reduce_node_list(
             # check for details node
             _lstDetailsNodes = _node.findall("./richcontent[@TYPE='DETAILS']")
             if _lstDetailsNodes:
-                _text = ''.join(_lstDetailsNodes[0].itertext())
-                if exact:
-                    if not caseinsensitive and details == _text:
-                        _lstNodes.append(_node)
-                    elif caseinsensitive and details.lower() == _text.lower():
-                        _lstNodes.append(_node)
-                else:
-                    if details.lower() in _text.lower():
-                        _lstNodes.append(_node)
+                _text = "".join(_lstDetailsNodes[0].itertext())
+                if re.search(details, _text):
+                    _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for node's NOTES
@@ -3416,22 +3374,16 @@ def reduce_node_list(
             # check for notes node
             _lstNotesNodes = _node.findall("./richcontent[@TYPE='NOTE']")
             if _lstNotesNodes:
-                _text = ''.join(_lstNotesNodes[0].itertext())
-                if exact:
-                    if not caseinsensitive and notes == _text:
-                        _lstNodes.append(_node)
-                    elif caseinsensitive and notes.lower() == _text.lower():
-                        _lstNodes.append(_node)
-                else:
-                    if notes.lower() in _text.lower():
-                        _lstNodes.append(_node)
+                _text = "".join(_lstNotesNodes[0].itertext())
+                if re.search(notes, _text):
+                    _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for node's style(s)
     if style:
         # convert to list if not already so
-        if not type(style)==list:
-            style=[style]
+        if not type(style) == list:
+            style = [style]
         _lstNodes = []
         for _node in lstXmlNodes:
             # check for node style
@@ -3448,6 +3400,7 @@ def reduce_node_list(
 
 # read text paragraph from mindmap
 # CLI FUNCTIONS
+
 
 def getText(self, strRootAttribute, strTitleText, strPortion):
 
