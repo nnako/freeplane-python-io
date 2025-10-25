@@ -3405,7 +3405,7 @@ def reduce_node_list(
                     (regex and re.search(details, _text))
                     or (exact and not caseinsensitive and details == _text)
                     or (exact and caseinsensitive and details.lower() == _text.lower())
-                    or (not exact and details.lower() == _text.lower())
+                    or (not exact and details.lower() in _text.lower())
                 ):
                     _lstNodes.append(_node)
 
