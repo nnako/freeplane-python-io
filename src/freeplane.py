@@ -3315,13 +3315,13 @@ def reduce_node_list(
         # check for current list of nodes
         for _node in lstXmlNodes:
             # get attributes of node
+            iFound = 0
             for _attribnode in _node.findall("./attribute"):
                 _key = _attribnode.attrib.get("NAME", "")
                 _value = ""
                 if _key:
                     _value = _attribnode.attrib.get("VALUE", "")
                 # check all given attributes
-                iFound = 0
                 for _check_key, _check_value in attrib.items():
 
                     # key found in node
@@ -3348,8 +3348,8 @@ def reduce_node_list(
                             iFound += 1
 
                 # check for matches of ALL given attribute
-                if iFound == len(attrib.items()):
-                    _lstNodes.append(_node)
+            if iFound >= len(attrib.items()):
+                _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for LINK within a node's LINK TEXT
