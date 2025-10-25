@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#-*- coding: utf-8 -*-
-
-
+# -*- coding: utf-8 -*-
 
 
 #
@@ -22,7 +20,7 @@
 #   B   Branch object         - a separate information structure organizing detached elements
 #   DH  Detached Head object  - the head of a detached branch
 #   DN  Detached Node object  - any branch node below a detached head
-#   XMLNODE object            - an lxml node element representing a real node in Freeplane 
+#   XMLNODE object            - an lxml node element representing a real node in Freeplane
 #
 #
 #  _path
@@ -77,13 +75,17 @@ import sys
 try:
     import lxml.etree as ET
 except:
-    print("at this point, lxml package is not available. shouldn't be a problem, though.")
+    print(
+        "at this point, lxml package is not available. shouldn't be a problem, though."
+    )
 
 # html format
 try:
     import html2text
 except:
-    print("at this point, html2text package is not available. shouldn't be a problem, though.")
+    print(
+        "at this point, html2text package is not available. shouldn't be a problem, though."
+    )
 
 # information model
 try:
@@ -93,55 +95,54 @@ except ImportError:
 
 
 # version
-__version__         = '0.10.1'
+__version__ = "0.10.1"
 
 
 # BUILTIN ICONS
-ICON_EXCLAMATION    = 'yes'
-ICON_LIST           = 'list'
-ICON_QUESTION       = 'help'
-ICON_CHECKED        = 'button_ok'
-ICON_BOOKMARK       = 'bookmark'
-ICON_PRIO1          = 'full-1'
-ICON_PRIO2          = 'full-2'
+ICON_EXCLAMATION = "yes"
+ICON_LIST = "list"
+ICON_QUESTION = "help"
+ICON_CHECKED = "button_ok"
+ICON_BOOKMARK = "bookmark"
+ICON_PRIO1 = "full-1"
+ICON_PRIO2 = "full-2"
 
 # LOGGER CONFIGURATION
 LOGGING_CONFIG = {
-    "version"                   : 1,
-    "disable_existing_loggers"  : False,
+    "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "simple": {
-            "format"            : '[ %(name)-12s ] %(levelname)-8s %(message)s',
-            },
-        "detailed": {
-            "format"            : '%(asctime)s [ %(name)-12s ] %(levelname)-8s L%(lineno)-5d] %(message)s',
-            "datefmt"           : "%Y-%m-%dT%H:%M:%S%z",
-            }
+            "format": "[ %(name)-12s ] %(levelname)-8s %(message)s",
         },
+        "detailed": {
+            "format": "%(asctime)s [ %(name)-12s ] %(levelname)-8s L%(lineno)-5d] %(message)s",
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",
+        },
+    },
     "handlers": {
         "stderr": {
-            "class"             : "logging.StreamHandler",
-            "level"             : "INFO",
-            "formatter"         : "simple",
-            "stream"            : "ext://sys.stderr",
-            },
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stderr",
         },
+    },
     "loggers": {
         "root": {
-            "level"             : "DEBUG",
+            "level": "DEBUG",
             "handlers": [
                 "stderr",
-                ]
-            }
+            ],
         }
-    }
-
-
+    },
+}
 
 
 #
 # functions
 #
+
 
 def sanitized(text):
 
@@ -153,14 +154,12 @@ def sanitized(text):
     return text.replace("\xa0", " ").strip()
 
 
-
-
 #
 # mindmap class
 #
 
-class Mindmap(object):
 
+class Mindmap(object):
     """
     representation of Freeplane mindmap file as a container for nodes. access
     styles and other general features from here.
@@ -176,46 +175,38 @@ class Mindmap(object):
     # possible new nodes before the id string is
     # added another digit (initially 10 digits).
     _global_node_id_incr = 0
-    _global_node_id_seed = datetime.datetime.now().strftime('%y%m%d')
-
+    _global_node_id_seed = datetime.datetime.now().strftime("%y%m%d")
 
     def __init__(
-            self,
-            path='',
-            mtype='freeplane',
-            version='1.3.0',
-            _id='',
-            log_level="",
-            ):
-
-
-
+        self,
+        path="",
+        mtype="freeplane",
+        version="1.3.0",
+        _id="",
+        log_level="",
+    ):
 
         #
         # IF directly started from command line
         #
 
         # do this only if called from the command line
-        if _id == 'cli':
+        if _id == "cli":
 
             # define information
             parser = argparse.ArgumentParser(
-                    description='Operation on Freeplane mindmap',
-                    usage='''%s <command> [<args>]
+                description="Operation on Freeplane mindmap",
+                usage="""%s <command> [<args>]
 
                     Possible commands are:
                         getText    return text portion of a node
                         test       test this library
-                        ...               ...''' % os.path.basename(sys.argv[0]))
+                        ...               ..."""
+                % os.path.basename(sys.argv[0]),
+            )
 
             # define command argument
-            parser.add_argument(
-                    'command',
-                    help='Subcommand to run'
-                    )
-
-
-
+            parser.add_argument("command", help="Subcommand to run")
 
             #
             # create logger
@@ -224,9 +215,6 @@ class Mindmap(object):
             # create own logger (as there is no calling application)
             self._logger = logging.getLogger(__name__)
             logging.config.dictConfig(LOGGING_CONFIG)
-
-
-
 
             #
             # read out CLI and execute main command
@@ -238,24 +226,18 @@ class Mindmap(object):
             # check if command is provided in script
             if not hasattr(self, args.command):
 
-                self._logger.error('Unrecognized command. EXITING.')
+                self._logger.error("Unrecognized command. EXITING.")
                 parser.print_help()
                 sys.exit(1)
 
             # use dispatch pattern to invoke method with same name
             getattr(self, args.command)()
 
-
-
-
         #
         # ELSE module was called from application
         #
 
         else:
-
-
-
 
             #
             # connect to existing logger
@@ -275,9 +257,6 @@ class Mindmap(object):
                 # create own logger (as there seems to be no calling application)
                 logging.config.dictConfig(LOGGING_CONFIG)
 
-
-
-
         #
         # adjust logging level to user's wishes
         #
@@ -291,19 +270,15 @@ class Mindmap(object):
         elif log_level.lower() == "error":
             self._logger.parent.handlers[0].setLevel(logging.ERROR)
         elif log_level != "":
-            self._logger.warning(f'level string "{log_level}" is no valid log level specification. log level not changed')
-
-
-
+            self._logger.warning(
+                f'level string "{log_level}" is no valid log level specification. log level not changed'
+            )
 
         #
         # update class variables
         #
 
         Mindmap._num_of_maps += 1
-
-
-
 
         #
         # reload specific packages for enhanced functionality
@@ -313,16 +288,13 @@ class Mindmap(object):
         # within e.g. the node objects
 
         if False:
-            _packages= [
+            _packages = [
                 "model",
-                #"grpc",
-                #"test",
+                # "grpc",
+                # "test",
             ]
             for _package in _packages:
                 self._load_package_if_exists(_package)
-
-
-
 
         #
         # access instance variables
@@ -334,9 +306,6 @@ class Mindmap(object):
         # type, version
         self._type = mtype
 
-
-
-
         #
         # read mindmap in case path is given
         #
@@ -347,9 +316,6 @@ class Mindmap(object):
 
         # check for validity of file
         if os.path.isfile(self._path):
-
-
-
 
             #
             # determine file's map version
@@ -366,7 +332,9 @@ class Mindmap(object):
                 with io.open(self._path, "r", encoding="utf-8") as fpMap:
                     strFirstLine = fpMap.readline()
             except:
-                self._logger.info("format mismatch in mindmap file vs. UTF-8. TRYING WORKAROUND.")
+                self._logger.info(
+                    "format mismatch in mindmap file vs. UTF-8. TRYING WORKAROUND."
+                )
                 retry = True
 
             # in case there are wrong encodings when trying to read as UTF-8,
@@ -378,23 +346,24 @@ class Mindmap(object):
                 try:
                     with io.open(self._path, "r", encoding="windows-1252") as fpMap:
                         strFirstLine = fpMap.readline()
-                    self._logger.info("format mismatch could be worked around, successfully")
+                    self._logger.info(
+                        "format mismatch could be worked around, successfully"
+                    )
                 except:
-                    self._logger.warning("format mismatch in mindmap file vs. windows-1252. FURTHER PROBLEMS WILL FOLLOW.")
+                    self._logger.warning(
+                        "format mismatch in mindmap file vs. windows-1252. FURTHER PROBLEMS WILL FOLLOW."
+                    )
 
             # now, analyze the characters in the first line of the mindmap file
             # and try to find the "freeplane" token which will contain the
             # version information.
 
             # detect from '<map version="freeplane 1.3.0">'
-            idxFpToken    = strFirstLine.find("freeplane")
-            idxSpace      = strFirstLine[idxFpToken:].find(" ") + idxFpToken
-            idxVer        = idxSpace+1
-            idxClQuote    = strFirstLine[idxVer:].find('"') + idxVer
+            idxFpToken = strFirstLine.find("freeplane")
+            idxSpace = strFirstLine[idxFpToken:].find(" ") + idxFpToken
+            idxVer = idxSpace + 1
+            idxClQuote = strFirstLine[idxVer:].find('"') + idxVer
             self._version = strFirstLine[idxVer:idxClQuote]
-
-
-
 
             #
             # set parser encoding due to map version
@@ -410,9 +379,6 @@ class Mindmap(object):
             # xmlparser = ET.XMLParser(encoding="latin1")
             # xmlparser = ET.XMLParser(encoding="utf-8")
 
-
-
-
             #
             # read entire mindmap and evaluate structure
             #
@@ -425,11 +391,13 @@ class Mindmap(object):
                 self._mindmap = ET.parse(self._path, parser=xmlparser)
 
             except ET.XMLSyntaxError:
-                self._logger.warning("invalid XML syntax. will try to fix it temporarily...")
+                self._logger.warning(
+                    "invalid XML syntax. will try to fix it temporarily..."
+                )
 
                 # write sanitized file into temporary file
                 _basename = "_" + os.path.basename(self._path)
-                _dirname  = os.path.dirname(self._path)
+                _dirname = os.path.dirname(self._path)
 
                 # ensure temp file is not yet present
                 while os.path.isfile(os.path.join(_dirname, _basename)):
@@ -462,18 +430,12 @@ class Mindmap(object):
             self._root = self._mindmap.getroot()
 
             # find and get first node element of etree
-            self._rootnode = self._root.find('node')
+            self._rootnode = self._root.find("node")
 
             # build parent map (using ElementTree nodes)
-            self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
-
-
-
+            self._parentmap = {c: p for p in self._rootnode.iter() for c in p}
 
             return
-
-
-
 
         #
         # create mindmap if path is invalid or empty
@@ -493,40 +455,40 @@ class Mindmap(object):
         self._parentmap = {}
 
         # create map element as XML node containing the version information
-        self._mindmap = ET.Element('map') 
-        self._mindmap.attrib['version'] = 'freeplane ' + self._version
+        self._mindmap = ET.Element("map")
+        self._mindmap.attrib["version"] = "freeplane " + self._version
 
         # get root of mindmap (necessary for save operation)
         self._root = self._mindmap
 
         # set some attributes for visibility within freeplane editor
-        _node = ET.Element('attribute_registry') 
-        _node.attrib['SHOW_ATTRIBUTES'] = 'hide'
+        _node = ET.Element("attribute_registry")
+        _node.attrib["SHOW_ATTRIBUTES"] = "hide"
         self._mindmap.append(_node)
 
         # create 1st visible node element containing standard TEXT
-        self._rootnode = ET.Element('node') 
+        self._rootnode = ET.Element("node")
         self._rootnode.attrib["TEXT"] = "new_mindmap"
         self._rootnode.attrib["FOLDED"] = "false"
         self._rootnode.attrib["ID"] = Mindmap.create_node_id()
         self._mindmap.append(self._rootnode)
 
         # create some standard edge styles
-        _node = ET.Element('edge') 
-        _node.attrib['STYLE'] = 'horizontal'
-        _node.attrib['COLOR'] = '#cccccc'
+        _node = ET.Element("edge")
+        _node.attrib["STYLE"] = "horizontal"
+        _node.attrib["COLOR"] = "#cccccc"
         self._rootnode.append(_node)
 
         #
         # hook element and properties
         #
 
-        _hook = ET.Element('hook') 
+        _hook = ET.Element("hook")
         _hook.attrib["NAME"] = "MapStyle"
         _hook.attrib["zoom"] = "1.00"
         self._rootnode.append(_hook)
         # sub element properties
-        _node = ET.Element('properties')
+        _node = ET.Element("properties")
         _node.attrib["show_icon_for_attributes"] = "false"
         _node.attrib["show_note_icons"] = "false"
         _hook.append(_node)
@@ -536,10 +498,10 @@ class Mindmap(object):
         #
 
         # sub element map styles
-        _mapstyles = ET.Element('map_styles')
+        _mapstyles = ET.Element("map_styles")
         _hook.append(_mapstyles)
         # sub sub element stylenode
-        _stylenode = ET.Element('stylenode')
+        _stylenode = ET.Element("stylenode")
         _stylenode.attrib["LOCALIZED_TEXT"] = "styles.root_node"
         _mapstyles.append(_stylenode)
 
@@ -548,42 +510,42 @@ class Mindmap(object):
         #
 
         # sub sub sub element stylenode
-        _node = ET.Element('stylenode')
+        _node = ET.Element("stylenode")
         _node.attrib["LOCALIZED_TEXT"] = "styles.predefined"
         _node.attrib["POSITION"] = "right"
         _stylenode.append(_node)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "default"
         _node2.attrib["MAX_WIDTH"] = "600"
         _node2.attrib["COLOR"] = "#000000"
         _node2.attrib["STYLE"] = "as_parent"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('font')
+        _node3 = ET.Element("font")
         _node3.attrib["NAME"] = "Segoe UI"
         _node3.attrib["SIZE"] = "12"
         _node3.attrib["BOLD"] = "false"
         _node3.attrib["ITALIC"] = "false"
         _node2.append(_node3)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.details"
         _node.append(_node2)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.note"
         _node.append(_node2)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "defaultstyle.floating"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('edge')
+        _node3 = ET.Element("edge")
         _node3.attrib["STYLE"] = "hide edge"
         _node2.append(_node3)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('cloud')
+        _node3 = ET.Element("cloud")
         _node3.attrib["COLOR"] = "#0f0f0f"
         _node3.attrib["SHAPE"] = "ROUND_RECT"
         _node2.append(_node3)
@@ -593,55 +555,55 @@ class Mindmap(object):
         #
 
         # sub sub sub element stylenode
-        _node = ET.Element('stylenode')
+        _node = ET.Element("stylenode")
         _node.attrib["LOCALIZED_TEXT"] = "styles.user-defined"
         _node.attrib["POSITION"] = "right"
         _stylenode.append(_node)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "styles.topic"
         _node2.attrib["COLOR"] = "#18898b"
         _node2.attrib["STYLE"] = "fork"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('font')
+        _node3 = ET.Element("font")
         _node3.attrib["NAME"] = "Liberation Sans"
         _node3.attrib["SIZE"] = "12"
         _node3.attrib["BOLD"] = "true"
         _node2.append(_node3)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "styles.subtopic"
         _node2.attrib["COLOR"] = "#cc3300"
         _node2.attrib["STYLE"] = "fork"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('font')
+        _node3 = ET.Element("font")
         _node3.attrib["NAME"] = "Liberation Sans"
         _node3.attrib["SIZE"] = "12"
         _node3.attrib["BOLD"] = "true"
         _node2.append(_node3)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "styles.subsubtopic"
         _node2.attrib["COLOR"] = "#669900"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('font')
+        _node3 = ET.Element("font")
         _node3.attrib["NAME"] = "Liberation Sans"
         _node3.attrib["SIZE"] = "12"
         _node3.attrib["BOLD"] = "true"
         _node2.append(_node3)
         # sub sub sub element stylenode
-        _node2 = ET.Element('stylenode')
+        _node2 = ET.Element("stylenode")
         _node2.attrib["LOCALIZED_TEXT"] = "styles.important"
         _node.append(_node2)
         # sub sub sub sub element stylenode
-        _node3 = ET.Element('icon')
+        _node3 = ET.Element("icon")
         _node3.attrib["BUILTIN"] = "yes"
         _node2.append(_node3)
 
-# MAP
+    # MAP
 
     @classmethod
     def get_num_of_maps(cls):
@@ -662,9 +624,9 @@ class Mindmap(object):
 
             1. the id token "ID_" which is used for all nodes directly created
                within freeplane editor
-        
+
             2. and kind of session seed which is the current date
-        
+
             3. and a standard 4-digit integer value constantly incremented
         """
 
@@ -672,12 +634,9 @@ class Mindmap(object):
         cls._global_node_id_incr += 1
 
         # set the node id
-        _id = 'ID_' + \
-                cls._global_node_id_seed + \
-                '{:04}'.format(cls._global_node_id_incr)
-
-
-
+        _id = (
+            "ID_" + cls._global_node_id_seed + "{:04}".format(cls._global_node_id_incr)
+        )
 
         #
         # resolve overlapping ids
@@ -702,57 +661,51 @@ class Mindmap(object):
                     cls._global_node_id_incr += 1
 
                     # set the node id string
-                    _id = 'ID_' + \
-                            cls._global_node_id_seed + \
-                            '{:04}'.format(cls._global_node_id_incr)
+                    _id = (
+                        "ID_"
+                        + cls._global_node_id_seed
+                        + "{:04}".format(cls._global_node_id_incr)
+                    )
 
                 else:
                     bLeave = True
-
-
-
 
         # return new node id
         return _id
 
     @classmethod
-    def create_node(cls,
-            core='',
-            link='',
-            id='',
-            style='',
-            modified='',  # timestamp format, milliseconds since 1.1.1970
-            created='',   # timestamp format, milliseconds since 1.1.1970
-            ):
+    def create_node(
+        cls,
+        core="",
+        link="",
+        id="",
+        style="",
+        modified="",  # timestamp format, milliseconds since 1.1.1970
+        created="",  # timestamp format, milliseconds since 1.1.1970
+    ):
 
         #
         # create and init element
         #
 
         # core
-        _node = ET.Element('node')
+        _node = ET.Element("node")
         node = Node(_node, None)
         node.plaintext = core
-
-
-
 
         #
         # set current creation and modification dates
         #
 
         update_date_attribute_in_node(
-                node=_node,
-                key="MODIFIED",
-                )
+            node=_node,
+            key="MODIFIED",
+        )
 
         update_date_attribute_in_node(
-                node=_node,
-                key="CREATED",
-                )
-
-
-
+            node=_node,
+            key="CREATED",
+        )
 
         # create temporary branch with local (empty) parent_map reference
         node._branch = Branch()
@@ -774,43 +727,43 @@ class Mindmap(object):
 
         return node
 
-
     @property
     def rootnode(self):
         return Node(self._rootnode, self)
-
 
     @property
     def styles(self):
         _style = {}
 
-        _stylenode_user = self._mindmap.find('.//stylenode[@LOCALIZED_TEXT="styles.user-defined"]')
-        _lst = _stylenode_user.findall('./stylenode[@TEXT]')
+        _stylenode_user = self._mindmap.find(
+            './/stylenode[@LOCALIZED_TEXT="styles.user-defined"]'
+        )
+        _lst = _stylenode_user.findall("./stylenode[@TEXT]")
         for _sty in _lst:
             _item = {}
 
             # style name
-            _name = _sty.get('TEXT', '')
+            _name = _sty.get("TEXT", "")
 
             # foreground color
-            _color = _sty.get('COLOR', '')
+            _color = _sty.get("COLOR", "")
             if _color:
-                _item['color'] = _color
+                _item["color"] = _color
 
             # background color
-            _bgcolor = _sty.get('BACKGROUND_COLOR', '')
+            _bgcolor = _sty.get("BACKGROUND_COLOR", "")
             if _bgcolor:
-                _item['bgcolor'] = _bgcolor
+                _item["bgcolor"] = _bgcolor
 
             # font
-            _sty_sub = _sty.find('./font')
+            _sty_sub = _sty.find("./font")
             if _sty_sub is not None:
                 # font name
-                _fontname = _sty_sub.get('NAME', '')
-                _item['fontname'] = _fontname
+                _fontname = _sty_sub.get("NAME", "")
+                _item["fontname"] = _fontname
                 # font size
-                _fontsize = _sty_sub.get('SIZE', '')
-                _item['fontsize'] = _fontsize
+                _fontsize = _sty_sub.get("SIZE", "")
+                _item["fontsize"] = _fontsize
 
             # ...
 
@@ -819,17 +772,14 @@ class Mindmap(object):
 
         return _style
 
-
-    def add_style(self,
-                name='',
-                settings={},
-                ):
+    def add_style(
+        self,
+        name="",
+        settings={},
+    ):
         """
         This functions adds a style to a mindmap
         """
-
-
-
 
         #
         # create new style within mindmap
@@ -837,22 +787,24 @@ class Mindmap(object):
 
         if name:
 
-
-
             #
             # check validity of requests
             #
 
             # look for parent element
-            _stylenode_user = self._mindmap.find('.//stylenode[@LOCALIZED_TEXT="styles.user-defined"]')
+            _stylenode_user = self._mindmap.find(
+                './/stylenode[@LOCALIZED_TEXT="styles.user-defined"]'
+            )
 
             # get list of existing style elements
-            _lst = _stylenode_user.findall('./stylenode[@TEXT]')
+            _lst = _stylenode_user.findall("./stylenode[@TEXT]")
 
             # leave function if style is already existing
             for _sty in _lst:
-                if name.lower() == _sty.get('TEXT').lower():
-                    logger.warning('style "' + name + '" is already existing. ignoring request.')
+                if name.lower() == _sty.get("TEXT").lower():
+                    logger.warning(
+                        'style "' + name + '" is already existing. ignoring request.'
+                    )
                     return False
 
             # create element
@@ -861,37 +813,34 @@ class Mindmap(object):
             # append element to list of styles
             _stylenode_user.append(_sty)
 
-
-
-
             #
             # set attributes
             #
 
             # foreground color
-            _check = 'color'
+            _check = "color"
             if _check in settings.keys():
-                _sty.set('COLOR', settings[_check])
+                _sty.set("COLOR", settings[_check])
 
             # background color
-            _check = 'bgcolor' 
+            _check = "bgcolor"
             if _check in settings.keys():
-                _sty.set('BACKGROUND_COLOR', settings[_check])
+                _sty.set("BACKGROUND_COLOR", settings[_check])
 
             # font name
-            _check = 'fontname'
+            _check = "fontname"
             if _check in settings.keys():
-                _item = ET.Element('font', NAME=settings[_check])
+                _item = ET.Element("font", NAME=settings[_check])
                 # add item to style
                 _sty.append(_item)
 
             # font size
-            _check = 'fontsize'
+            _check = "fontsize"
             if _check in settings.keys():
-                _item = _sty.find('./font')
+                _item = _sty.find("./font")
                 if _item is None:
                     # create new font element
-                    _item = ET.Element('font', SIZE=settings[_check])
+                    _item = ET.Element("font", SIZE=settings[_check])
                     _sty.append(_item)
                 else:
                     # add size attribute to font element
@@ -901,25 +850,22 @@ class Mindmap(object):
 
         return False
 
-
     def find_nodes(
-            self,
-            core='',
-            link='',
-            id='',
-            attrib='',
-            details='',
-            notes='',
-            icon='',
-            style=[],
-            exact=False,
-            generalpathsep=False,
-            caseinsensitive=False,
-            keep_link_specials=False,
-            ):
-
-
-
+        self,
+        core="",
+        link="",
+        id="",
+        attrib="",
+        details="",
+        notes="",
+        icon="",
+        style=[],
+        exact=False,
+        generalpathsep=False,
+        caseinsensitive=False,
+        keep_link_specials=False,
+        regex=False,
+    ):
 
         #
         # find list of nodes in map
@@ -946,11 +892,8 @@ class Mindmap(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
-
-
-
-
 
         #
         # create Node instances
@@ -960,18 +903,14 @@ class Mindmap(object):
         for _node in lstXmlNodes:
 
             # create reference to parent lxml node
-            #...
+            # ...
 
             # apend to list
             lstNodesRet.append(Node(_node, self))
 
         return lstNodesRet
 
-
-    def save(self, strPath, encoding=''):
-
-
-
+    def save(self, strPath, encoding=""):
 
         #
         # auto-determine and set encoding
@@ -981,9 +920,6 @@ class Mindmap(object):
         if not encoding:
             encoding = get_version_specific_file_encoding(self._version)
 
-
-
-
         #
         # create XML formatted output string
         #
@@ -992,12 +928,9 @@ class Mindmap(object):
         _outputstring = ET.tostring(
             self._root,
             pretty_print=True,
-            method='xml',
+            method="xml",
             encoding=encoding,
-            ).decode(encoding)
-
-
-
+        ).decode(encoding)
 
         #
         # sanitize string content
@@ -1009,22 +942,22 @@ class Mindmap(object):
         # at least the german special characters must be corrected to be
         # properly displayed within freeplane.
 
-        _version = self._version.split('.')
+        _version = self._version.split(".")
         if int(_version[0]) == 1 and int(_version[1]) < 8:
 
             # #160 characters representing <SPACE>
-            _outputstring = _outputstring.replace( chr(160),' ')
+            _outputstring = _outputstring.replace(chr(160), " ")
 
             # at least substitute encoded german special characters
             # with characters fitting to the UTF-8 HTML encoding
 
-            _outputstring = _outputstring.replace( 'ä','&#xe4;') # &#228
-            _outputstring = _outputstring.replace( 'ö','&#xf6;') # &#246
-            _outputstring = _outputstring.replace( 'ü','&#xfc;') # &#252
-            _outputstring = _outputstring.replace( 'Ä','&#xc4;')
-            _outputstring = _outputstring.replace( 'Ö','&#xd6;')
-            _outputstring = _outputstring.replace( 'Ü','&#xdc;')
-            _outputstring = _outputstring.replace( 'ß','&#xdf;')
+            _outputstring = _outputstring.replace("ä", "&#xe4;")  # &#228
+            _outputstring = _outputstring.replace("ö", "&#xf6;")  # &#246
+            _outputstring = _outputstring.replace("ü", "&#xfc;")  # &#252
+            _outputstring = _outputstring.replace("Ä", "&#xc4;")
+            _outputstring = _outputstring.replace("Ö", "&#xd6;")
+            _outputstring = _outputstring.replace("Ü", "&#xdc;")
+            _outputstring = _outputstring.replace("ß", "&#xdf;")
 
             # by copy/paste from other applications into the mindmap, there
             # might be further character sequences not wanted within this file
@@ -1038,9 +971,6 @@ class Mindmap(object):
             # _outputstring = _outputstring.replace( chr(0x2026);','...')
             # _outputstring = _outputstring.replace( chr(133),'...')
 
-
-
-
         #
         # write content into file
         #
@@ -1048,17 +978,16 @@ class Mindmap(object):
         # remove first line if not starting with "<map"
         # as Freeplane doesn't use strict XML
         if not _outputstring.startswith("<map"):
-            _outputstring = _outputstring.split('\n', 1)[1]
+            _outputstring = _outputstring.split("\n", 1)[1]
 
         # open output file
         _file = io.open(strPath, "w", encoding=encoding)
 
         # write output string
-        _file.write( _outputstring )
+        _file.write(_outputstring)
 
         # close file
         _file.close()
-
 
     def test(self):
 
@@ -1069,45 +998,39 @@ class Mindmap(object):
         # print(dicStyles)
         # mm.save(strExamplePath[:strExamplePath.rfind('.')] + '__saved.mm')
 
-
-
-
         # create new mindmap
-        mm=Mindmap()
+        mm = Mindmap()
 
         # get and print root node
-        rn=mm.rootnode
+        rn = mm.rootnode
         print(rn)
 
         # change root node plain text
         rn.plaintext = "ROOT NODE"
         print(rn)
 
-
-
-
         #
         # create some nodes and branches
         #
 
         # create detached node
-        detach=mm.create_node("DETACHED")
+        detach = mm.create_node("DETACHED")
         print(detach)
 
         # create detached node
-        detach2=mm.create_node("DETACHED2")
+        detach2 = mm.create_node("DETACHED2")
         print(detach2)
 
         # add node into 2nd detached branch
-        nd2=detach2.add_child("ADDED_TO_DETACHED2_AS_CHILD")
+        nd2 = detach2.add_child("ADDED_TO_DETACHED2_AS_CHILD")
         print(nd2)
 
         # create detached node
-        detach3=mm.create_node("DETACHED3")
+        detach3 = mm.create_node("DETACHED3")
         print(detach3)
 
         # add node into 2nd detached branch
-        nd3=detach3.add_child("ADDED_TO_DETACHED3_AS_CHILD")
+        nd3 = detach3.add_child("ADDED_TO_DETACHED3_AS_CHILD")
         print(nd3)
 
         # check parent node within branch
@@ -1119,10 +1042,11 @@ class Mindmap(object):
 
         # add style to mindmap
         mm.add_style(
-                "klein und grau",
-                {
-                    'color': '#999999',
-                })
+            "klein und grau",
+            {
+                "color": "#999999",
+            },
+        )
 
         # WARNING: apply non-existing style to detached branch node
         nd2.style = "groß und grau"
@@ -1161,7 +1085,6 @@ class Mindmap(object):
 
         mm.save("example101.mm")
 
-
     def _load_package_if_exists(self, strPackageName):
         """
         load a package into memory, accessible as an ordinary package based on its
@@ -1184,12 +1107,11 @@ class Mindmap(object):
 
         else:
             globals()[strPackageName] = None
-            self._logger.debug(f'NO {strPackageName}.py found – skipping import.')
-
-
+            self._logger.debug(f"NO {strPackageName}.py found – skipping import.")
 
 
 # BRANCH
+
 
 class Branch(object):
 
@@ -1203,8 +1125,6 @@ class Branch(object):
         self._map = None
 
 
-
-
 # ARROW STYLES
 
 # currently, Freeplane stores arrow link foot points as xmlnodes directly below
@@ -1213,6 +1133,7 @@ class Branch(object):
 # "named" arrow link definitions e.g. in order to re-use them. thus, here we
 # define a structure to externally provide named arrow link styles. these can
 # be set an retrieved when creating arrow links.
+
 
 class ArrowStyles(object):
 
@@ -1224,17 +1145,17 @@ class ArrowStyles(object):
     def styles(self):
         return self._styles
 
-    def add_style(self,
-            name='',
-            settings={},
-            ):
-        self._styles.update({
-            name: settings
-            })
+    def add_style(
+        self,
+        name="",
+        settings={},
+    ):
+        self._styles.update({name: settings})
         return True
 
 
 # NODE
+
 
 class Node(object):
     """
@@ -1244,51 +1165,41 @@ class Node(object):
 
     def __init__(self, xmlnode, mindmap):
 
-
-
-
         #
         # initialize instance
         #
 
-        self._map = mindmap                 # the reference to the current mindmap object
-        self._node = xmlnode                # the reference to the corresponding node within the xml file
-        self._branch = None                 # a pointer to be set to a detached branch (possibly later)
+        self._map = mindmap  # the reference to the current mindmap object
+        self._node = (
+            xmlnode  # the reference to the corresponding node within the xml file
+        )
+        self._branch = None  # a pointer to be set to a detached branch (possibly later)
         if model:
-            self.model = model.Model(self)  # interface to a more user friendly access model
-
-
-
+            self.model = model.Model(
+                self
+            )  # interface to a more user friendly access model
 
         #
         # create unique session node id
         #
 
-        if not xmlnode.get('ID', ''):
-            self._node.set('ID',
-                Mindmap.create_node_id(self._map)
-                )
-
-
-
+        if not xmlnode.get("ID", ""):
+            self._node.set("ID", Mindmap.create_node_id(self._map))
 
         #
         # create date entries
         #
 
-        if not xmlnode.get('CREATED', ''):
+        if not xmlnode.get("CREATED", ""):
             update_date_attribute_in_node(xmlnode, key="CREATED")
-        if not xmlnode.get('MODIFIED', ''):
+        if not xmlnode.get("MODIFIED", ""):
             update_date_attribute_in_node(xmlnode, key="MODIFIED")
-
 
     def __repr__(self):
         return self.plaintext
 
-
     def __str__(self):
         return self.plaintext
-
 
     @property
     def is_detached_head(self):
@@ -1297,8 +1208,7 @@ class Node(object):
         """
         # is not associated with a map
         # and has no parent within the branch
-        if self._map is None \
-                and not self._node in self._branch._parentmap.keys():
+        if self._map is None and not self._node in self._branch._parentmap.keys():
             return True
         return False
 
@@ -1309,8 +1219,7 @@ class Node(object):
         """
         # is not associated with a map
         # and has a parent within the branch
-        if self._map is None \
-                and self._node in self._branch._parentmap.keys():
+        if self._map is None and self._node in self._branch._parentmap.keys():
             return True
         return False
 
@@ -1320,8 +1229,7 @@ class Node(object):
         check if node is belonging to a map, but not being the root node.
         """
         # is associated with a map
-        if self._map is not None \
-                and not self._node == self._map._rootnode:
+        if self._map is not None and not self._node == self._map._rootnode:
             return True
         return False
 
@@ -1331,11 +1239,9 @@ class Node(object):
         check if node is the map's root node.
         """
         # is associated with a map
-        if self._map is not None \
-                and self._node == self._map._rootnode:
+        if self._map is not None and self._node == self._map._rootnode:
             return True
         return False
-
 
     @property
     def visibletext(self):
@@ -1359,51 +1265,41 @@ class Node(object):
 
     @property
     def plaintext(self):
-        return sanitized(
-            getCoreTextFromNode(self._node, bOnlyFirstLine=False)
-        )
-
+        return sanitized(getCoreTextFromNode(self._node, bOnlyFirstLine=False))
 
     @plaintext.setter
-    def plaintext(self, strText, modified=''):
+    def plaintext(self, strText, modified=""):
 
         # check if there is textual content to be set (other than None)
         if strText is None:
             return None
 
         # set plain text content
-        self._node.attrib['TEXT'] = strText
+        self._node.attrib["TEXT"] = strText
 
         # remove node's richcontent if present
-        _richcontentnode = self._node.find('richcontent')
+        _richcontentnode = self._node.find("richcontent")
         if _richcontentnode is not None:
             self._node.remove(_richcontentnode)
-
-
-
 
         #
         # set modification date
         #
 
         update_date_attribute_in_node(
-                node=self._node,
-                date=modified,
-                key="MODIFIED",
-                )
-
-
+            node=self._node,
+            date=modified,
+            key="MODIFIED",
+        )
 
         return True
 
-
     @property
     def has_internal_hyperlink(self):
-        _link = self._node.attrib.get("LINK","")
+        _link = self._node.attrib.get("LINK", "")
         if _link and _link[0] == "#":
             return True
         return False
-
 
     @property
     def follow_internal_hyperlink(self):
@@ -1412,7 +1308,7 @@ class Node(object):
         if self.has_internal_hyperlink:
 
             # get target node id by removing leading hash char
-            _referenced_node_id = self._node.attrib.get("LINK","")[1:]
+            _referenced_node_id = self._node.attrib.get("LINK", "")[1:]
 
             try:
                 # find node
@@ -1423,16 +1319,17 @@ class Node(object):
 
                 # update branch reference in case of detached node
                 if not self.is_root_node and not self.is_map_node:
-                    fpnode._map     = None
-                    fpnode._branch  = self._branch
+                    fpnode._map = None
+                    fpnode._branch = self._branch
 
                 # return it to user
                 return fpnode
 
             except:
-                logger.warning(f'the referenced node "{_referenced_node_id}" was not found in mindmap. please check.')
+                logger.warning(
+                    f'the referenced node "{_referenced_node_id}" was not found in mindmap. please check.'
+                )
                 return None
-
 
     @property
     def follow_corelink(self):
@@ -1449,52 +1346,48 @@ class Node(object):
 
                 # update branch reference in case of detached node
                 if not self.is_root_node and not self.is_map_node:
-                    fpnode._map     = None
-                    fpnode._branch  = self._branch
+                    fpnode._map = None
+                    fpnode._branch = self._branch
 
                 # return it to user
                 return fpnode
 
             except:
-                logger.warning(f'the referenced node "{self.corelink}" was not found in mindmap. please check.')
+                logger.warning(
+                    f'the referenced node "{self.corelink}" was not found in mindmap. please check.'
+                )
                 return None
-
 
     @property
     def hyperlink(self):
-        return self._node.attrib.get("LINK","")
-
+        return self._node.attrib.get("LINK", "")
 
     @hyperlink.setter
-    def hyperlink(self, strLink, modified=''):
+    def hyperlink(self, strLink, modified=""):
         self._node.attrib["LINK"] = strLink
-
-
-
 
         #
         # set creation and modification dates
         #
 
         update_date_attribute_in_node(
-                node=self._node,
-                date=modified,
-                key="MODIFIED",
-                )
+            node=self._node,
+            date=modified,
+            key="MODIFIED",
+        )
 
         return True
-
 
     @property
     def imagepath(self):
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
+        if self._node.find("hook") is None:
             logger.warning(f'the node "{self.id}" does not contain an in-line image.')
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = self._node.find("hook")
 
         # get uri attribute
         uri = hook.attrib.get("URI", "")
@@ -1511,7 +1404,7 @@ class Node(object):
         # is not corrected within Freeplane.
 
         # check for leading slash in front of drive token
-        _match = re.search(r'^(/[A-z]:/)', uri)
+        _match = re.search(r"^(/[A-z]:/)", uri)
         if _match:
             # remove leading slash
             uri = uri[1:]
@@ -1522,26 +1415,26 @@ class Node(object):
     def imagesize(self):
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
-            logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
+        if self._node.find("hook") is None:
+            logger.warning(
+                f'the node "{self._node.id}" does not contain an in-line image.'
+            )
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = self._node.find("hook")
 
         # get uri attribute
         size = hook.attrib.get("SIZE", "")
 
         return size
 
-    def set_image(self,
-            link="",
-            size="1",
-            modified='',
-            ):
-
-
-
+    def set_image(
+        self,
+        link="",
+        size="1",
+        modified="",
+    ):
 
         #
         # prepare path string
@@ -1551,13 +1444,10 @@ class Node(object):
         link = link.replace("\\", "/")
 
         # check for Windows-style absolute path (drive name is one char long)
-        _match_abs_win_style = re.search(r'^([A-z]:/)', link)
+        _match_abs_win_style = re.search(r"^([A-z]:/)", link)
 
         # check for protocol specification (protocol name at least 2 chars long)
-        _match_specific_protocol = re.search(r'^([A-z]{2,}:/)', link)
-
-
-
+        _match_specific_protocol = re.search(r"^([A-z]{2,}:/)", link)
 
         #
         # build path string
@@ -1585,9 +1475,6 @@ class Node(object):
         else:
             link = "./" + link
 
-
-
-
         #
         # localize XML hook element below node
         #
@@ -1597,11 +1484,11 @@ class Node(object):
 
             # create hook element
             hook = ET.Element(
-                    "hook",
-                    URI=link,
-                    SIZE=str(size),
-                    NAME='ExternalObject',
-                    )
+                "hook",
+                URI=link,
+                SIZE=str(size),
+                NAME="ExternalObject",
+            )
 
             # add hook to node's children
             self._node.append(hook)
@@ -1612,24 +1499,21 @@ class Node(object):
             hook.set("URI", link)
             hook.set("SIZE", str(size))
 
-
-
-
         #
         # set creation and modification dates
         #
 
         update_date_attribute_in_node(
-                node=self._node,
-                date=modified,
-                key="MODIFIED",
-                )
+            node=self._node,
+            date=modified,
+            key="MODIFIED",
+        )
 
         return True
 
     @property
     def id(self):
-        return self._node.attrib['ID']
+        return self._node.attrib["ID"]
 
     @id.setter
     def id(self, strId):
@@ -1639,13 +1523,17 @@ class Node(object):
             strId = str(strId)
 
         # check required format
-        if not strId.lower().startswith('id_'):
-            logger.warning('in Freeplane, an ID must start with "ID_" and contain a number string.')
+        if not strId.lower().startswith("id_"):
+            logger.warning(
+                'in Freeplane, an ID must start with "ID_" and contain a number string.'
+            )
             # correct ID format
-            strId = "ID_"+strId
+            strId = "ID_" + strId
 
-        if not strId[len('id_'):].isnumeric():
-            logger.warning('in Freeplane, an ID must have a certain format. ignoring ID change request.')
+        if not strId[len("id_") :].isnumeric():
+            logger.warning(
+                "in Freeplane, an ID must have a certain format. ignoring ID change request."
+            )
             return False
 
         # set new ID
@@ -1655,41 +1543,38 @@ class Node(object):
     @property
     def attributes(self):
         _attribute = {}
-        _lst = self._node.findall('attribute')
+        _lst = self._node.findall("attribute")
         for _attr in _lst:
-            _name = _attr.get('NAME', '')
-            _value = _attr.get('VALUE', '')
+            _name = _attr.get("NAME", "")
+            _value = _attr.get("VALUE", "")
             if _name:
                 _attribute[_name] = _value
         return _attribute
 
-
-    def set_attribute(self,
-                key='',
-                value='',
-                ):
+    def set_attribute(
+        self,
+        key="",
+        value="",
+    ):
         """
         This functions sets an attribute for a node
         """
-
-
-
 
         #
         # IF attribute key already exists
         #
 
-        if key.lower() in [ _.lower() for _ in self.attributes.keys() ]:
+        if key.lower() in [_.lower() for _ in self.attributes.keys()]:
 
             #
             # overwrite existing value
             #
 
-            _lst = self._node.findall('attribute')
+            _lst = self._node.findall("attribute")
             for _attr in _lst:
-                _name = _attr.get('NAME', '')
+                _name = _attr.get("NAME", "")
                 if key.lower() == _name.lower():
-                    _attr.set('VALUE', value)
+                    _attr.set("VALUE", value)
 
         #
         # ELSE
@@ -1706,27 +1591,21 @@ class Node(object):
             # append element
             _node = self._node.append(_attrib)
 
-
-    def remove_attribute(self,
-                key='',
-                ):
+    def remove_attribute(
+        self,
+        key="",
+    ):
         """
         This functions removes the node's existing attribute
         """
-
-
-
 
         #
         # walk through all of node's xml attributes
         #
 
-        _lst = self._node.findall('attribute')
+        _lst = self._node.findall("attribute")
         for _attr in _lst:
-            _name = _attr.get('NAME', '')
-
-
-
+            _name = _attr.get("NAME", "")
 
             #
             # remove existing element if corresponding
@@ -1741,22 +1620,16 @@ class Node(object):
 
                 return True
 
-
-
-
         return False
 
-
-    def add_attribute(self,
-                key='',
-                value='',
-                ):
+    def add_attribute(
+        self,
+        key="",
+        value="",
+    ):
         """
         This functions adds an attribute to a node
         """
-
-
-
 
         #
         # create new attribute within node
@@ -1772,11 +1645,10 @@ class Node(object):
 
         # return self.attributes
 
-
     @property
     def style(self):
-        if 'STYLE_REF' in self._node.attrib.keys():
-            return self._node.attrib['STYLE_REF']
+        if "STYLE_REF" in self._node.attrib.keys():
+            return self._node.attrib["STYLE_REF"]
         return ""
 
     @style.setter
@@ -1793,27 +1665,26 @@ class Node(object):
         # attached to a proper mindmap tree, there might still be an invalid
         # _map reference for its branch trees as they are not updated
         # automatically. in these cases, the _map member can be updated, here,
-        # for the user to have a corrected object reference. 
+        # for the user to have a corrected object reference.
 
         # check if node seems detached
         if self._map is None:
- 
+
             # check if node is still detached
             if self._branch._map is None:
 
-                logger.warning("trying to set a style for a detached node. please, make sure style exists.")
+                logger.warning(
+                    "trying to set a style for a detached node. please, make sure style exists."
+                )
 
             else:
 
-                # 
+                #
                 # update reference to mindmap
                 #
 
                 # update node's map reference
                 self._map = self._branch._map
-
-
-
 
         #
         # set style reference
@@ -1828,7 +1699,11 @@ class Node(object):
                     break
             else:
                 if strStyle:
-                    logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
+                    logger.warning(
+                        'style "'
+                        + strStyle
+                        + '" not found in mindmap. make sure, style exists.'
+                    )
 
         # set style reference in XML node
         if strStyle:
@@ -1844,42 +1719,39 @@ class Node(object):
 
         return True
 
-
     @property
     def creationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('CREATED'):
+        if self._node.get("CREATED"):
 
             # read out text content
-            text = self._node.attrib['CREATED']
+            text = self._node.attrib["CREATED"]
 
             # convert to float time value
-            _time = float(text)/1000
+            _time = float(text) / 1000
 
             # return datetime value
             return datetime.datetime.fromtimestamp(_time).timetuple()
 
         return tuple()
-
 
     @property
     def modificationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('MODIFIED'):
+        if self._node.get("MODIFIED"):
 
             # read out text content
-            text = self._node.attrib['MODIFIED']
+            text = self._node.attrib["MODIFIED"]
 
             # convert to float time value
-            _time = float(text)/1000
+            _time = float(text) / 1000
 
             # return datetime value
             return datetime.datetime.fromtimestamp(_time).timetuple()
 
         return tuple()
-
 
     @property
     def corelink(self):
@@ -1895,62 +1767,50 @@ class Node(object):
             # check for formula identifier
             if _text[0] == "=":
 
-
-
-
                 #
                 # check for reference to external node
                 #
 
                 # identify link based on type (file, http, ...)
 
-
-
-
                 #
                 # check for reference to internal node content
                 #
 
-                _match=re.match(r'^.*ID_([\d]+)\.text.*', _text)
+                _match = re.match(r"^.*ID_([\d]+)\.text.*", _text)
                 if _match:
-                    return 'ID_' + _match.group(1)
-
-
-
+                    return "ID_" + _match.group(1)
 
         return ""
-
 
     @property
     def comment(self):
 
         # check for existence of child
-        if not self._node.find('node') is None:
+        if not self._node.find("node") is None:
 
             # get first child
-            node = self._node.find('node')
+            node = self._node.find("node")
 
             # check for TEXT attribute
-            if not node.get('TEXT') is None:
+            if not node.get("TEXT") is None:
 
                 # read out text content
-                return node.attrib['TEXT']
+                return node.attrib["TEXT"]
 
         return ""
-
 
     @property
     def details(self):
 
-        _text = ''
+        _text = ""
 
         # check for details node
         _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
-            _text = ''.join(_lstDetailsNodes[0].itertext()).strip()
+            _text = "".join(_lstDetailsNodes[0].itertext()).strip()
 
         return _text
-
 
     @details.setter
     def details(self, strDetails):
@@ -1964,31 +1824,30 @@ class Node(object):
         if strDetails:
 
             # build html structure
-            _element = ET.Element("richcontent", TYPE='DETAILS')
+            _element = ET.Element("richcontent", TYPE="DETAILS")
             _html = ET.SubElement(_element, "html")
             _head = ET.SubElement(_html, "head")
             _body = ET.SubElement(_html, "body")
-            for strLine in strDetails.split('\n'):
-                _p    = ET.SubElement(_body, "p")
+            for strLine in strDetails.split("\n"):
+                _p = ET.SubElement(_body, "p")
                 _p.text = strLine
             # _element.text = \
-                # '\n' + \
-                # '<html>\n' + \
-                # '  <head>\n' + \
-                # '\n' + \
-                # '  </head>\n' + \
-                # '  <body>\n' + \
-                # '    <p>\n' + \
-                # '      ' + strDetails + '\n' + \
-                # '    </p>\n' + \
-                # '  </body>\n' + \
-                # '</html>\n'
+            # '\n' + \
+            # '<html>\n' + \
+            # '  <head>\n' + \
+            # '\n' + \
+            # '  </head>\n' + \
+            # '  <body>\n' + \
+            # '    <p>\n' + \
+            # '      ' + strDetails + '\n' + \
+            # '    </p>\n' + \
+            # '  </body>\n' + \
+            # '</html>\n'
 
             # append element
             _node = self._node.append(_element)
 
         # return self.details
-
 
     @property
     def notes(self):
@@ -1999,15 +1858,14 @@ class Node(object):
         :rtype: string
         """
 
-        _text = ''
+        _text = ""
 
         # check for notes node
         _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
         if _lstNotesNodes:
-            _text = ''.join(_lstNotesNodes[0].itertext()).strip()
+            _text = "".join(_lstNotesNodes[0].itertext()).strip()
 
         return _text
-
 
     @notes.setter
     def notes(self, strNotes):
@@ -2027,17 +1885,16 @@ class Node(object):
         if strNotes:
 
             # build html structure
-            _element = ET.Element("richcontent", TYPE='NOTE')
+            _element = ET.Element("richcontent", TYPE="NOTE")
             _html = ET.SubElement(_element, "html")
             _head = ET.SubElement(_html, "head")
             _body = ET.SubElement(_html, "body")
-            for strLine in strNotes.split('\n'):
-                _p    = ET.SubElement(_body, "p")
+            for strLine in strNotes.split("\n"):
+                _p = ET.SubElement(_body, "p")
                 _p.text = strLine
 
             # append element
             _node = self._node.append(_element)
-
 
     @property
     def parent(self):
@@ -2061,9 +1918,8 @@ class Node(object):
             return None
 
         else:
-            #print("[ ERROR  : local parentmap has not been created for detached node. ]")
+            # print("[ ERROR  : local parentmap has not been created for detached node. ]")
             return None
-
 
     @property
     def previous(self):
@@ -2077,14 +1933,13 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             return fpnode
         else:
             return None
-
 
     @property
     def next(self):
@@ -2098,35 +1953,31 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             return fpnode
         else:
             return None
 
-
     @property
     def icons(self):
         _icons = []
-        _lst = self._node.findall('icon')
+        _lst = self._node.findall("icon")
         for _icon in _lst:
-            _name = _icon.get('BUILTIN', '')
+            _name = _icon.get("BUILTIN", "")
             if _name:
                 _icons.append(_name)
         return _icons
 
-
-    def add_icon(self,
-                icon='',
-                ):
+    def add_icon(
+        self,
+        icon="",
+    ):
         """
         This functions adds a Freeplane-Icon to a node
         """
-
-
-
 
         #
         # add icon to node
@@ -2134,16 +1985,16 @@ class Node(object):
 
         if icon:
 
-            _icon = ET.Element('icon')
-            _icon.attrib['BUILTIN'] = icon
+            _icon = ET.Element("icon")
+            _icon.attrib["BUILTIN"] = icon
 
             self._node.append(_icon)
 
         # return self.icons
 
-
-    def remove(self,
-                ):
+    def remove(
+        self,
+    ):
         """
         This functions removes the current Freeplane node from a branch
         """
@@ -2156,16 +2007,13 @@ class Node(object):
 
         return True
 
-
-    def del_icon(self,
-                icon='',
-                ):
+    def del_icon(
+        self,
+        icon="",
+    ):
         """
         This functions removes a Freeplane-Icon from a node
         """
-
-
-
 
         #
         # search for icon
@@ -2174,13 +2022,10 @@ class Node(object):
         if icon:
 
             _icons = []
-            _lst = self._node.findall('icon')
+            _lst = self._node.findall("icon")
             for _icon in _lst:
 
-                if _icon.get('BUILTIN', '').lower() == icon.lower():
-
-
-
+                if _icon.get("BUILTIN", "").lower() == icon.lower():
 
                     #
                     # remove icon from node's icon list
@@ -2191,25 +2036,23 @@ class Node(object):
 
         # return self.icons
 
-
     @property
     def children(self):
         lstNodesRet = []
-        for _node in  self._node.findall("./node"):
+        for _node in self._node.findall("./node"):
 
             # create Node instance
             fpnode = Node(_node, self._map)
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
-
 
     @property
     def index(self):
@@ -2218,7 +2061,6 @@ class Node(object):
         if not self.is_root_node and self.parent:
             return self.parent._node.index(self._node)
         return 0
-
 
     def get_child_by_index(self, idx=0):
         # check if node has children
@@ -2234,8 +2076,8 @@ class Node(object):
 
                     # update branch reference in case of detached node
                     if not self.is_root_node and not self.is_map_node:
-                        fpnode._map     = None
-                        fpnode._branch  = self._branch
+                        fpnode._map = None
+                        fpnode._branch = self._branch
 
                     # append node object
                     return fpnode
@@ -2285,7 +2127,6 @@ class Node(object):
         # reverse results
         return list(reversed(lstIdxValues))
 
-
     def is_descendant_of(self, node):
         """
         determine if the current node object has a direct relational connection
@@ -2316,49 +2157,44 @@ class Node(object):
         # this statement shouldn't be reached
         return False
 
-
     @property
     def is_rootnode(self):
-        if self._map._rootnode == self._node \
-                and not self._branch:
+        if self._map._rootnode == self._node and not self._branch:
             return True
         return False
-
 
     @property
     def is_comment(self):
-        if not self._node.get('STYLE_REF') is None \
-                and self._node.attrib['STYLE_REF'] == 'klein und grau':
+        if (
+            not self._node.get("STYLE_REF") is None
+            and self._node.attrib["STYLE_REF"] == "klein und grau"
+        ):
             return True
         return False
 
-
     @property
     def has_children(self):
-        if not self._node.findall('./node'):
+        if not self._node.findall("./node"):
             return False
         return True
 
-
     def find_nodes(
-            self,
-            core='',
-            link='',
-            id='',
-            attrib='',
-            details='',
-            notes='',
-            icon='',
-            style=[],
-            exact=False,
-            generalpathsep=False,
-            caseinsensitive=False,
-            find_in_self=False,
-            keep_link_specials=False,
-            ):
-
-
-
+        self,
+        core="",
+        link="",
+        id="",
+        attrib="",
+        details="",
+        notes="",
+        icon="",
+        style=[],
+        exact=False,
+        generalpathsep=False,
+        caseinsensitive=False,
+        find_in_self=False,
+        keep_link_specials=False,
+        regex=False,
+    ):
 
         #
         # find list of nodes below node
@@ -2370,7 +2206,7 @@ class Node(object):
 
         # add self to the list of nodes if desired
         if find_in_self:
-            lstXmlNodes = [ self._node ] + lstXmlNodes
+            lstXmlNodes = [self._node] + lstXmlNodes
 
         # do the checks on the base of the list
         lstXmlNodes = reduce_node_list(
@@ -2387,10 +2223,8 @@ class Node(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
-
-
-
 
         #
         # create Node instances
@@ -2404,33 +2238,30 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
-
     def find_children(
-            self,
-            core='',
-            link='',
-            id='',
-            attrib='',
-            details='',
-            notes='',
-            icon='',
-            style=[],
-            exact=False,
-            generalpathsep=False,
-            caseinsensitive=False,
-            keep_link_specials=False,
-            ):
-
-
-
+        self,
+        core="",
+        link="",
+        id="",
+        attrib="",
+        details="",
+        notes="",
+        icon="",
+        style=[],
+        exact=False,
+        generalpathsep=False,
+        caseinsensitive=False,
+        keep_link_specials=False,
+        regex=False,
+    ):
 
         #
         # find list of nodes directly below node
@@ -2454,10 +2285,8 @@ class Node(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
-
-
-
 
         #
         # create Node instances
@@ -2471,23 +2300,19 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
-
-    def getSubText(self, token=''):
+    def getSubText(self, token=""):
 
         # initialize contents
         text = ""
         commentnode = None
-
-
-
 
         #
         # find node's INTERMEDIATE child node
@@ -2501,15 +2326,12 @@ class Node(object):
             if not tokennode == []:
 
                 # go further to find the comment text
-                commentnode = tokennode[0].find('./node')
+                commentnode = tokennode[0].find("./node")
 
         else:
 
             # get first node node as comment node
-            commentnode = self._node.find('./node')
-
-
-
+            commentnode = self._node.find("./node")
 
         #
         # access text portion of target node
@@ -2528,11 +2350,11 @@ class Node(object):
 
         return text
 
-
-    def attach(self,
-            attached_node=None,
-            pos=-1,
-            ):
+    def attach(
+        self,
+        attached_node=None,
+        pos=-1,
+    ):
         """
         This functions appends an existing but previously detached
         Freeplane-Node as a child to this node object.
@@ -2547,9 +2369,6 @@ class Node(object):
         # needed node references are re-created e.g. by using find() on the
         # map.
 
-
-
-
         #
         # check if attached node is valid
         #
@@ -2557,9 +2376,6 @@ class Node(object):
         if attached_node is None:
             logger.warning("no attached_node given to be attached.")
             return False
-
-
-
 
         #
         # check if to-be-attached-node is already attached
@@ -2572,16 +2388,19 @@ class Node(object):
         # check if object is child within map
         if self.is_map_node or self.is_root_node:
             if attached_node._node in self._map._parentmap.keys():
-                logger.warning('node "' + str(attached_node) + \
-                        '" already attached to a map. NOTHING DONE.')
+                logger.warning(
+                    'node "'
+                    + str(attached_node)
+                    + '" already attached to a map. NOTHING DONE.'
+                )
                 return False
         elif attached_node.is_detached_node:
-            logger.warning('node "' + str(attached_node) + \
-                    '" is part of a detached branch. NOTHING DONE. please only attach branch head.')
+            logger.warning(
+                'node "'
+                + str(attached_node)
+                + '" is part of a detached branch. NOTHING DONE. please only attach branch head.'
+            )
             return False
-
-
-
 
         #
         # DIFFERENT CASES
@@ -2592,9 +2411,6 @@ class Node(object):
         # and the necessary operations differ depending on the node types
         # involved during attachment, there must be a kind of
         # "Fallunterscheidung".
-
-
-
 
         #
         # handle attach of detached head to map node
@@ -2644,14 +2460,13 @@ class Node(object):
             # return attached_node
             return True
 
-
-
-
         #
         # handle attach of detached head to detached branch
         #
 
-        if (self.is_detached_node or self.is_detached_head) and attached_node.is_detached_head:
+        if (
+            self.is_detached_node or self.is_detached_head
+        ) and attached_node.is_detached_head:
 
             #
             # update old branch head's _branch member
@@ -2685,41 +2500,37 @@ class Node(object):
             # leave function
             return True
 
-
-
-
         #
         # handle attach of detached head to detached branch
         #
 
         if attached_node.is_detached_node:
-            logger.warning('attach of "' \
-                    + str(attached_node) \
-                    + '" not possible. generally, only the heads of detached branches attachable.')
+            logger.warning(
+                'attach of "'
+                + str(attached_node)
+                + '" not possible. generally, only the heads of detached branches attachable.'
+            )
             return False
 
-
-
-
-        logger.warning('host / child configuration for attach is not defined.')
+        logger.warning("host / child configuration for attach is not defined.")
         return False
 
-
-    def add_arrowlink(self,
-            node=None,
-            style='',
-            shape='',
-            color='',
-            width='',
-            transparency='',
-            dash='',
-            fontsize='',
-            font='',
-            startinclination='',
-            endinclination='',
-            startarrow='NONE',
-            endarrow='DEFAULT',
-            ):
+    def add_arrowlink(
+        self,
+        node=None,
+        style="",
+        shape="",
+        color="",
+        width="",
+        transparency="",
+        dash="",
+        fontsize="",
+        font="",
+        startinclination="",
+        endinclination="",
+        startarrow="NONE",
+        endarrow="DEFAULT",
+    ):
         """
         draw an arrow link from the current node to the given one.
 
@@ -2739,17 +2550,11 @@ class Node(object):
 
         if node:
 
-
-
-
             #
             # create arrow link node
             #
 
-            _node = ET.Element('arrowlink')
-
-
-
+            _node = ET.Element("arrowlink")
 
             #
             # append arrow link node to node object
@@ -2757,17 +2562,11 @@ class Node(object):
 
             self._node.append(_node)
 
-
-
-
             #
             # IF named style definition was given
             #
 
             if style:
-
-
-
 
                 #
                 # set style according to style definition
@@ -2775,73 +2574,63 @@ class Node(object):
 
                 pass
 
-
-
-
             #
             # ELSE
             #
 
             else:
 
-
-
-
                 #
                 # set individual style members
                 #
 
                 if not shape:
-                    _node.set('SHAPE', 'CUBIC_CURVE')
+                    _node.set("SHAPE", "CUBIC_CURVE")
                 else:
-                    _node.set('SHAPE', shape)
+                    _node.set("SHAPE", shape)
                 if not color:
-                    _node.set('COLOR', '#000000')
+                    _node.set("COLOR", "#000000")
                 else:
-                    _node.set('COLOR', color)
+                    _node.set("COLOR", color)
                 if not width:
-                    _node.set('WIDTH', '2')
+                    _node.set("WIDTH", "2")
                 else:
-                    _node.set('WIDTH', width)
+                    _node.set("WIDTH", width)
                 if not transparency:
-                    _node.set('TRANSPARENCY', '80')
+                    _node.set("TRANSPARENCY", "80")
                 else:
-                    _node.set('TRANSPARENCY', transparency)
+                    _node.set("TRANSPARENCY", transparency)
                 if dash:
-                    _node.set('DASH', dash)
+                    _node.set("DASH", dash)
                 if not fontsize:
-                    _node.set('FONT_SIZE', '9')
+                    _node.set("FONT_SIZE", "9")
                 else:
-                    _node.set('FONT_SIZE', fontsize)
+                    _node.set("FONT_SIZE", fontsize)
                 if not font:
-                    _node.set('FONT_FAMILY', 'SansSerif')
+                    _node.set("FONT_FAMILY", "SansSerif")
                 else:
-                    _node.set('FONT_FAMILY', font)
+                    _node.set("FONT_FAMILY", font)
                 if not startinclination:
-                    _node.set('STARTINCLINATION', '131;0;')
+                    _node.set("STARTINCLINATION", "131;0;")
                 else:
-                    _node.set('STARTINCLINATION', startinclination)
+                    _node.set("STARTINCLINATION", startinclination)
                 if not endinclination:
-                    _node.set('ENDINCLINATION', '131;0;')
+                    _node.set("ENDINCLINATION", "131;0;")
                 else:
-                    _node.set('ENDINCLINATION', endinclination)
+                    _node.set("ENDINCLINATION", endinclination)
                 if not startarrow:
-                    _node.set('STARTARROW', 'NONE')
+                    _node.set("STARTARROW", "NONE")
                 else:
-                    _node.set('STARTARROW', startarrow)
+                    _node.set("STARTARROW", startarrow)
                 if not endarrow:
-                    _node.set('ENDARROW', 'DEFAULT')
+                    _node.set("ENDARROW", "DEFAULT")
                 else:
-                    _node.set('ENDARROW', endarrow)
+                    _node.set("ENDARROW", endarrow)
 
             # destination
-            _node.set('DESTINATION', node.id)
-
-
-
+            _node.set("DESTINATION", node.id)
 
         return False
-
 
     @property
     def arrowlinks(self):
@@ -2851,10 +2640,10 @@ class Node(object):
         :returns:       list of Node elements
         """
         lstNodesRet = []
-        for _arrowlink in  self._node.findall("./arrowlink"):
+        for _arrowlink in self._node.findall("./arrowlink"):
 
             # get the destination id of target node
-            _nodeid = _arrowlink.attrib.get('DESTINATION', "")
+            _nodeid = _arrowlink.attrib.get("DESTINATION", "")
 
             # find node in local mindmap
             _xmlnode = self._map._root.find('.//node[@ID="' + _nodeid + '"]')
@@ -2864,18 +2653,18 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
-
-    def del_arrowlink(self,
-            ident=0,
-            ):
+    def del_arrowlink(
+        self,
+        ident=0,
+    ):
         """
         remove arrowlink from node
 
@@ -2895,14 +2684,16 @@ class Node(object):
         if isinstance(ident, str):
             _nodeid = ident
         elif isinstance(ident, int):
-            if ident > len(fpnodes)-1:
+            if ident > len(fpnodes) - 1:
                 return False
             _nodeid = fpnodes[ident].id
         elif isinstance(ident, Node):
             _nodeid = ident.id
 
         # check for node id to be removed from arrowlinks
-        _xmlarrowlinks = self._node.findall('./arrowlink[@DESTINATION="' + _nodeid + '"]')
+        _xmlarrowlinks = self._node.findall(
+            './arrowlink[@DESTINATION="' + _nodeid + '"]'
+        )
 
         # remove arrowlink
         if len(_xmlarrowlinks) <= 0:
@@ -2910,7 +2701,6 @@ class Node(object):
         self._node.remove(_xmlarrowlinks[0])
 
         return True
-
 
     @property
     def arrowlinked(self):
@@ -2923,7 +2713,9 @@ class Node(object):
 
         # find xmlnodes in local mindmap
         _nodeid = self.id
-        _xmlarrowlinks = self._map._root.findall('.//arrowlink[@DESTINATION="' + _nodeid + '"]')
+        _xmlarrowlinks = self._map._root.findall(
+            './/arrowlink[@DESTINATION="' + _nodeid + '"]'
+        )
 
         for _xmlarrowlink in _xmlarrowlinks:
 
@@ -2932,40 +2724,34 @@ class Node(object):
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
-                fpnode._map     = None
-                fpnode._branch  = self._branch
+                fpnode._map = None
+                fpnode._branch = self._branch
 
             # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
 
-
-    def add_child(self,
-                 core='',
-                 link='',
-                 id='',
-                 pos=-1,
-                 style='',
-                 ):
+    def add_child(
+        self,
+        core="",
+        link="",
+        id="",
+        pos=-1,
+        style="",
+    ):
         """
         This functions adds a Freeplane-Node as a child to this Node. Further
         more a XML-node ist added to the XML-Tree
         """
 
-
-
-
         #
         # create and init element
         #
 
-        _node = ET.Element('node')
+        _node = ET.Element("node")
         node = Node(_node, self._map)
         node.plaintext = core
-
-
-
 
         #
         # overwrite standard id
@@ -2976,9 +2762,6 @@ class Node(object):
             if not node.id == id:
                 return None
 
-
-
-
         #
         # set link portion
         #
@@ -2986,18 +2769,12 @@ class Node(object):
         if link:
             node.hyperlink = link
 
-
-
-
         #
         # set style
         #
 
         if style:
             node.style = style
-
-
-
 
         #
         # set node's position within children
@@ -3007,9 +2784,6 @@ class Node(object):
             self._node.append(_node)
         else:
             self._node.insert(pos, _node)
-
-
-
 
         #
         # update parentmap dict
@@ -3029,36 +2803,28 @@ class Node(object):
             # add this object as parent to new object within detached branch
             self._branch._parentmap[_node] = self._node
 
-
-
-
         return node
 
-
-    def add_sibling(self,
-                   core="",
-                   link="",
-                   id='',
-                   pos=-1,
-                   style=None,
-                   ):
+    def add_sibling(
+        self,
+        core="",
+        link="",
+        id="",
+        pos=-1,
+        style=None,
+    ):
         """
         This functions adds a Freeplane-Node as a Sibling. Further more a
         XML-node ist added to the XML-Tree at the corresponding position
         """
 
-
-
         #
         # create and init element
         #
 
-        _node = ET.Element('node')
+        _node = ET.Element("node")
         node = Node(_node, self._map)
         node.plaintext = core
-
-
-
 
         # overwrite standard id
         if id:
@@ -3067,9 +2833,6 @@ class Node(object):
                 # print("[ WARNING: node id must follow Freplane's format rules. nothing done. ]")
                 return None
 
-
-
-
         #
         # set link portion
         #
@@ -3077,18 +2840,12 @@ class Node(object):
         if link:
             node.hyperlink = link
 
-
-
-
         #
         # set style
         #
 
         if style:
             node.style = style
-
-
-
 
         #
         # set node's position within siblings
@@ -3098,9 +2855,6 @@ class Node(object):
             self._node.getparent().append(_node)
         else:
             self._node.getparent().insert(pos, _node)
-
-
-
 
         #
         # update parentmap dict
@@ -3119,11 +2873,10 @@ class Node(object):
         else:
 
             # output warning
-            logger.warning("it is not possible to add a sibling to a detached node. please use the create_node function.")
+            logger.warning(
+                "it is not possible to add a sibling to a detached node. please use the create_node function."
+            )
             return None
-
-
-
 
         return node
 
@@ -3132,11 +2885,12 @@ class Node(object):
 # HELPERS
 #
 
+
 def update_date_attribute_in_node(
-            node=None,
-            date="",
-            key="MODIFIED",
-            ):
+    node=None,
+    date="",
+    key="MODIFIED",
+):
 
     # leave if inappropriate arguments
     if node is None:
@@ -3144,7 +2898,7 @@ def update_date_attribute_in_node(
 
     # calculate current date in milliseconds
     _current_time = datetime.datetime.now()
-    _current_timestamp = str(int(_current_time.timestamp()*1000))
+    _current_timestamp = str(int(_current_time.timestamp() * 1000))
 
     # set modification date
     if date:
@@ -3161,8 +2915,8 @@ def get_version_specific_file_encoding(version):
     # file encoding was changed from "latin1" or "windows-1252"
     # to "utf-8" with Freeplane version 1.8.0
 
-    lstVersionItems = version.split('.')
-    if len(lstVersionItems)>=2:
+    lstVersionItems = version.split(".")
+    if len(lstVersionItems) >= 2:
         if int(lstVersionItems[0]) == 1 and int(lstVersionItems[1]) <= 6:
             # return "latin1"
             return "windows-1252"
@@ -3172,46 +2926,38 @@ def get_version_specific_file_encoding(version):
 
 # CONVENIENCE FUNCTIONS
 
+
 def getCoreTextFromNode(node, bOnlyFirstLine=False):
 
     # initialize text content
     text = ""
 
-
-
-
     #
     # get TEXT attribute of node if present
     #
 
-    if not node.get('TEXT') is None:
+    if not node.get("TEXT") is None:
 
         # read out text content
-        text = node.attrib['TEXT']
-
-
-
+        text = node.attrib["TEXT"]
 
     #
     # strip text from RICHTEXT content if present
     #
 
-    elif not node.find('richcontent') is None:
+    elif not node.find("richcontent") is None:
 
         # get richtext node
-        richnode = node.find('richcontent')
+        richnode = node.find("richcontent")
 
         # get html node
-        htmlnode = richnode.find('html')
+        htmlnode = richnode.find("html")
 
         # get html body node
-        html_body = htmlnode.find('body')
+        html_body = htmlnode.find("body")
 
         # filter out plain text content
         sanitized_text = extract_sanitized_body_content(html_body)
-
-
-
 
         #
         # filter first line if desired
@@ -3220,13 +2966,12 @@ def getCoreTextFromNode(node, bOnlyFirstLine=False):
         if bOnlyFirstLine:
 
             # take only first line of text content
-            text = sanitized_text.strip().split('\n')[0].strip()
+            text = sanitized_text.strip().split("\n")[0].strip()
 
         else:
 
             # remove leading / trailing whitespace
             text = sanitized_text.strip()
-
 
     return text
 
@@ -3248,7 +2993,7 @@ def extract_sanitized_body_content(body_elem):
 
             # when only whitespace -> discard
             if child.tail and child.tail.strip():
-                    parts.append(html.unescape(child.tail))
+                parts.append(html.unescape(child.tail))
 
             # add NEWLINE only if on body level
             if child.tag == "p" and child.tail and child.tail.strip() == "":
@@ -3257,24 +3002,26 @@ def extract_sanitized_body_content(body_elem):
     process_element(body_elem)
 
     # join parts, strip trailing whitespace, and preserve non-breaking spaces
-    result = ''.join(parts).strip('\n')
+    result = "".join(parts).strip("\n")
 
     return result
 
+
 def reduce_node_list(
     lstXmlNodes=[],
-    id='',
-    core='',
-    attrib='',
-    details='',
-    notes='',
-    link='',
-    icon='',
+    id="",
+    core="",
+    attrib="",
+    details="",
+    notes="",
+    link="",
+    icon="",
     style=[],
     exact=False,
     generalpathsep=False,
     caseinsensitive=False,
     keep_link_specials=False,
+    regex=False,
 ):
 
     # check for identical ID
@@ -3289,8 +3036,16 @@ def reduce_node_list(
     if core:
         _lstNodes = []
         for _node in lstXmlNodes:
-            if re.search(core, _node.attrib.get("TEXT", "")):
+            _text = _node.attrib.get("TEXT", "")
+
+            if (
+                (regex and re.search(core, _text))
+                or (exact and not caseinsensitive and core == _text)
+                or (exact and caseinsensitive and core.lower() == _text)
+                or (not exact and core.lower() in _text.lower())
+            ):
                 _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for all ATTRIBUTES within a node
@@ -3299,24 +3054,41 @@ def reduce_node_list(
         # check for current list of nodes
         for _node in lstXmlNodes:
             # get attributes of node
-            iFound = 0
             for _attribnode in _node.findall("./attribute"):
                 _key = _attribnode.attrib.get("NAME", "")
                 _value = ""
                 if _key:
                     _value = _attribnode.attrib.get("VALUE", "")
                 # check all given attributes
+                iFound = 0
                 for _check_key, _check_value in attrib.items():
 
                     # key found in node
                     if _key == _check_key:
+                        if regex and re.search(_check_value, _value):
+                            iFound += 1
+                            continue
 
-                        if re.search(_check_value, _value):
+                        if generalpathsep:
+                            _value = _value.replace("\\", "/")
+                            _check_value = _check_value.replace("\\", "/")
+
+                        if (
+                            (
+                                exact
+                                and caseinsensitive
+                                and _value.lower() == _check_value.lower()
+                            )
+                            or (
+                                exact and not caseinsensitive and _value == _check_value
+                            )
+                            or (not exact and _value.lower() == _check_value.lower())
+                        ):
                             iFound += 1
 
-            # check for matches of ALL given attribute
-            if iFound >= len(attrib.items()):
-                _lstNodes.append(_node)
+                # check for matches of ALL given attribute
+                if iFound == len(attrib.items()):
+                    _lstNodes.append(_node)
         lstXmlNodes = _lstNodes
 
     # check for LINK within a node's LINK TEXT
@@ -3339,8 +3111,12 @@ def reduce_node_list(
             else:
                 _link = _node.attrib.get("LINK", "").replace("\\", "/")
 
-
-            if re.search(link, _link):
+            if (
+                (regex and re.search(link, _link))
+                or (exact and not caseinsensitive and link == _link)
+                or (exact and caseinsensitive and link.lower() == _link.lower())
+                or (not exact and link in _link.lower())
+            ):
                 _lstNodes.append(_node)
 
         lstXmlNodes = _lstNodes
@@ -3363,8 +3139,15 @@ def reduce_node_list(
             _lstDetailsNodes = _node.findall("./richcontent[@TYPE='DETAILS']")
             if _lstDetailsNodes:
                 _text = "".join(_lstDetailsNodes[0].itertext())
-                if re.search(details, _text):
+
+                if (
+                    (regex and re.search(details, _text))
+                    or (exact and not caseinsensitive and details == _text)
+                    or (exact and caseinsensitive and details.lower() == _text.lower())
+                    or (not exact and details.lower() == _text.lower())
+                ):
                     _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for node's NOTES
@@ -3375,8 +3158,15 @@ def reduce_node_list(
             _lstNotesNodes = _node.findall("./richcontent[@TYPE='NOTE']")
             if _lstNotesNodes:
                 _text = "".join(_lstNotesNodes[0].itertext())
-                if re.search(notes, _text):
+
+                if (
+                    (regex and re.search(notes, _text))
+                    or (exact and not caseinsensitive and notes == _text)
+                    or (exact and caseinsensitive and notes.lower() == _text.lower())
+                    or (not exact and notes.lower() in _text.lower())
+                ):
                     _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for node's style(s)
@@ -3405,45 +3195,47 @@ def reduce_node_list(
 def getText(self, strRootAttribute, strTitleText, strPortion):
 
     # get list of all attributes
-    lstAttributes = self._mindmap.getElementsByTagName('attribute')
+    lstAttributes = self._mindmap.getElementsByTagName("attribute")
 
     # search for ROOT ATTRIBUTE NODE
     for item in lstAttributes:
-        if item.attributes['NAME'].value == 'type' and \
-                item.attributes['VALUE'].value == strRootAttribute:
+        if (
+            item.attributes["NAME"].value == "type"
+            and item.attributes["VALUE"].value == strRootAttribute
+        ):
             rootnode = item.parentNode
 
     # get list of all nodes below
-    lstNodes = rootnode.getElementsByTagName('node')
+    lstNodes = rootnode.getElementsByTagName("node")
 
     # look for node containing TITLE STRING
     for item in lstNodes:
-        if item.hasAttribute('TEXT'):
-            if item.getAttribute('TEXT') == strTitleText:
+        if item.hasAttribute("TEXT"):
+            if item.getAttribute("TEXT") == strTitleText:
                 titlenode = item
 
     # get list of all nodes below
-    lstNodes = titlenode.getElementsByTagName('node')
+    lstNodes = titlenode.getElementsByTagName("node")
 
     # look for node containing PORTION STRING
     for item in lstNodes:
-        if item.hasAttribute('TEXT'):
-            if item.getAttribute('TEXT') == strPortion:
+        if item.hasAttribute("TEXT"):
+            if item.getAttribute("TEXT") == strPortion:
                 portionnode = item
 
     # if there is no richtext content ...
-    if not portionnode.getElementsByTagName('richcontent'):
+    if not portionnode.getElementsByTagName("richcontent"):
 
         # get next following single node
-        textnode = portionnode.getElementsByTagName('node')[0]
+        textnode = portionnode.getElementsByTagName("node")[0]
 
         # get standard TEXT attribute
-        strText = textnode.getAttribute('TEXT')
+        strText = textnode.getAttribute("TEXT")
 
     else:
 
         # look for HTML content
-        richcontents = portionnode.getElementsByTagName('richcontent')
+        richcontents = portionnode.getElementsByTagName("richcontent")
 
         # convert content to HTML
         strHtml = richcontents[0].toxml()
@@ -3452,8 +3244,8 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
         strText = html2text.html2text(strHtml)
 
     # replace cryptic text passages
-    strText = strText.replace('&lt;', '<')
-    strText = strText.replace('&gt;', '>')
+    strText = strText.replace("&lt;", "<")
+    strText = strText.replace("&gt;", ">")
 
     # return value back to caller
     return strText
@@ -3466,5 +3258,4 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
 if __name__ == "__main__":
 
     # create execute class init with command line environment
-    Mindmap(_id='cli')
-
+    Mindmap(_id="cli")
