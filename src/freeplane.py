@@ -3343,7 +3343,7 @@ def reduce_node_list(
                             or (
                                 exact and not caseinsensitive and _value == _check_value
                             )
-                            or (not exact and _value.lower() == _check_value.lower())
+                            or (not exact and _value.lower() in _check_value.lower())
                         ):
                             iFound += 1
 
