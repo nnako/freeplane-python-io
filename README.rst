@@ -120,6 +120,10 @@ usage
     # search whole mindmap for "test"
     nodes = mindmap.find_nodes(core="test", exact=True)
 
+    # search whole mindmap with regular expression
+    if not nodes:
+        nodes = mindmap.find_nodes(core=r"t[a-z]+t", regex=True)
+
     # search whole mindmap for "test", "tEST", ...
     if not nodes:
         nodes = mindmap.find_nodes(core="test")
@@ -162,3 +166,4 @@ documentation
 For more information, please visit our documentation_ at ReadTheDocs.
 
 .. _documentation: https://freeplane-python-io.readthedocs.io/en/latest/
+

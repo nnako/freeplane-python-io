@@ -915,6 +915,7 @@ class Mindmap(object):
             generalpathsep=False,
             caseinsensitive=False,
             keep_link_specials=False,
+            regex=False,
             ):
 
 
@@ -945,6 +946,7 @@ class Mindmap(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
 
 
@@ -2354,6 +2356,7 @@ class Node(object):
             caseinsensitive=False,
             find_in_self=False,
             keep_link_specials=False,
+            regex=False,
             ):
 
 
@@ -2386,6 +2389,7 @@ class Node(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
 
 
@@ -2426,6 +2430,7 @@ class Node(object):
             generalpathsep=False,
             caseinsensitive=False,
             keep_link_specials=False,
+            regex=False,
             ):
 
 
@@ -2453,6 +2458,7 @@ class Node(object):
             generalpathsep=generalpathsep,
             caseinsensitive=caseinsensitive,
             keep_link_specials=False,
+            regex=regex,
         )
 
 
@@ -3261,6 +3267,23 @@ def extract_sanitized_body_content(body_elem):
     return result
 
 
+def match_textual_content(
+    search="",
+    text="",
+    regex=False,
+    exact=False,
+    caseinsensitive=False,
+):
+
+    if (
+        (regex and re.search(search, text))
+        or (exact and not caseinsensitive and search == text)
+        or (exact and caseinsensitive and search.lower() == text.lower())
+        or (not exact and search.lower() in text.lower())
+    ):
+        return True
+    return False
+
 def reduce_node_list(
         lstXmlNodes=[],
         id='',
@@ -3275,6 +3298,7 @@ def reduce_node_list(
         generalpathsep=False,
         caseinsensitive=False,
         keep_link_specials=False,
+        regex=False,
     ):
 
     # check for identical ID
@@ -3289,14 +3313,11 @@ def reduce_node_list(
     if core:
         _lstNodes = []
         for _node in lstXmlNodes:
-            if exact:
-                if not caseinsensitive and core == _node.attrib.get("TEXT", ""):
-                    _lstNodes.append(_node)
-                elif caseinsensitive and core.lower() == _node.attrib.get("TEXT", "").lower():
-                    _lstNodes.append(_node)
-            else:
-                if core.lower() in _node.attrib.get("TEXT", "").lower():
-                    _lstNodes.append(_node)
+            _text = _node.attrib.get("TEXT", "")
+
+            if match_textual_content(core, _text, regex, exact, caseinsensitive):
+                _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for all ATTRIBUTES within a node
@@ -3316,33 +3337,16 @@ def reduce_node_list(
 
                     # key found in node
                     if _key == _check_key:
+                        if regex and re.search(_check_value, _value):
+                            iFound += 1
+                            continue
 
-                        # exact match desired
-                        if exact:
+                        if generalpathsep:
+                            _value = _value.replace("\\", "/")
+                            _check_value = _check_value.replace("\\", "/")
 
-                            # generalized path separator
-                            if generalpathsep:
-
-                                # case-sensitivity desired
-                                if caseinsensitive and _value.replace("\\", "/").lower() == _check_value.replace("\\", "/").lower():
-                                    iFound += 1
-                                # case-insensitivity desired
-                                elif not caseinsensitive and _value.replace("\\", "/") == _check_value.replace("\\", "/"):
-                                    iFound += 1
-
-                            # original path separator
-                            else:
-                                # case-sensitivity desired
-                                if caseinsensitive and _value.lower() == _check_value.lower():
-                                    iFound += 1
-                                # case-insensitivity desired
-                                elif not caseinsensitive and _value == _check_value:
-                                    iFound += 1
-
-                        # approximate match
-                        else:
-                            if _value.lower() in _check_value.lower():
-                                iFound += 1
+                        if match_textual_content(_check_value, _value, False, exact, caseinsensitive):
+                            iFound += 1
 
                 # check for matches of ALL given attribute
                 if iFound == len(attrib.items()):
@@ -3363,21 +3367,14 @@ def reduce_node_list(
             # characters.
 
             if not keep_link_specials:
-                _link = _node.attrib.get("LINK", "").replace("\\","/").replace("%20", " ")
+                _link = (
+                    _node.attrib.get("LINK", "").replace("\\", "/").replace("%20", " ")
+                )
             else:
-                _link = _node.attrib.get("LINK", "").replace("\\","/")
+                _link = _node.attrib.get("LINK", "").replace("\\", "/")
 
-            # now do the comparison
-            if exact:
-                # case-sensitive test
-                if not caseinsensitive and (link.replace("\\","/") == _link):
-                    _lstNodes.append(_node)
-                # case-insensitive test
-                elif caseinsensitive and (link.replace("\\","/").lower() == _link.lower()):
-                    _lstNodes.append(_node)
-            else:
-                if link.replace("\\", "/").lower() in _link.lower():
-                    _lstNodes.append(_node)
+            if match_textual_content(link, _link, regex, exact, caseinsensitive):
+                _lstNodes.append(_node)
 
         lstXmlNodes = _lstNodes
 
@@ -3398,15 +3395,11 @@ def reduce_node_list(
             # check for details node
             _lstDetailsNodes = _node.findall("./richcontent[@TYPE='DETAILS']")
             if _lstDetailsNodes:
-                _text = ''.join(_lstDetailsNodes[0].itertext())
-                if exact:
-                    if not caseinsensitive and details == _text:
-                        _lstNodes.append(_node)
-                    elif caseinsensitive and details.lower() == _text.lower():
-                        _lstNodes.append(_node)
-                else:
-                    if details.lower() in _text.lower():
-                        _lstNodes.append(_node)
+                _text = "".join(_lstDetailsNodes[0].itertext())
+
+                if match_textual_content(details, _text, regex, exact, caseinsensitive):
+                    _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for node's NOTES
@@ -3416,15 +3409,11 @@ def reduce_node_list(
             # check for notes node
             _lstNotesNodes = _node.findall("./richcontent[@TYPE='NOTE']")
             if _lstNotesNodes:
-                _text = ''.join(_lstNotesNodes[0].itertext())
-                if exact:
-                    if not caseinsensitive and notes == _text:
-                        _lstNodes.append(_node)
-                    elif caseinsensitive and notes.lower() == _text.lower():
-                        _lstNodes.append(_node)
-                else:
-                    if notes.lower() in _text.lower():
-                        _lstNodes.append(_node)
+                _text = "".join(_lstNotesNodes[0].itertext())
+
+                if match_textual_content(notes, _text, regex, exact, caseinsensitive):
+                    _lstNodes.append(_node)
+
         lstXmlNodes = _lstNodes
 
     # check for node's style(s)
