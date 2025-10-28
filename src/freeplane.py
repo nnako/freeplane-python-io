@@ -79,10 +79,10 @@ except:
     print("at this point, lxml package is not available. shouldn't be a problem, though.")
 
 # html format
-try:
-    import html2text
-except:
-    print("at this point, html2text package is not available. shouldn't be a problem, though.")
+# try:
+#     import html2text
+# except:
+#     print("at this point, html2text package is not available. shouldn't be a problem, though.")
 
 # information model
 try:
@@ -3485,7 +3485,8 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
         strHtml = richcontents[0].toxml()
 
         # convert HTML to MARKDOWN ASCII
-        strText = html2text.html2text(strHtml)
+        # strText = html2text.html2text(strHtml)
+        strText = extract_text_from_html(strHtml)
 
     # replace cryptic text passages
     strText = strText.replace('&lt;', '<')
@@ -3493,6 +3494,27 @@ def getText(self, strRootAttribute, strTitleText, strPortion):
 
     # return value back to caller
     return strText
+
+
+from html.parser import HTMLParser
+import html
+
+class TextExtractor(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.text_parts = []
+
+    def handle_data(self, data):
+        self.text_parts.append(html.unescape(data))
+
+    def get_text(self):
+        return ''.join(self.text_parts).strip()
+
+def extract_text_from_html(html_code: str) -> str:
+    parser = TextExtractor()
+    parser.feed(html_code)
+    return parser.get_text()
+
 
 
 #

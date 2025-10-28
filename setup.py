@@ -29,7 +29,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
-        "html2text ~= 2020.1.16",
+        # "html2text ~= 2020.1.16",
         "lxml",
         ],
     classifiers=[
