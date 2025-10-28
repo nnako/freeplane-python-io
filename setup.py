@@ -31,6 +31,8 @@ setup(
     install_requires=[
         # "html2text ~= 2020.1.16",
         "lxml",
+        "pytest >= 8.0.0",
+        "pytest-cov",
         ],
     classifiers=[
         "Programming Language :: Python :: 3",
