@@ -640,6 +640,15 @@ class Mindmap(object):
         _node3.attrib["BUILTIN"] = "yes"
         _node2.append(_node3)
 
+
+    def __eq__(self, __value) -> bool:
+        """
+        compares two mindmaps by recursively comparing their nodes
+
+        :returns: bool
+        """
+        return self.rootnode == __value.rootnode
+
 # MAP
 
     @classmethod
@@ -1289,6 +1298,33 @@ class Node(object):
 
     def __str__(self):
         return self.plaintext
+
+
+    def __eq__(self, __value) -> bool:
+        """
+        compares two nodes by comparing some of their attributes and
+        recursively comparing their children
+
+        supported attributes for comparison: plaintext, hyperlink, imagepath, details
+
+        :returns: bool
+        """
+        if self.plaintext != __value.plaintext:
+            return False
+
+        if self.hyperlink != __value.hyperlink:
+            return False
+
+        if self.imagepath != __value.imagepath:
+            return False
+
+        if self.details != __value.details:
+            return False
+
+        if len(self.children) != len(__value.children):
+            return False
+
+        return all([self.children[i] == __value.children[i] for i in range(len(self.children))])
 
 
     @property
