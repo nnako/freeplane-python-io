@@ -160,6 +160,31 @@ usage
     mindmap.save('./example_OUT.mm')
 
 
+development
+-------------
+
+As a user of this package or a developer, you are welcome to contribute to this
+project. Contribution may happen in different ways. Here are a couple of
+examples:
+
+- **use the features** within your own application and **create an issue** if you want something fixed.
+- create a new issue to announce and discuss **an idea**, or ask **a question**.
+- **create an issue** if you want something changed. Your request will be openly discussed and might lead into a code change.
+- **create a unittest** if you see some feature has not been tested, yet. See [unittesting]_ for details.
+- **create a new feature** if you want to add more features. Please, discuss it, first. I might support you.
+
+
+unittesting _`unittesting`
+-----------
+
+If you want to test your locally changed code, please add a **unittest** for
+the changed aspect of the respective feature and test that aspect, before you
+create a **pull request** for integrating both, the tests and the changes into
+the code base. Here is the structure to be respected when working with tests:
+
+... here comes an ASCII diagram
+
+
 documentation
 -------------
 
