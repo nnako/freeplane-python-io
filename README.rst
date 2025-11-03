@@ -12,11 +12,15 @@ with Freeplane mindmap files, directly.
 
 These are the main features of the package:
 
-**create, read and modify Freeplane mindmaps**
-  at least in theory, this package
-  will not touch anything it does not know within an opened mindmap. so, you
-  can read big maps, change them where you like and save them without any
-  information loss.
++------------+------------+
+| feature    | description   |
++============+============+
+| Eintrag A  | Eintrag B  |
++------------+------------+
+| Eintrag C  | Eintrag D  |
++------------+------------+
+| **create, read and modify Freeplane mindmaps** | at least in theory, this package will not touch anything it does not know within an opened mindmap. so, you can read big maps, change them where you like and save them without any information loss. |
++-----------+--------+
 
 **transparent handling of different mindmap file versions**
   different freeplane file
@@ -182,7 +186,19 @@ the changed aspect of the respective feature and test that aspect, before you
 create a **pull request** for integrating both, the tests and the changes into
 the code base. Here is the structure to be respected when working with tests:
 
-... here comes an ASCII diagram
+::
+
+    +-------+
+    + Box   +
+    +-------+
+
+    ... here comes an ASCII diagram
+
+.. graphviz::
+
+   digraph G {
+    A -> B;
+    B -> C;
 
 
 documentation
