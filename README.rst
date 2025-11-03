@@ -170,11 +170,11 @@ examples:
 - **use the features** within your own application and **create an issue** if you want something fixed.
 - create a new issue to announce and discuss **an idea**, or ask **a question**.
 - **create an issue** if you want something changed. Your request will be openly discussed and might lead into a code change.
-- **create a unittest** if you see some feature has not been tested, yet. See [unittesting]_ for details.
+- **create a unittest** if you see some feature has not been tested, yet. See unittesting_ for details.
 - **create a new feature** if you want to add more features. Please, discuss it, first. I might support you.
 
 
-unittesting _`unittesting`
+_`unittesting`
 -----------
 
 If you want to test your locally changed code, please add a **unittest** for
