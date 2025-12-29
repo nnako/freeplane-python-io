@@ -61,6 +61,7 @@
 
 # built-ins
 from __future__ import print_function
+
 import argparse
 import datetime
 import html
@@ -851,7 +852,7 @@ class Mindmap(object):
             # leave function if style is already existing
             for _sty in _lst:
                 if name.lower() == _sty.get('TEXT').lower():
-                    logger.warning('style "' + name + '" is already existing. ignoring request.')
+                    self._logger.warning('style "' + name + '" is already existing. ignoring request.')
                     return False
 
             # create element
@@ -1252,6 +1253,10 @@ class Node(object):
         # initialize instance
         #
 
+        # in case of a valid map (no detached node)
+        if mindmap:
+            self._logger = mindmap._logger      # the reference to the logger feature
+
         self._map = mindmap                 # the reference to the current mindmap object
         self._node = xmlnode                # the reference to the corresponding node within the xml file
         self._branch = None                 # a pointer to be set to a detached branch (possibly later)
@@ -1431,7 +1436,7 @@ class Node(object):
                 return fpnode
 
             except:
-                logger.warning(f'the referenced node "{_referenced_node_id}" was not found in mindmap. please check.')
+                self._logger.warning(f'the referenced node "{_referenced_node_id}" was not found in mindmap. please check.')
                 return None
 
 
@@ -1457,7 +1462,7 @@ class Node(object):
                 return fpnode
 
             except:
-                logger.warning(f'the referenced node "{self.corelink}" was not found in mindmap. please check.')
+                self._logger.warning(f'the referenced node "{self.corelink}" was not found in mindmap. please check.')
                 return None
 
 
@@ -1491,7 +1496,7 @@ class Node(object):
 
         # check if node holds no in-line image
         if self._node.find('hook') is None:
-            logger.warning(f'the node "{self.id}" does not contain an in-line image.')
+            self._logger.warning(f'the node "{self.id}" does not contain an in-line image.')
             return None
 
         # get hook node
@@ -1524,7 +1529,7 @@ class Node(object):
 
         # check if node holds no in-line image
         if self._node.find('hook') is None:
-            logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
+            self._logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
             return None
 
         # get hook node
@@ -1641,12 +1646,12 @@ class Node(object):
 
         # check required format
         if not strId.lower().startswith('id_'):
-            logger.warning('in Freeplane, an ID must start with "ID_" and contain a number string.')
+            self._logger.warning('in Freeplane, an ID must start with "ID_" and contain a number string.')
             # correct ID format
             strId = "ID_"+strId
 
         if not strId[len('id_'):].isnumeric():
-            logger.warning('in Freeplane, an ID must have a certain format. ignoring ID change request.')
+            self._logger.warning('in Freeplane, an ID must have a certain format. ignoring ID change request.')
             return False
 
         # set new ID
@@ -1802,7 +1807,7 @@ class Node(object):
             # check if node is still detached
             if self._branch._map is None:
 
-                logger.warning("trying to set a style for a detached node. please, make sure style exists.")
+                self._logger.warning("trying to set a style for a detached node. please, make sure style exists.")
 
             else:
 
@@ -1829,7 +1834,7 @@ class Node(object):
                     break
             else:
                 if strStyle:
-                    logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
+                    self._logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
 
         # set style reference in XML node
         if strStyle:
@@ -2058,7 +2063,7 @@ class Node(object):
 
         # if detached branch head
         elif self.is_detached_head:
-            logger.warning("a detached branch head has no other parent.")
+            self._logger.warning("a detached branch head has no other parent.")
             return None
 
         else:
@@ -2560,7 +2565,7 @@ class Node(object):
         #
 
         if attached_node is None:
-            logger.warning("no attached_node given to be attached.")
+            self._logger.warning("no attached_node given to be attached.")
             return False
 
 
@@ -2577,11 +2582,11 @@ class Node(object):
         # check if object is child within map
         if self.is_map_node or self.is_root_node:
             if attached_node._node in self._map._parentmap.keys():
-                logger.warning('node "' + str(attached_node) + \
+                self._logger.warning('node "' + str(attached_node) + \
                         '" already attached to a map. NOTHING DONE.')
                 return False
         elif attached_node.is_detached_node:
-            logger.warning('node "' + str(attached_node) + \
+            self._logger.warning('node "' + str(attached_node) + \
                     '" is part of a detached branch. NOTHING DONE. please only attach branch head.')
             return False
 
@@ -2698,7 +2703,7 @@ class Node(object):
         #
 
         if attached_node.is_detached_node:
-            logger.warning('attach of "' \
+            self._logger.warning('attach of "' \
                     + str(attached_node) \
                     + '" not possible. generally, only the heads of detached branches attachable.')
             return False
@@ -2706,7 +2711,7 @@ class Node(object):
 
 
 
-        logger.warning('host / child configuration for attach is not defined.')
+        self._logger.warning('host / child configuration for attach is not defined.')
         return False
 
 
@@ -3124,7 +3129,7 @@ class Node(object):
         else:
 
             # output warning
-            logger.warning("it is not possible to add a sibling to a detached node. please use the create_node function.")
+            self._logger.warning("it is not possible to add a sibling to a detached node. please use the create_node function.")
             return None
 
 
