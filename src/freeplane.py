@@ -3291,13 +3291,13 @@ def match_textual_content(
 
 def reduce_node_list(
         lstXmlNodes=[],
-        id='',
-        core='',
-        attrib='',
-        details='',
-        notes='',
-        link='',
-        icon='',
+        id="",
+        core="",
+        attrib="",
+        details="",
+        notes="",
+        link="",
+        icon="",
         style=[],
         exact=False,
         generalpathsep=False,
@@ -3424,8 +3424,8 @@ def reduce_node_list(
     # check for node's style(s)
     if style:
         # convert to list if not already so
-        if not type(style)==list:
-            style=[style]
+        if not type(style) == list:
+            style = [style]
         _lstNodes = []
         for _node in lstXmlNodes:
             # check for node style
@@ -3442,6 +3442,7 @@ def reduce_node_list(
 
 # read text paragraph from mindmap
 # CLI FUNCTIONS
+
 
 def getText(self, strRootAttribute, strTitleText, strPortion):
 
