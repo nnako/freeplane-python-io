@@ -149,7 +149,7 @@ def sanitized(text):
     # dealing with html or richtext nodes and converting them to plain text.
     # these are replaced by ordinary <SPACE> characters.
 
-    return text.replace("\xa0", " ").strip()
+    return text.replace("\xa0", " ")
 
 
 
