@@ -2313,7 +2313,7 @@ class Node(object):
                 return True
 
             # leave function if we reached the root node
-            if parent.id == self._map.rootnode:
+            if parent.id == self._map.rootnode.id:
                 return False
 
             # get next parent further up
