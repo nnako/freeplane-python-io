@@ -775,6 +775,46 @@ class Mindmap(object):
         return node
 
 
+    @classmethod
+    def print_tree(cls,
+        node=None,
+        max_depth=0,
+        current_depth=0,
+        indent="  ",
+        _node=None,     # used for internal walk
+    ):
+        """
+        print tree structure until a specified depth
+
+        :param node: Freeplane node element (node)
+        :param max_depth: max recursion depth (0 = only base node)
+        :param current_depth: current depth (internal)
+        :param indent: indentation for each layer
+        """
+
+        # finish this layer?
+        if current_depth > max_depth:
+            return
+
+        # get the lxml node
+        if node:
+            _node = node._node
+
+        # output
+        text = _node.get("TEXT", "")
+        print(f"{indent * current_depth}- {text}")
+
+        # proceed with next layer
+        for child in _node.findall("node"):
+            cls.print_tree(
+                node=None,      # internal call not with Freeplane node
+                max_depth=max_depth,
+                current_depth=current_depth + 1,
+                indent=indent,
+                _node=child,    # internal call using lxml node
+            )
+
+
     @property
     def rootnode(self):
         return Node(self._rootnode, self)
@@ -1803,7 +1843,7 @@ class Node(object):
 
         # check if node seems detached
         if self._map is None:
- 
+
             # check if node is still detached
             if self._branch._map is None:
 
@@ -2344,6 +2384,29 @@ class Node(object):
         if not self._node.findall('./node'):
             return False
         return True
+
+
+    def print_tree(
+        self,
+        max_depth=0,
+        current_depth=0,
+        indent="  ",
+    ):
+
+
+
+
+        #
+        # call respective class method
+        #
+
+        Mindmap.print_tree(
+            node=None,
+            max_depth=max_depth,
+            current_depth=current_depth,
+            indent=indent,
+            _node=self._node,
+        )
 
 
     def find_nodes(
