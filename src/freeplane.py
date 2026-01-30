@@ -2392,6 +2392,14 @@ class Node(object):
         current_depth=0,
         indent="  ",
     ):
+        """
+        print tree structure until a specified depth
+
+        :param max_depth: max recursion depth (0 = only base node)
+        :param current_depth: current depth (internal)
+        :param indent: indentation for each layer
+        """
+
 
 
 
