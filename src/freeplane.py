@@ -2380,6 +2380,17 @@ class Node(object):
 
 
     @property
+    def is_html_format(self):
+
+        # if the current xmlnode has no attribute "TEXT", it is expected that
+        # the text portion must reside in its richcontent child
+
+        if self._node.get('TEXT') is None:
+            return True
+        return False
+
+
+    @property
     def has_children(self):
         if not self._node.findall('./node'):
             return False
