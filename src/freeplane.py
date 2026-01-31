@@ -2403,7 +2403,6 @@ class Node(object):
 
 
 
-
         #
         # call respective class method
         #
@@ -2415,6 +2414,49 @@ class Node(object):
             indent=indent,
             _node=self._node,
         )
+
+
+    def iter_tree(
+        self,
+        max_depth=100000,   # not expected to have that many layers, though
+        _current_depth=0,
+        _node=None,
+    ):
+        """
+        iterate tree structure recursively until a specified depth
+
+        :param max_depth: max recursion depth (0 = only base node)
+        :param _current_depth: current level below base node (internal)
+        :param _node: xmlnode when recursion has started (internal)
+        """
+
+
+
+
+        #
+        # iterate over each element of the tree
+        #
+
+        # finish this layer?
+        if _current_depth > max_depth:
+            return
+
+        # get node fromm input args. as the 1st user call would contain the
+        # current node within the self object and the further calls are
+        # internal, do a respective check.
+        if _node is None:
+            _node = self._node
+
+        # return element
+        yield Node(_node, self._map)
+
+        # proceed with next layer
+        for _child in _node.findall("node"):
+            yield from self.iter_tree(
+                max_depth=max_depth,
+                _current_depth=_current_depth + 1,
+                _node=_child,
+            )
 
 
     def find_nodes(
