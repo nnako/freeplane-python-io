@@ -2430,6 +2430,7 @@ class Node(object):
     def iter_tree(
         self,
         max_depth=100000,   # not expected to have that many layers, though
+        track_depth=False,
         _current_depth=0,
         _node=None,
     ):
@@ -2437,6 +2438,7 @@ class Node(object):
         iterate tree structure recursively until a specified depth
 
         :param max_depth: max recursion depth (0 = only base node)
+        :param track_depth: set to True if return of node AND respective depth desired
         :param _current_depth: current level below base node (internal)
         :param _node: xmlnode when recursion has started (internal)
         """
@@ -2459,12 +2461,16 @@ class Node(object):
             _node = self._node
 
         # return element
-        yield Node(_node, self._map)
+        if track_depth:
+            yield Node(_node, self._map), _current_depth
+        else:
+            yield Node(_node, self._map)
 
         # proceed with next layer
         for _child in _node.findall("node"):
             yield from self.iter_tree(
                 max_depth=max_depth,
+                track_depth=track_depth,
                 _current_depth=_current_depth + 1,
                 _node=_child,
             )
