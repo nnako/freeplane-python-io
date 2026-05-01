@@ -501,6 +501,7 @@ class Mindmap(object):
             self._preferred_passwords = []
             self._encrypted_nodes = {}
             self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+            self._register_encrypted_nodes()
 
 
 
@@ -678,6 +679,7 @@ class Mindmap(object):
         _node3 = ET.Element('icon')
         _node3.attrib["BUILTIN"] = "yes"
         _node2.append(_node3)
+        self._register_encrypted_nodes()
 
 # MAP
 
@@ -894,6 +896,84 @@ class Mindmap(object):
         Remove all map-specific preferred encryption passwords.
         """
         self._preferred_passwords = []
+
+    def _register_encrypted_nodes(self):
+        """
+        Register all encrypted wrapper nodes found in the current lxml tree.
+
+        The canonical tree remains unchanged. Each wrapper node gets a runtime
+        state entry that can later hold a decrypted shadow subtree.
+        """
+        self._encrypted_nodes = {}
+
+        if self._root is None:
+            return
+
+        for wrapper_node in self._root.findall(".//node[@ENCRYPTED_CONTENT]"):
+            payload = wrapper_node.get("ENCRYPTED_CONTENT", "")
+            self._encrypted_nodes[wrapper_node] = EncryptedNodeState(
+                wrapper_node=wrapper_node,
+                original_payload=payload,
+            )
+
+        if self._preferred_passwords:
+            self.unlock_encrypted_nodes()
+
+    def _try_decrypt_registered_node(self, wrapper_node, password):
+        """
+        Try to decrypt one registered encrypted node with a given password.
+
+        Args:
+            wrapper_node: The encrypted wrapper node from the canonical tree.
+            password: Candidate password string.
+
+        Returns:
+            bool: True if decryption succeeded, else False.
+        """
+        if self._cipher is None:
+            return False
+
+        state = self._encrypted_nodes.get(wrapper_node)
+        if state is None or not password:
+            return False
+
+        try:
+            decrypted_root = self._cipher.decrypt_subtree(wrapper_node, password)
+        except Exception:
+            return False
+
+        state.decrypted_root = decrypted_root
+        state.password = str(password)
+        state.is_unlocked = True
+        state.is_dirty = False
+        return True
+
+    def unlock_encrypted_nodes(self, passwords=None):
+        """
+        Try to unlock registered encrypted wrapper nodes with preferred passwords.
+
+        Args:
+            passwords: Optional iterable of passwords to try in order.
+
+        Returns:
+            int: Number of nodes that were successfully unlocked.
+        """
+        if passwords is None:
+            passwords = self._preferred_passwords
+
+        passwords = [str(password) for password in passwords if password]
+        unlocked_nodes = 0
+
+        for wrapper_node, state in self._encrypted_nodes.items():
+            if state.is_unlocked:
+                continue
+
+            for password in passwords:
+                if self._try_decrypt_registered_node(wrapper_node, password):
+                    unlocked_nodes += 1
+                    break
+
+        return unlocked_nodes
 
     def _get_effective_password(self, password=''):
         """
