@@ -14,9 +14,7 @@ import binascii
 import base64
 import hashlib
 import os
-import array
 from Crypto.Cipher import DES, DES3
-from Crypto.Util.Padding import unpad
 
 
 BLOCK_LENGTH_BYTES = 8  # pad incoming message to whole length of block
@@ -34,7 +32,7 @@ class AbstractPBEWithMD5AndDES(ABC):
     # use DES3 (triple DES a.k.a. DESede) or plain DES
     triple_des = True
 
-    def __init__(self, iterations=1000):
+    def __init__(self, iterations=DERIVED_KEY_ITERATIONS):
         super().__init__()
         self.iterations = iterations
 
@@ -57,12 +55,11 @@ class AbstractPBEWithMD5AndDES(ABC):
         (dk, iv) = self._get_derived_key_and_iv(password.encode('utf-8'), salt)
 
         # get proper class (DES/DES3) to instantiate and use for encoding
-        des_class = self._get_des_encoder_class()
-        des = des_class.new(dk, DES.MODE_CBC, iv)
+        des = self._build_cipher(dk, iv)
 
         # do the encryption (use bytes not string)
         #encrypted_text = des.encrypt(padded_text)
-        encrypted_text = des.encrypt(padded_text.encode('utf8'))
+        encrypted_text = des.encrypt(padded_text.encode('utf-8'))
 
         # return encrypted text prepended with salt, all base64-encoded
         return base64.b64encode(salt + encrypted_text)
@@ -75,50 +72,43 @@ class AbstractPBEWithMD5AndDES(ABC):
         :param password: password to decrypt with
         :return: decrypted plain text as string (bytes)
         """
-
-
-        # get salt and encrypted text as strings from base64 encoding
-        if " " in encoded_text:
-
-            # within freeplane, the crypted nodes are written in a specific
-            # format within the XML file:
-            #
-            # <node
-            #   TEXT="<node-text>"
-            #   ENCRYPTED_CONTENT="<salt_base64> <content_base64>"
-            #   POSITION=...
-            #   ID=...
-            #   CREATED=...
-            #   MODIFIED=...
-            # />
-
-            _idx = encoded_text.find(" ")
-            salt = base64.b64decode(encoded_text[:_idx])
-            encrypted_text_message = base64.b64decode(encoded_text[_idx:]) 
-
-        else:
-
-            # get first 8 bytes as salt
-            salt = base64.b64decode(encoded_text)[:8]
-
-            # get rest of data (starting from 8th byte as message)
-            encrypted_text_message = base64.b64decode(encoded_text)[8:]
+        salt, encrypted_text_message = self._decode_payload(encoded_text)
 
 
         # get dk and iv using proper algorithm (either for DES or DES3)
         (dk, iv) = self._get_derived_key_and_iv(password.encode('utf-8'), salt)
 
         # get proper class (DES/DES3) to instantiate and use for decoding
+        des = self._build_cipher(dk, iv)
+
+        # freeplane stores XML fragments, so remove PKCS5 padding on bytes first
+        decrypted_bytes = des.decrypt(encrypted_text_message)
+        return self._unpad_decrypted_message(decrypted_bytes).decode("utf-8")
+
+
+    def _decode_payload(self, encoded_text):
+        """
+        Freeplane stores encrypted nodes in XML as:
+
+            ENCRYPTED_CONTENT="<salt_base64> <content_base64>"
+
+        Older helper code may also pass a single base64 string containing
+        salt + ciphertext. Support both forms.
+        """
+
+        if " " in encoded_text:
+            salt_base64, content_base64 = encoded_text.split(" ", 1)
+            return base64.b64decode(salt_base64), base64.b64decode(content_base64.strip())
+
+        decoded = base64.b64decode(encoded_text)
+        return decoded[:8], decoded[8:]
+
+
+    def _build_cipher(self, dk, iv):
         des_class = self._get_des_encoder_class()
-        des = des_class.new(dk, DES.MODE_CBC, iv)
-
-        # do the decryption (then convert from byte to str)
-        #decrypted_text = des.decrypt(encrypted_text_message)
-        decrypted_text = des.decrypt(encrypted_text_message).decode("utf8")
-
-        # return decrypted text with possible padding removed, converted from bytes string to string
-        #return str(self._unpad_decrypted_message(decrypted_text), 'utf-8')
-        return self._unpad_decrypted_message(decrypted_text)
+        if self.triple_des:
+            dk = DES3.adjust_key_parity(dk)
+        return des_class.new(dk, des_class.MODE_CBC, iv)
 
 
     def _pad_plain_text(self, plain_text):
@@ -142,6 +132,14 @@ class AbstractPBEWithMD5AndDES(ABC):
         :return: unpadded text
         """
 
+        if isinstance(decrypted_message, bytes):
+            pad_value = decrypted_message[-1]
+            if pad_value == 0 or pad_value > BLOCK_LENGTH_BYTES:
+                return decrypted_message
+            if decrypted_message[-pad_value:] != bytes([pad_value]) * pad_value:
+                return decrypted_message
+            return decrypted_message[:-pad_value]
+
         message_length = len(decrypted_message)
         pad_str = decrypted_message[-1]
 
@@ -160,13 +158,6 @@ class AbstractPBEWithMD5AndDES(ABC):
             # where real data ends
             position = message_length - pad_value
 
-            # padding element, repeated `pad_value` number of times, as byte string
-            #padding_elements = array.array('B', [pad_value] * pad_value).tostring()
-
-            # check if correctly padded
-            #if pad_value == 0 or decrypted_message[-pad_value:] != padding_elements:
-                #raise ValueError('Incorrect padding')
-
             return decrypted_message[:position]
 
 
@@ -175,7 +166,7 @@ class AbstractPBEWithMD5AndDES(ABC):
 
 
     @abstractmethod
-    def _get_derived_key_and_iv(self, password, salt, cycles=DERIVED_KEY_ITERATIONS):
+    def _get_derived_key_and_iv(self, password, salt):
         return None
 
 
@@ -183,7 +174,7 @@ class PBEWithMD5AndDES(AbstractPBEWithMD5AndDES):
 
     triple_des = False
 
-    def _get_derived_key_and_iv(self, password, salt, cycles=DERIVED_KEY_ITERATIONS):
+    def _get_derived_key_and_iv(self, password, salt):
         """
         Returns tuple of dk(8 bytes) and iv(8 bytes) for DES
 
@@ -196,7 +187,7 @@ class PBEWithMD5AndDES(AbstractPBEWithMD5AndDES):
         :return: (8 bytes dk, 8 bytes iv)
         """
         key = password + salt
-        for i in range(cycles):
+        for i in range(self.iterations):
             m = hashlib.md5(key)
             key = m.digest()
         return key[:8], key[8:]
@@ -204,7 +195,7 @@ class PBEWithMD5AndDES(AbstractPBEWithMD5AndDES):
 
 class PBEWithMD5AndTripleDES(AbstractPBEWithMD5AndDES):
 
-    def _get_derived_key_and_iv(self, password, salt, cycles=DERIVED_KEY_ITERATIONS):
+    def _get_derived_key_and_iv(self, password, salt):
         """
         Returns tuple of dk(24 bytes) and iv(8 bytes) for DES3 (Triple DES, DESede)
 
@@ -230,13 +221,13 @@ class PBEWithMD5AndTripleDES(AbstractPBEWithMD5AndDES):
 
         # do part 1
         part1_to_hash = salt[:4]
-        for i in range(cycles):
+        for i in range(self.iterations):
             m = hashlib.md5(part1_to_hash + password)
             part1_to_hash = m.digest()
 
         # do part 2
         part2_to_hash = salt[4:]
-        for i in range(cycles):
+        for i in range(self.iterations):
             m = hashlib.md5(part2_to_hash + password)
             part2_to_hash = m.digest()
 
