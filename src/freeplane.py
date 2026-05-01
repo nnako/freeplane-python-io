@@ -1187,6 +1187,46 @@ class Mindmap(object):
 
         return lstNodesRet
 
+    def _find_matching_node_in_copy(self, original_node, root_copy):
+        """
+        Find the counterpart of an original node inside a copied XML tree.
+        """
+        node_id = original_node.get("ID", "")
+        if not node_id:
+            return None
+        matches = root_copy.xpath(f".//node[@ID='{node_id}']")
+        if matches:
+            return matches[0]
+        return None
+
+    def _apply_encryption_states_to_tree(self, root_copy):
+        """
+        Write encrypted wrapper payloads into a copied XML tree for saving.
+        """
+        if self._cipher is None:
+            return
+
+        for wrapper_node, state in self._encrypted_nodes.items():
+            wrapper_copy = self._find_matching_node_in_copy(wrapper_node, root_copy)
+            if wrapper_copy is None:
+                continue
+
+            payload = state.original_payload
+            if state.is_unlocked and state.decrypted_root is not None:
+                password = state.password or self._get_effective_password()
+                payload = self._cipher.encrypt(
+                    self._cipher._serialize_xml_node(state.decrypted_root),
+                    password,
+                )
+                state.original_payload = payload
+                state.password = password
+                state.is_dirty = False
+                wrapper_node.attrib["ENCRYPTED_CONTENT"] = payload
+
+            wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
+            for child in list(wrapper_copy):
+                wrapper_copy.remove(child)
+
 
     def save(self, strPath, encoding=''):
 
@@ -1209,8 +1249,11 @@ class Mindmap(object):
         #
 
         # create output string
+        root_to_save = copy.deepcopy(self._root)
+        self._apply_encryption_states_to_tree(root_to_save)
+
         _outputstring = ET.tostring(
-            self._root,
+            root_to_save,
             pretty_print=True,
             method='xml',
             encoding=encoding,
