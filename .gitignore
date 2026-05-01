@@ -6,8 +6,13 @@ __pycache__/
 _stuff/
 _test/
 *.bak
+.coverage
 *.pyc
 *.c
 .session.vim
 _tools/
+.venv/
+_venv/
+_docu/
+_work/
 freeplane_io.egg-info/
