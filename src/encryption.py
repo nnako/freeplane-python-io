@@ -90,7 +90,17 @@ class AbstractPBEWithMD5AndDES(ABC):
         """
         Freeplane stores encrypted nodes in XML as:
 
+        within freeplane, the crypted nodes are written in a specific
+        format within the XML file:
+
+          <node
+            TEXT="<node-text>"
             ENCRYPTED_CONTENT="<salt_base64> <content_base64>"
+            POSITION=...
+            ID=...
+            CREATED=...
+            MODIFIED=...
+          />
 
         Older helper code may also pass a single base64 string containing
         salt + ciphertext. Support both forms.
