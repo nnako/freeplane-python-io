@@ -857,6 +857,65 @@ class Mindmap(object):
     def rootnode(self):
         return Node(self._rootnode, self)
 
+    @property
+    def passwords(self):
+        """
+        Return the map-specific list of preferred encryption passwords.
+        """
+        return list(self._preferred_passwords)
+
+    def set_passwords(self, passwords):
+        """
+        Replace the map-specific list of preferred encryption passwords.
+
+        Args:
+            passwords: Iterable of password strings in preferred order.
+        """
+        self._preferred_passwords = []
+        for password in passwords:
+            self.add_password(password)
+
+    def add_password(self, password):
+        """
+        Add a preferred encryption password for this map.
+
+        Args:
+            password: Password string to append if not already present.
+        """
+        if password is None:
+            return
+
+        password = str(password)
+        if password and password not in self._preferred_passwords:
+            self._preferred_passwords.append(password)
+
+    def clear_passwords(self):
+        """
+        Remove all map-specific preferred encryption passwords.
+        """
+        self._preferred_passwords = []
+
+    def _get_effective_password(self, password=''):
+        """
+        Resolve the password that should be used for an encryption operation.
+
+        Args:
+            password: Explicit password override.
+
+        Returns:
+            The explicit password or the first preferred map password.
+
+        Raises:
+            ValueError: No usable password is available.
+        """
+        if password:
+            return str(password)
+
+        if self._preferred_passwords:
+            return self._preferred_passwords[0]
+
+        raise ValueError("no password available for encryption or decryption")
+
 
     @property
     def styles(self):
