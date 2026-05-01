@@ -1,6 +1,28 @@
 package versions
 
 
+v...
+ <date>
+
+  - NEW: new method <node>.iter_tree() to iterate through
+         all (or at least until as specified within the
+		 max_depth attribute) nodes below the current one.
+
+  - NEW: new class method freeplane.Mindmap.print_tree()
+         to print out the tree structure of and below any
+		 specified node. Additionally, this method can be
+		 called from any node as a native method print_tree().
+
+  - NEW: first version of test concept
+
+  - NEW: regular expression support for all text-based search
+         methods e.g. find_nodes(), find_children(), ... and
+         respective search scopes (core text, attribute values,
+         link text, ...)
+
+  - DEL: remove dependency to abandoned html2text package
+
+
 v0.10.1
  02.03.2025
 
