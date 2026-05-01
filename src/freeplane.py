@@ -1512,6 +1512,26 @@ class Node(object):
     def __str__(self):
         return self.plaintext
 
+    def _encrypted_state(self):
+        """
+        Return the registered encrypted runtime state for this wrapper node.
+        """
+        if self._map is None:
+            return None
+        return self._map._encrypted_nodes.get(self._node)
+
+    def _effective_xmlnode(self):
+        """
+        Return the XML node that should be used for read access.
+
+        For unlocked encrypted wrapper nodes this is the decrypted shadow
+        subtree. For all other nodes it is the canonical XML node.
+        """
+        state = self._encrypted_state()
+        if state and state.is_unlocked and state.decrypted_root is not None:
+            return state.decrypted_root
+        return self._node
+
 
     @property
     def is_detached_head(self):
@@ -1559,6 +1579,52 @@ class Node(object):
             return True
         return False
 
+    @property
+    def is_encrypted(self):
+        """
+        Check whether this node is an encrypted Freeplane wrapper node.
+        """
+        return bool(self._node.get("ENCRYPTED_CONTENT", ""))
+
+    @property
+    def is_unlocked(self):
+        """
+        Check whether this encrypted wrapper node has decrypted shadow content.
+        """
+        state = self._encrypted_state()
+        if state is None:
+            return False
+        return state.is_unlocked
+
+    def unlock(self, password=''):
+        """
+        Try to unlock this encrypted wrapper node.
+
+        Args:
+            password: Optional explicit password override.
+
+        Returns:
+            bool: True if this node is unlocked after the call.
+        """
+        if not self.is_encrypted or self._map is None:
+            return False
+
+        passwords = [password] if password else self._map.passwords
+        return bool(self._map.unlock_encrypted_nodes(passwords=passwords))
+
+    def lock(self):
+        """
+        Drop decrypted shadow content for this encrypted wrapper node.
+        """
+        state = self._encrypted_state()
+        if state is None:
+            return
+
+        state.decrypted_root = None
+        state.password = ""
+        state.is_unlocked = False
+        state.is_dirty = False
+
 
     @property
     def visibletext(self):
@@ -1583,7 +1649,7 @@ class Node(object):
     @property
     def plaintext(self):
         return sanitized(
-            getCoreTextFromNode(self._node, bOnlyFirstLine=False)
+            getCoreTextFromNode(self._effective_xmlnode(), bOnlyFirstLine=False)
         )
 
 
@@ -1622,7 +1688,7 @@ class Node(object):
 
     @property
     def has_internal_hyperlink(self):
-        _link = self._node.attrib.get("LINK","")
+        _link = self._effective_xmlnode().attrib.get("LINK","")
         if _link and _link[0] == "#":
             return True
         return False
@@ -1635,7 +1701,7 @@ class Node(object):
         if self.has_internal_hyperlink:
 
             # get target node id by removing leading hash char
-            _referenced_node_id = self._node.attrib.get("LINK","")[1:]
+            _referenced_node_id = self._effective_xmlnode().attrib.get("LINK","")[1:]
 
             try:
                 # find node
@@ -1685,7 +1751,7 @@ class Node(object):
 
     @property
     def hyperlink(self):
-        return self._node.attrib.get("LINK","")
+        return self._effective_xmlnode().attrib.get("LINK","")
 
 
     @hyperlink.setter
@@ -1710,14 +1776,15 @@ class Node(object):
 
     @property
     def imagepath(self):
+        xmlnode = self._effective_xmlnode()
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
+        if xmlnode.find('hook') is None:
             self._logger.warning(f'the node "{self.id}" does not contain an in-line image.')
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = xmlnode.find('hook')
 
         # get uri attribute
         uri = hook.attrib.get("URI", "")
@@ -1743,14 +1810,15 @@ class Node(object):
 
     @property
     def imagesize(self):
+        xmlnode = self._effective_xmlnode()
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
+        if xmlnode.find('hook') is None:
             self._logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = xmlnode.find('hook')
 
         # get uri attribute
         size = hook.attrib.get("SIZE", "")
@@ -1878,7 +1946,7 @@ class Node(object):
     @property
     def attributes(self):
         _attribute = {}
-        _lst = self._node.findall('attribute')
+        _lst = self._effective_xmlnode().findall('attribute')
         for _attr in _lst:
             _name = _attr.get('NAME', '')
             _value = _attr.get('VALUE', '')
@@ -1998,8 +2066,9 @@ class Node(object):
 
     @property
     def style(self):
-        if 'STYLE_REF' in self._node.attrib.keys():
-            return self._node.attrib['STYLE_REF']
+        xmlnode = self._effective_xmlnode()
+        if 'STYLE_REF' in xmlnode.attrib.keys():
+            return xmlnode.attrib['STYLE_REF']
         return ""
 
     @style.setter
@@ -2146,12 +2215,13 @@ class Node(object):
 
     @property
     def comment(self):
+        xmlnode = self._effective_xmlnode()
 
         # check for existence of child
-        if not self._node.find('node') is None:
+        if not xmlnode.find('node') is None:
 
             # get first child
-            node = self._node.find('node')
+            node = xmlnode.find('node')
 
             # check for TEXT attribute
             if not node.get('TEXT') is None:
@@ -2164,11 +2234,12 @@ class Node(object):
 
     @property
     def details(self):
+        xmlnode = self._effective_xmlnode()
 
         _text = ''
 
         # check for details node
-        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        _lstDetailsNodes = xmlnode.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
             _text = ''.join(_lstDetailsNodes[0].itertext()).strip()
 
@@ -2225,7 +2296,7 @@ class Node(object):
         _text = ''
 
         # check for notes node
-        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        _lstNotesNodes = self._effective_xmlnode().findall("./richcontent[@TYPE='NOTE']")
         if _lstNotesNodes:
             _text = ''.join(_lstNotesNodes[0].itertext()).strip()
 
@@ -2333,7 +2404,7 @@ class Node(object):
     @property
     def icons(self):
         _icons = []
-        _lst = self._node.findall('icon')
+        _lst = self._effective_xmlnode().findall('icon')
         for _icon in _lst:
             _name = _icon.get('BUILTIN', '')
             if _name:
@@ -2418,7 +2489,7 @@ class Node(object):
     @property
     def children(self):
         lstNodesRet = []
-        for _node in  self._node.findall("./node"):
+        for _node in  self._effective_xmlnode().findall("./node"):
 
             # create Node instance
             fpnode = Node(_node, self._map)
@@ -2445,7 +2516,7 @@ class Node(object):
 
     def get_child_by_index(self, idx=0):
         # check if node has children
-        _children = self._node.findall("./node")
+        _children = self._effective_xmlnode().findall("./node")
         if len(_children):
             # run through all child nodes
             for _i, _child in enumerate(_children):
@@ -2550,8 +2621,9 @@ class Node(object):
 
     @property
     def is_comment(self):
-        if not self._node.get('STYLE_REF') is None \
-                and self._node.attrib['STYLE_REF'] == 'klein und grau':
+        xmlnode = self._effective_xmlnode()
+        if not xmlnode.get('STYLE_REF') is None \
+                and xmlnode.attrib['STYLE_REF'] == 'klein und grau':
             return True
         return False
 
@@ -2562,14 +2634,14 @@ class Node(object):
         # if the current xmlnode has no attribute "TEXT", it is expected that
         # the text portion must reside in its richcontent child
 
-        if self._node.get('TEXT') is None:
+        if self._effective_xmlnode().get('TEXT') is None:
             return True
         return False
 
 
     @property
     def has_children(self):
-        if not self._node.findall('./node'):
+        if not self._effective_xmlnode().findall('./node'):
             return False
         return True
 
