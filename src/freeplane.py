@@ -72,6 +72,7 @@ import logging.config
 import os
 import re
 import sys
+from dataclasses import dataclass
 
 # xml format
 try:
@@ -90,6 +91,11 @@ try:
     import model
 except ImportError:
     model = None
+
+try:
+    import encryption
+except ImportError:
+    encryption = None
 
 
 # version
@@ -151,6 +157,32 @@ def sanitized(text):
     # these are replaced by ordinary <SPACE> characters.
 
     return text.replace("\xa0", " ")
+
+
+@dataclass
+class EncryptedNodeState:
+    """Hold runtime state for an encrypted Freeplane wrapper node.
+
+    The raw lxml tree keeps Freeplane's persisted wrapper node unchanged.
+    When a password is available, the decrypted subtree is stored separately
+    and can be exposed through Node accessors without losing round-trip
+    fidelity when saving the map later.
+
+    Attributes:
+        wrapper_node: The original wrapper node from the loaded lxml tree.
+        decrypted_root: The decrypted subtree root, if available.
+        password: The password that successfully decrypted the subtree.
+        original_payload: The original ENCRYPTED_CONTENT value from the file.
+        is_unlocked: Whether decrypted_root currently holds valid content.
+        is_dirty: Whether the decrypted subtree was modified in memory.
+    """
+
+    wrapper_node: object
+    decrypted_root: object = None
+    password: str = ""
+    original_payload: str = ""
+    is_unlocked: bool = False
+    is_dirty: bool = False
 
 
 
@@ -466,6 +498,9 @@ class Mindmap(object):
 
             # build parent map (using ElementTree nodes)
             self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
+            self._preferred_passwords = []
+            self._encrypted_nodes = {}
+            self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
 
 
 
@@ -491,6 +526,9 @@ class Mindmap(object):
         # of parent nodes of valid node objects (using ElementTree nodes as
         # keys and values)
         self._parentmap = {}
+        self._preferred_passwords = []
+        self._encrypted_nodes = {}
+        self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
 
         # create map element as XML node containing the version information
         self._mindmap = ET.Element('map') 
@@ -3661,4 +3699,3 @@ if __name__ == "__main__":
 
     # create execute class init with command line environment
     Mindmap(_id='cli')
-
