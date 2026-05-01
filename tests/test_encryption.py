@@ -53,13 +53,13 @@ if __name__ == "__main__":
 
     # these settings might be replaced with arguments read from CLI or API
 
-    strProjectPath          = 'c:\\Users\\pkohn\\_NEXTCLOUD\\_TOOLS\\_Python\\LIB__freeplane'
-    strModule               = 'freeplane'
-    strModuleFilename       = strModule + '.py'
-    strMindmapPath          = strProjectPath + '\\freeplane.mm'
-    strModulePath           = strProjectPath + '\\src\\' + strModuleFilename
-    strExample1NodeId       = "ID_639295227"
-    strResult1ParentNodeId  = "ID_1935110449"
+    # strProjectPath          = 'c:\\Users\\pkohn\\_NEXTCLOUD\\_TOOLS\\_Python\\LIB__freeplane'
+    # strModule               = 'freeplane'
+    # strModuleFilename       = strModule + '.py'
+    # strMindmapPath          = strProjectPath + '\\freeplane.mm'
+    # strModulePath           = strProjectPath + '\\src\\' + strModuleFilename
+    # strExample1NodeId       = "ID_639295227"
+    # strResult1ParentNodeId  = "ID_1935110449"
 
 
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # load existing mindmap
     #
 
-    mindmap = freeplane.Mindmap(strMindmapPath, log_level="debug")
+    # mindmap = freeplane.Mindmap(strMindmapPath, log_level="debug")
 
 
 
@@ -77,8 +77,8 @@ if __name__ == "__main__":
     # read node contents
     #
 
-    _node = mindmap.find_nodes(id=strExample1NodeId)[0]
-    _text = _node.model.text_as_list_of_lines
+    # _node = mindmap.find_nodes(id=strExample1NodeId)[0]
+    # _text = _node.model.text_as_list_of_lines
 
 
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # print content
     #
 
-    print(_text)
+    # print(_text)
 
 
 
