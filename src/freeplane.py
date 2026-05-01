@@ -1521,6 +1521,8 @@ class Node(object):
         self._map = mindmap                 # the reference to the current mindmap object
         self._node = xmlnode                # the reference to the corresponding node within the xml file
         self._branch = None                 # a pointer to be set to a detached branch (possibly later)
+        self._encrypted_owner_state = None  # shadow subtree owner state for virtual decrypted nodes
+        self._shadow_parent = None          # virtual parent for decrypted shadow nodes
         if model:
             self.model = model.Model(self)  # interface to a more user friendly access model
 
@@ -1567,13 +1569,7 @@ class Node(object):
     def _effective_xmlnode(self):
         """
         Return the XML node that should be used for read access.
-
-        For unlocked encrypted wrapper nodes this is the decrypted shadow
-        subtree. For all other nodes it is the canonical XML node.
         """
-        state = self._encrypted_state()
-        if state and state.is_unlocked and state.decrypted_root is not None:
-            return state.decrypted_root
         return self._node
 
     def _write_xmlnode(self):
@@ -1586,9 +1582,41 @@ class Node(object):
         """
         Mark the decrypted shadow subtree as modified if this node is unlocked.
         """
-        state = self._encrypted_state()
+        state = self._encrypted_owner_state or self._encrypted_state()
         if state and state.is_unlocked:
             state.is_dirty = True
+
+    def _virtual_child_xmlnodes(self):
+        """
+        Return the child XML nodes visible from this node.
+
+        Encrypted wrapper nodes keep their own identity after unlock; the
+        decrypted subtree root is exposed as a virtual child node instead.
+        """
+        state = self._encrypted_state()
+        if state and state.is_unlocked and state.decrypted_root is not None:
+            return [state.decrypted_root]
+        return list(self._node.findall("./node"))
+
+    def _build_child_node(self, xmlnode):
+        """
+        Create a child Node while preserving shadow subtree ownership.
+        """
+        fpnode = Node(xmlnode, self._map)
+
+        if self._encrypted_owner_state is not None:
+            fpnode._encrypted_owner_state = self._encrypted_owner_state
+            fpnode._shadow_parent = self
+        else:
+            state = self._encrypted_state()
+            if state and state.is_unlocked and state.decrypted_root is xmlnode:
+                fpnode._encrypted_owner_state = state
+                fpnode._shadow_parent = self
+            elif self._shadow_parent is not None:
+                fpnode._encrypted_owner_state = self._encrypted_owner_state
+                fpnode._shadow_parent = self
+
+        return fpnode
 
 
     @property
@@ -2459,6 +2487,8 @@ class Node(object):
 
     @property
     def parent(self):
+        if self._shadow_parent is not None:
+            return self._shadow_parent
 
         # if non-detached node
         if self.is_map_node:
@@ -2616,10 +2646,10 @@ class Node(object):
     @property
     def children(self):
         lstNodesRet = []
-        for _node in  self._effective_xmlnode().findall("./node"):
+        for _node in self._virtual_child_xmlnodes():
 
             # create Node instance
-            fpnode = Node(_node, self._map)
+            fpnode = self._build_child_node(_node)
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
@@ -2643,7 +2673,7 @@ class Node(object):
 
     def get_child_by_index(self, idx=0):
         # check if node has children
-        _children = self._effective_xmlnode().findall("./node")
+        _children = self._virtual_child_xmlnodes()
         if len(_children):
             # run through all child nodes
             for _i, _child in enumerate(_children):
@@ -2651,7 +2681,7 @@ class Node(object):
                 if _i == idx:
 
                     # create Node instance
-                    fpnode = Node(_child, self._map)
+                    fpnode = self._build_child_node(_child)
 
                     # update branch reference in case of detached node
                     if not self.is_root_node and not self.is_map_node:
@@ -2768,7 +2798,7 @@ class Node(object):
 
     @property
     def has_children(self):
-        if not self._effective_xmlnode().findall('./node'):
+        if not self._virtual_child_xmlnodes():
             return False
         return True
 
