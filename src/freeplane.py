@@ -1147,12 +1147,10 @@ class Mindmap(object):
         # start with ALL nodes within the mindmap and strip down to the number
         # of nodes matching all given arguments
 
-        # list all nodes regardless of further properties
-        lstXmlNodes = self._root.findall(".//node")
+        lstNodes = list(self.rootnode.iter_tree())
 
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -1177,13 +1175,8 @@ class Mindmap(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create reference to parent lxml node
-            #...
-
-            # apend to list
-            lstNodesRet.append(Node(_node, self))
+        for node in lstNodes:
+            lstNodesRet.append(node)
 
         return lstNodesRet
 
@@ -2839,6 +2832,7 @@ class Node(object):
         track_depth=False,
         _current_depth=0,
         _node=None,
+        _current_node=None,
     ):
         """
         iterate tree structure recursively until a specified depth
@@ -2863,22 +2857,29 @@ class Node(object):
         # get node fromm input args. as the 1st user call would contain the
         # current node within the self object and the further calls are
         # internal, do a respective check.
-        if _node is None:
-            _node = self._node
+        if _current_node is None:
+            if _node is None:
+                current_node = self
+            else:
+                current_node = Node(_node, self._map)
+                current_node._encrypted_owner_state = self._encrypted_owner_state
+                current_node._shadow_parent = self._shadow_parent
+        else:
+            current_node = _current_node
 
         # return element
         if track_depth:
-            yield Node(_node, self._map), _current_depth
+            yield current_node, _current_depth
         else:
-            yield Node(_node, self._map)
+            yield current_node
 
         # proceed with next layer
-        for _child in _node.findall("node"):
-            yield from self.iter_tree(
+        for child_node in current_node.children:
+            yield from child_node.iter_tree(
                 max_depth=max_depth,
                 track_depth=track_depth,
                 _current_depth=_current_depth + 1,
-                _node=_child,
+                _current_node=child_node,
             )
 
 
@@ -2907,17 +2908,12 @@ class Node(object):
         # find list of nodes below node
         #
 
-        # list all nodes regardless of further properties
-        # starting from below the current node
-        lstXmlNodes = self._node.findall(".//node")
+        lstNodes = list(self.iter_tree())
+        if not find_in_self and lstNodes:
+            lstNodes = lstNodes[1:]
 
-        # add self to the list of nodes if desired
-        if find_in_self:
-            lstXmlNodes = [ self._node ] + lstXmlNodes
-
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -2941,17 +2937,10 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create Node instance
-            fpnode = Node(_node, self._map)
-
-            # update branch reference in case of detached node
-            if not self.is_root_node and not self.is_map_node:
+        for fpnode in lstNodes:
+            if not self.is_root_node and not self.is_map_node and fpnode._shadow_parent is None:
                 fpnode._map     = None
                 fpnode._branch  = self._branch
-
-            # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
@@ -2982,11 +2971,10 @@ class Node(object):
         #
 
         # list all nodes regardless of further properties
-        lstXmlNodes = self._node.findall("./node")
+        lstNodes = list(self.children)
 
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -3010,17 +2998,10 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create Node instance
-            fpnode = Node(_node, self._map)
-
-            # update branch reference in case of detached node
-            if not self.is_root_node and not self.is_map_node:
+        for fpnode in lstNodes:
+            if not self.is_root_node and not self.is_map_node and fpnode._shadow_parent is None:
                 fpnode._map     = None
                 fpnode._branch  = self._branch
-
-            # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
@@ -3972,6 +3953,115 @@ def reduce_node_list(
 
     # and back
     return lstXmlNodes
+
+
+def reduce_node_objects(
+        lstNodes=[],
+        id="",
+        core="",
+        attrib="",
+        details="",
+        notes="",
+        link="",
+        icon="",
+        style=[],
+        exact=False,
+        generalpathsep=False,
+        caseinsensitive=False,
+        keep_link_specials=False,
+        regex=False,
+    ):
+    """
+    Filter Node objects using logical node semantics.
+
+    This variant is aware of decrypted virtual subtrees exposed by unlocked
+    encrypted wrapper nodes because it relies on Node properties instead of
+    raw XML traversal.
+    """
+
+    if id:
+        _lstNodes = []
+        for node in lstNodes:
+            if id.lower() == node.id.lower():
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if core:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(core, node.plaintext, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if attrib:
+        _lstNodes = []
+        for node in lstNodes:
+            node_attributes = node.attributes
+            found = 0
+            for check_key, check_value in attrib.items():
+                if check_key not in node_attributes:
+                    break
+
+                value = node_attributes[check_key]
+                if regex and re.search(check_value, value):
+                    found += 1
+                    continue
+
+                if generalpathsep:
+                    value = value.replace("\\", "/")
+                    check_value = check_value.replace("\\", "/")
+
+                if match_textual_content(check_value, value, False, exact, caseinsensitive):
+                    found += 1
+
+            if found == len(attrib.items()):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if link:
+        _lstNodes = []
+        for node in lstNodes:
+            if not keep_link_specials:
+                node_link = node.hyperlink.replace("\\", "/").replace("%20", " ")
+            else:
+                node_link = node.hyperlink.replace("\\", "/")
+
+            if match_textual_content(link, node_link, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if icon:
+        _lstNodes = []
+        for node in lstNodes:
+            if icon in node.icons:
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if details:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(details, node.details, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if notes:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(notes, node.notes, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if style:
+        if not type(style) == list:
+            style = [style]
+        _lstNodes = []
+        for node in lstNodes:
+            node_style = node.style
+            if node_style.lower() in [_.lower() for _ in style]:
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    return lstNodes
 
 
 # OLD
