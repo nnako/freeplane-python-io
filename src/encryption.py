@@ -9,12 +9,19 @@
 
 """
 
-from abc import ABC, abstractmethod
-import binascii
 import base64
+import copy
 import hashlib
 import os
+from abc import ABC, abstractmethod
+from typing import Any, Union
+
 from Crypto.Cipher import DES, DES3
+
+try:
+    import lxml.etree as ET
+except ImportError:  # pragma: no cover - optional dependency during packaging
+    ET = None
 
 
 BLOCK_LENGTH_BYTES = 8  # pad incoming message to whole length of block
@@ -36,57 +43,106 @@ class AbstractPBEWithMD5AndDES(ABC):
         super().__init__()
         self.iterations = iterations
 
-    def encrypt(self, plain_text, password):
+    def encrypt(self, plain_text: str, password: str) -> str:
         """
-        Encrypts plain text with given password
+        Encrypt plain text with the given password.
 
-        :param plain_text: plain text to decrypt
-        :param password: password to decrypt with
-        :return: base64-encoded encrypted text
+        The return value matches Freeplane's legacy attribute format:
+
+            "<salt_base64> <ciphertext_base64>"
+
+        Args:
+            plain_text: Plain text to encrypt.
+            password: Password used for encryption.
+
+        Returns:
+            Freeplane-compatible encrypted payload.
         """
-
-        # pad message up to a whole block size
-        padded_text = self._pad_plain_text(plain_text)
-
-        # generate Salt as 8 random bytes
+        padded_text = self._pad_plain_text(plain_text.encode("utf-8"))
         salt = os.urandom(8)
-
-        # get dk and iv using proper algorithm (either for DES ot DES3), password as bytes
-        (dk, iv) = self._get_derived_key_and_iv(password.encode('utf-8'), salt)
-
-        # get proper class (DES/DES3) to instantiate and use for encoding
+        dk, iv = self._get_derived_key_and_iv(password.encode("utf-8"), salt)
         des = self._build_cipher(dk, iv)
+        encrypted_text = des.encrypt(padded_text)
+        return self._encode_payload(salt, encrypted_text)
 
-        # do the encryption (use bytes not string)
-        #encrypted_text = des.encrypt(padded_text)
-        encrypted_text = des.encrypt(padded_text.encode('utf-8'))
-
-        # return encrypted text prepended with salt, all base64-encoded
-        return base64.b64encode(salt + encrypted_text)
-
-    def decrypt(self, encoded_text, password):
+    def decrypt(self, encoded_text: str, password: str) -> str:
         """
-        Decrypts encoded_text with given password
+        Decrypt an encrypted Freeplane payload with the given password.
 
-        :param encoded_text: encoded string
-        :param password: password to decrypt with
-        :return: decrypted plain text as string (bytes)
+        Args:
+            encoded_text: Freeplane-style encrypted payload.
+            password: Password used for decryption.
+
+        Returns:
+            Decrypted plain text.
         """
         salt, encrypted_text_message = self._decode_payload(encoded_text)
-
-
-        # get dk and iv using proper algorithm (either for DES or DES3)
-        (dk, iv) = self._get_derived_key_and_iv(password.encode('utf-8'), salt)
-
-        # get proper class (DES/DES3) to instantiate and use for decoding
+        dk, iv = self._get_derived_key_and_iv(password.encode("utf-8"), salt)
         des = self._build_cipher(dk, iv)
-
-        # freeplane stores XML fragments, so remove PKCS5 padding on bytes first
         decrypted_bytes = des.decrypt(encrypted_text_message)
         return self._unpad_decrypted_message(decrypted_bytes).decode("utf-8")
 
+    def encrypt_subtree(
+        self,
+        subtree: Union[str, Any],
+        password: str,
+        *,
+        keep_outer_attributes: bool = True,
+    ) -> Any:
+        """Encrypt a Freeplane subtree into an XML node with ENCRYPTED_CONTENT.
 
-    def _decode_payload(self, encoded_text):
+        Args:
+            subtree: lxml node or XML string representing the subtree root.
+            password: Password used for encryption.
+            keep_outer_attributes: Whether to keep the original node attributes
+                on the encrypted wrapper node.
+
+        Returns:
+            Encrypted lxml node structure.
+        """
+        source_node = self._coerce_xml_node(subtree)
+        encrypted_payload = self.encrypt(
+            self._serialize_xml_node(source_node),
+            password,
+        )
+
+        encrypted_node = ET.Element(source_node.tag)
+        if keep_outer_attributes:
+            for key, value in source_node.attrib.items():
+                encrypted_node.attrib[key] = value
+
+        encrypted_node.attrib["ENCRYPTED_CONTENT"] = encrypted_payload
+        return encrypted_node
+
+    def decrypt_subtree(
+        self,
+        encrypted_subtree: Union[str, Any],
+        password: str,
+    ) -> Any:
+        """Decrypt a Freeplane encrypted XML node into its original subtree.
+
+        Args:
+            encrypted_subtree: lxml node or XML string containing an
+                ENCRYPTED_CONTENT attribute.
+            password: Password used for decryption.
+
+        Returns:
+            Decrypted lxml subtree root.
+        """
+        encrypted_node = self._coerce_xml_node(encrypted_subtree)
+        encrypted_payload = encrypted_node.get("ENCRYPTED_CONTENT", "")
+        if not encrypted_payload:
+            raise ValueError("encrypted_subtree must contain ENCRYPTED_CONTENT")
+        decrypted_text = self.decrypt(encrypted_payload, password)
+        return self._coerce_xml_node(decrypted_text)
+
+    def _encode_payload(self, salt: bytes, encrypted_text: bytes) -> str:
+        """Build the Freeplane-compatible encrypted payload string."""
+        salt_base64 = base64.b64encode(salt).decode("ascii")
+        encrypted_base64 = base64.b64encode(encrypted_text).decode("ascii")
+        return f"{salt_base64} {encrypted_base64}"
+
+    def _decode_payload(self, encoded_text: str) -> tuple[bytes, bytes]:
         """
         Freeplane stores encrypted nodes in XML as:
 
@@ -113,6 +169,30 @@ class AbstractPBEWithMD5AndDES(ABC):
         decoded = base64.b64decode(encoded_text)
         return decoded[:8], decoded[8:]
 
+    def _coerce_xml_node(self, subtree: Union[str, Any]) -> Any:
+        """Convert a subtree input to an lxml node."""
+        if ET is None:
+            raise ImportError("lxml is required for subtree encryption helpers")
+
+        if hasattr(subtree, "tag") and hasattr(subtree, "attrib"):
+            return copy.deepcopy(subtree)
+
+        if isinstance(subtree, str):
+            return ET.fromstring(subtree.encode("utf-8"))
+
+        raise TypeError("subtree must be an XML string or lxml element")
+
+    def _serialize_xml_node(self, subtree: Any) -> str:
+        """Serialize an lxml subtree without XML declaration."""
+        if ET is None:
+            raise ImportError("lxml is required for subtree encryption helpers")
+
+        return ET.tostring(
+            subtree,
+            pretty_print=True,
+            method="xml",
+            encoding="utf-8",
+        ).decode("utf-8")
 
     def _build_cipher(self, dk, iv):
         des_class = self._get_des_encoder_class()
@@ -121,54 +201,35 @@ class AbstractPBEWithMD5AndDES(ABC):
         return des_class.new(dk, des_class.MODE_CBC, iv)
 
 
-    def _pad_plain_text(self, plain_text):
+    def _pad_plain_text(self, plain_text: bytes) -> bytes:
         """
-        Pads plain text up to the whole length of block (8 bytes).
-        We are adding chars which are equal to the number of padded bytes.
-        i.e. 'hello' -> 'hello/x03/x03/x03'
-        :param plain_text: plain text to be padded (bytes)
-        :return: padded bytes
+        Pad plain text up to the whole block size using PKCS5/PKCS7 bytes.
+
+        Args:
+            plain_text: Plain text bytes to pad.
+
+        Returns:
+            Padded bytes.
         """
         pad_number = BLOCK_LENGTH_BYTES - (len(plain_text) % BLOCK_LENGTH_BYTES)
-        result = plain_text
-        for i in range(pad_number):
-            result += chr(pad_number)
-        return result
+        return plain_text + bytes([pad_number]) * pad_number
 
 
-    def _unpad_decrypted_message(self, decrypted_message):
-        """ Decrypted message could be padded on the end, last character means number of
-        :param decrypted_message: with PKCS7 padding
-        :return: unpadded text
+    def _unpad_decrypted_message(self, decrypted_message: bytes) -> bytes:
+        """Remove PKCS5/PKCS7 padding from a decrypted message.
+
+        Args:
+            decrypted_message: Decrypted bytes.
+
+        Returns:
+            Unpadded bytes.
         """
-
-        if isinstance(decrypted_message, bytes):
-            pad_value = decrypted_message[-1]
-            if pad_value == 0 or pad_value > BLOCK_LENGTH_BYTES:
-                return decrypted_message
-            if decrypted_message[-pad_value:] != bytes([pad_value]) * pad_value:
-                return decrypted_message
-            return decrypted_message[:-pad_value]
-
-        message_length = len(decrypted_message)
-        pad_str = decrypted_message[-1]
-
-        # try to identify a pad value from the incoming string
-        try:
-            pad_value = int(binascii.b2a_hex(pad_str.encode("utf8")))
-        except:
-            # no padding elements identified
+        pad_value = decrypted_message[-1]
+        if pad_value == 0 or pad_value > BLOCK_LENGTH_BYTES:
             return decrypted_message
-
-        if pad_value > 8:
-            # no padding used
+        if decrypted_message[-pad_value:] != bytes([pad_value]) * pad_value:
             return decrypted_message
-
-        else:
-            # where real data ends
-            position = message_length - pad_value
-
-            return decrypted_message[:position]
+        return decrypted_message[:-pad_value]
 
 
     def _get_des_encoder_class(self):
