@@ -63,6 +63,7 @@
 from __future__ import print_function
 
 import argparse
+import copy
 import datetime
 import html
 import importlib.util
@@ -1532,6 +1533,20 @@ class Node(object):
             return state.decrypted_root
         return self._node
 
+    def _write_xmlnode(self):
+        """
+        Return the XML node that should be used for write access.
+        """
+        return self._effective_xmlnode()
+
+    def _mark_encrypted_dirty(self):
+        """
+        Mark the decrypted shadow subtree as modified if this node is unlocked.
+        """
+        state = self._encrypted_state()
+        if state and state.is_unlocked:
+            state.is_dirty = True
+
 
     @property
     def is_detached_head(self):
@@ -1625,6 +1640,51 @@ class Node(object):
         state.is_unlocked = False
         state.is_dirty = False
 
+    def decrypt(self, password=''):
+        """
+        Unlock this encrypted wrapper node for in-memory access.
+        """
+        return self.unlock(password=password)
+
+    def encrypt(self, password=''):
+        """
+        Convert this node into an encrypted wrapper or refresh its password.
+        """
+        if self._map is None or self._map._cipher is None:
+            return False
+
+        effective_password = self._map._get_effective_password(password)
+        state = self._encrypted_state()
+
+        if state and state.is_unlocked and state.decrypted_root is not None:
+            state.password = effective_password
+            state.is_dirty = True
+            return True
+
+        if state is None:
+            source_subtree = copy.deepcopy(self._node)
+            encrypted_node = self._map._cipher.encrypt_subtree(
+                source_subtree,
+                effective_password,
+            )
+
+            for child in list(self._node):
+                self._node.remove(child)
+
+            self._node.attrib["ENCRYPTED_CONTENT"] = encrypted_node.get("ENCRYPTED_CONTENT", "")
+
+            self._map._encrypted_nodes[self._node] = EncryptedNodeState(
+                wrapper_node=self._node,
+                decrypted_root=source_subtree,
+                password=effective_password,
+                original_payload=self._node.get("ENCRYPTED_CONTENT", ""),
+                is_unlocked=True,
+                is_dirty=False,
+            )
+            return True
+
+        return self.unlock(password=effective_password)
+
 
     @property
     def visibletext(self):
@@ -1655,18 +1715,19 @@ class Node(object):
 
     @plaintext.setter
     def plaintext(self, strText, modified=''):
+        xmlnode = self._write_xmlnode()
 
         # check if there is textual content to be set (other than None)
         if strText is None:
             return None
 
         # set plain text content
-        self._node.attrib['TEXT'] = strText
+        xmlnode.attrib['TEXT'] = strText
 
         # remove node's richcontent if present
-        _richcontentnode = self._node.find('richcontent')
+        _richcontentnode = xmlnode.find('richcontent')
         if _richcontentnode is not None:
-            self._node.remove(_richcontentnode)
+            xmlnode.remove(_richcontentnode)
 
 
 
@@ -1676,11 +1737,12 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
 
 
         return True
@@ -1756,7 +1818,8 @@ class Node(object):
 
     @hyperlink.setter
     def hyperlink(self, strLink, modified=''):
-        self._node.attrib["LINK"] = strLink
+        xmlnode = self._write_xmlnode()
+        xmlnode.attrib["LINK"] = strLink
 
 
 
@@ -1766,11 +1829,12 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
         return True
 
 
@@ -1883,7 +1947,8 @@ class Node(object):
         # localize XML hook element below node
         #
 
-        hook = self._node.find('./hook[@NAME="ExternalObject"]')
+        xmlnode = self._write_xmlnode()
+        hook = xmlnode.find('./hook[@NAME="ExternalObject"]')
         if hook is None:
 
             # create hook element
@@ -1895,7 +1960,7 @@ class Node(object):
                     )
 
             # add hook to node's children
-            self._node.append(hook)
+            xmlnode.append(hook)
 
         else:
 
@@ -1911,11 +1976,12 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
         return True
 
     @property
@@ -1962,9 +2028,7 @@ class Node(object):
         """
         This functions sets an attribute for a node
         """
-
-
-
+        xmlnode = self._write_xmlnode()
 
         #
         # IF attribute key already exists
@@ -1976,7 +2040,7 @@ class Node(object):
             # overwrite existing value
             #
 
-            _lst = self._node.findall('attribute')
+            _lst = xmlnode.findall('attribute')
             for _attr in _lst:
                 _name = _attr.get('NAME', '')
                 if key.lower() == _name.lower():
@@ -1995,7 +2059,9 @@ class Node(object):
             _attrib = ET.Element("attribute", NAME=key, VALUE=value)
 
             # append element
-            _node = self._node.append(_attrib)
+            _node = xmlnode.append(_attrib)
+
+        self._mark_encrypted_dirty()
 
 
     def remove_attribute(self,
@@ -2012,7 +2078,8 @@ class Node(object):
         # walk through all of node's xml attributes
         #
 
-        _lst = self._node.findall('attribute')
+        xmlnode = self._write_xmlnode()
+        _lst = xmlnode.findall('attribute')
         for _attr in _lst:
             _name = _attr.get('NAME', '')
 
@@ -2024,12 +2091,13 @@ class Node(object):
             #
 
             if key.lower() == _name.lower():
-                self._node.remove(_attr)
+                xmlnode.remove(_attr)
 
                 # remove entry from user's structure
                 if key in self.attributes.keys():
                     self.attributes.pop(key)
 
+                self._mark_encrypted_dirty()
                 return True
 
 
@@ -2054,12 +2122,15 @@ class Node(object):
         #
 
         if key:
+            xmlnode = self._write_xmlnode()
 
             # create element
             _attrib = ET.Element("attribute", NAME=key, VALUE=value)
 
             # append element
-            _node = self._node.append(_attrib)
+            _node = xmlnode.append(_attrib)
+
+            self._mark_encrypted_dirty()
 
         # return self.attributes
 
@@ -2123,17 +2194,19 @@ class Node(object):
                     self._logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
 
         # set style reference in XML node
+        xmlnode = self._write_xmlnode()
         if strStyle:
-            self._node.attrib["STYLE_REF"] = strStyle
+            xmlnode.attrib["STYLE_REF"] = strStyle
 
         # on empty string
         else:
             # remove style from xmlnode to set to defaults
             try:
-                del self._node.attrib["STYLE_REF"]
+                del xmlnode.attrib["STYLE_REF"]
             except KeyError:
                 pass
 
+        self._mark_encrypted_dirty()
         return True
 
 
@@ -2141,10 +2214,11 @@ class Node(object):
     def creationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('CREATED'):
+        xmlnode = self._effective_xmlnode()
+        if xmlnode.get('CREATED'):
 
             # read out text content
-            text = self._node.attrib['CREATED']
+            text = xmlnode.attrib['CREATED']
 
             # convert to float time value
             _time = float(text)/1000
@@ -2159,10 +2233,11 @@ class Node(object):
     def modificationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('MODIFIED'):
+        xmlnode = self._effective_xmlnode()
+        if xmlnode.get('MODIFIED'):
 
             # read out text content
-            text = self._node.attrib['MODIFIED']
+            text = xmlnode.attrib['MODIFIED']
 
             # convert to float time value
             _time = float(text)/1000
@@ -2248,11 +2323,12 @@ class Node(object):
 
     @details.setter
     def details(self, strDetails):
+        xmlnode = self._write_xmlnode()
 
         # remove existing details element
-        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        _lstDetailsNodes = xmlnode.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
-            self._node.remove(_lstDetailsNodes[0])
+            xmlnode.remove(_lstDetailsNodes[0])
 
         # create new details element
         if strDetails:
@@ -2279,7 +2355,9 @@ class Node(object):
                 # '</html>\n'
 
             # append element
-            _node = self._node.append(_element)
+            _node = xmlnode.append(_element)
+
+        self._mark_encrypted_dirty()
 
         # return self.details
 
@@ -2313,9 +2391,10 @@ class Node(object):
         """
 
         # remove existing notes element
-        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        xmlnode = self._write_xmlnode()
+        _lstNotesNodes = xmlnode.findall("./richcontent[@TYPE='NOTE']")
         if _lstNotesNodes:
-            self._node.remove(_lstNotesNodes[0])
+            xmlnode.remove(_lstNotesNodes[0])
 
         # create new notes element
         if strNotes:
@@ -2330,7 +2409,9 @@ class Node(object):
                 _p.text = strLine
 
             # append element
-            _node = self._node.append(_element)
+            _node = xmlnode.append(_element)
+
+        self._mark_encrypted_dirty()
 
 
     @property
@@ -2431,7 +2512,8 @@ class Node(object):
             _icon = ET.Element('icon')
             _icon.attrib['BUILTIN'] = icon
 
-            self._node.append(_icon)
+            self._write_xmlnode().append(_icon)
+            self._mark_encrypted_dirty()
 
         # return self.icons
 
@@ -2468,7 +2550,8 @@ class Node(object):
         if icon:
 
             _icons = []
-            _lst = self._node.findall('icon')
+            xmlnode = self._write_xmlnode()
+            _lst = xmlnode.findall('icon')
             for _icon in _lst:
 
                 if _icon.get('BUILTIN', '').lower() == icon.lower():
@@ -2480,7 +2563,8 @@ class Node(object):
                     # remove icon from node's icon list
                     #
 
-                    self._node.remove(_icon)
+                    xmlnode.remove(_icon)
+                    self._mark_encrypted_dirty()
                     break
 
         # return self.icons
