@@ -218,6 +218,7 @@ class Mindmap(object):
             path='',
             mtype='freeplane',
             version='1.3.0',
+            encryption_passwords=None,
             _id='',
             log_level="",
             ):
@@ -503,6 +504,8 @@ class Mindmap(object):
             self._preferred_passwords = []
             self._encrypted_nodes = {}
             self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+            if encryption_passwords:
+                self.set_passwords(encryption_passwords)
             self._register_encrypted_nodes()
 
 
@@ -532,6 +535,8 @@ class Mindmap(object):
         self._preferred_passwords = []
         self._encrypted_nodes = {}
         self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+        if encryption_passwords:
+            self.set_passwords(encryption_passwords)
 
         # create map element as XML node containing the version information
         self._mindmap = ET.Element('map') 
