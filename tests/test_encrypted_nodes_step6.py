@@ -41,7 +41,7 @@ def test__save_persists_newly_encrypted_in_memory_wrapper_nodes(tmp_path):
     mindmap = Mindmap()
     child = mindmap.rootnode.add_child("secret")
     child.add_attribute("kind", "x")
-    child.encrypt("test")
+    child.set_encryption_password("test")
     child.children[0].plaintext = "secret changed"
 
     output_path = tmp_path / "newly_encrypted.mm"
@@ -60,3 +60,23 @@ def test__save_persists_newly_encrypted_in_memory_wrapper_nodes(tmp_path):
     assert reloaded_node.plaintext == "secret"
     assert reloaded_node.children[0].plaintext == "secret changed"
     assert reloaded_node.children[0].attributes == {"kind": "x"}
+
+
+def test__empty_encryption_password_writes_plaintext_subtree_on_save(tmp_path):
+    """Verify empty string disables encrypted persistence on the next save."""
+    mindmap = Mindmap(str(FIXTURE_PATH))
+    wrapper = mindmap.find_nodes(id="ID_1476345788")[0]
+
+    assert wrapper.decrypt("test") is True
+    assert wrapper.set_encryption_password("") is True
+
+    output_path = tmp_path / "unencrypted_saved.mm"
+    mindmap.save(str(output_path))
+
+    reloaded = Mindmap(str(output_path))
+    reloaded_wrapper = reloaded.find_nodes(id="ID_1476345788")[0]
+
+    assert reloaded_wrapper.is_encrypted is False
+    assert reloaded_wrapper.plaintext == "this is a parent node"
+    assert reloaded_wrapper.has_children is True
+    assert reloaded_wrapper.children[0].plaintext == "this is an attributed node with HTML content"

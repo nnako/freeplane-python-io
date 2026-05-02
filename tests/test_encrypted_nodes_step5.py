@@ -28,13 +28,13 @@ def test__unlocked_encrypted_node_mutations_update_shadow_and_mark_dirty():
 
 
 def test__regular_node_can_become_encrypted_wrapper_in_memory():
-    """Verify encrypt() turns a normal node into a registered wrapper node."""
+    """Verify set_encryption_password() prepares encrypted persistence."""
     mindmap = Mindmap()
     child = mindmap.rootnode.add_child("secret")
     child.add_attribute("kind", "x")
     child.notes = "hidden note"
 
-    assert child.encrypt("test") is True
+    assert child.set_encryption_password("test") is True
 
     state = mindmap._encrypted_nodes[child._node]
     inner = child.children[0]
@@ -53,7 +53,7 @@ def test__regular_node_can_become_encrypted_wrapper_in_memory():
 
 
 def test__refreshing_an_unlocked_encrypted_node_marks_it_for_reencryption():
-    """Verify encrypt() on an unlocked encrypted node refreshes password intent."""
+    """Verify password changes on unlocked encrypted nodes mark them dirty."""
     mindmap = Mindmap(str(FIXTURE_PATH))
     node = mindmap.find_nodes(id="ID_1476345788")[0]
 
@@ -61,7 +61,7 @@ def test__refreshing_an_unlocked_encrypted_node_marks_it_for_reencryption():
     state = mindmap._encrypted_nodes[node._node]
     state.is_dirty = False
 
-    assert node.encrypt("override") is True
+    assert node.set_encryption_password("override") is True
 
     assert state.password == "override"
     assert state.is_dirty is True

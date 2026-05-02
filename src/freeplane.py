@@ -184,6 +184,7 @@ class EncryptedNodeState:
     original_payload: str = ""
     is_unlocked: bool = False
     is_dirty: bool = False
+    encryption_enabled: bool = True
 
 
 
@@ -915,6 +916,7 @@ class Mindmap(object):
             self._encrypted_nodes[wrapper_node] = EncryptedNodeState(
                 wrapper_node=wrapper_node,
                 original_payload=payload,
+                encryption_enabled=True,
             )
 
         if self._preferred_passwords:
@@ -1199,6 +1201,8 @@ class Mindmap(object):
         if self._cipher is None:
             return
 
+        nodes_to_plaintext = []
+
         for wrapper_node, state in self._encrypted_nodes.items():
             wrapper_copy = self._find_matching_node_in_copy(wrapper_node, root_copy)
             if wrapper_copy is None:
@@ -1206,19 +1210,43 @@ class Mindmap(object):
 
             payload = state.original_payload
             if state.is_unlocked and state.decrypted_root is not None:
-                password = state.password or self._get_effective_password()
-                payload = self._cipher.encrypt(
-                    self._cipher._serialize_xml_node(state.decrypted_root),
-                    password,
-                )
-                state.original_payload = payload
-                state.password = password
-                state.is_dirty = False
-                wrapper_node.attrib["ENCRYPTED_CONTENT"] = payload
+                if state.encryption_enabled:
+                    password = state.password or self._get_effective_password()
+                    payload = self._cipher.encrypt(
+                        self._cipher._serialize_xml_node(state.decrypted_root),
+                        password,
+                    )
+                    state.original_payload = payload
+                    state.password = password
+                    state.is_dirty = False
+                    wrapper_node.attrib["ENCRYPTED_CONTENT"] = payload
 
-            wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
-            for child in list(wrapper_copy):
-                wrapper_copy.remove(child)
+                    wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
+                    for child in list(wrapper_copy):
+                        wrapper_copy.remove(child)
+                else:
+                    wrapper_copy.attrib.pop("ENCRYPTED_CONTENT", None)
+                    for child in list(wrapper_copy):
+                        wrapper_copy.remove(child)
+                    wrapper_copy.append(copy.deepcopy(state.decrypted_root))
+                    nodes_to_plaintext.append(wrapper_node)
+            else:
+                wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
+                for child in list(wrapper_copy):
+                    wrapper_copy.remove(child)
+
+        if nodes_to_plaintext:
+            for wrapper_node in nodes_to_plaintext:
+                state = self._encrypted_nodes.pop(wrapper_node, None)
+                if state is None or state.decrypted_root is None:
+                    continue
+
+                wrapper_node.attrib.pop("ENCRYPTED_CONTENT", None)
+                for child in list(wrapper_node):
+                    wrapper_node.remove(child)
+                wrapper_node.append(state.decrypted_root)
+
+            self._parentmap = {c: p for p in self._rootnode.iter() for c in p}
 
 
     def save(self, strPath, encoding=''):
@@ -1710,18 +1738,37 @@ class Node(object):
         """
         return self.unlock(password=password)
 
-    def encrypt(self, password=''):
+    def set_encryption_password(self, password=''):
         """
-        Convert this node into an encrypted wrapper or refresh its password.
+        Configure encryption for this node for future save operations.
+
+        A non-empty password enables encrypted persistence. An empty string
+        neutralizes encryption for an already unlocked encrypted node so that
+        future saves write the expanded subtree in plaintext form.
         """
-        if self._map is None or self._map._cipher is None:
+        if self._map is None:
+            return False
+
+        state = self._encrypted_state()
+
+        if password == '':
+            if state is None:
+                return True
+            if not state.is_unlocked or state.decrypted_root is None:
+                return False
+            state.password = ""
+            state.encryption_enabled = False
+            state.is_dirty = True
+            return True
+
+        if self._map._cipher is None:
             return False
 
         effective_password = self._map._get_effective_password(password)
-        state = self._encrypted_state()
 
         if state and state.is_unlocked and state.decrypted_root is not None:
             state.password = effective_password
+            state.encryption_enabled = True
             state.is_dirty = True
             return True
 
@@ -1744,10 +1791,17 @@ class Node(object):
                 original_payload=self._node.get("ENCRYPTED_CONTENT", ""),
                 is_unlocked=True,
                 is_dirty=False,
+                encryption_enabled=True,
             )
             return True
 
         return self.unlock(password=effective_password)
+
+    def encrypt(self, password=''):
+        """
+        Backward-compatible alias for set_encryption_password().
+        """
+        return self.set_encryption_password(password)
 
 
     @property
