@@ -63,6 +63,7 @@
 from __future__ import print_function
 
 import argparse
+import copy
 import datetime
 import html
 import importlib.util
@@ -72,6 +73,7 @@ import logging.config
 import os
 import re
 import sys
+from dataclasses import dataclass
 
 # xml format
 try:
@@ -90,6 +92,11 @@ try:
     import model
 except ImportError:
     model = None
+
+try:
+    import encryption
+except ImportError:
+    encryption = None
 
 
 # version
@@ -153,6 +160,33 @@ def sanitized(text):
     return text.replace("\xa0", " ")
 
 
+@dataclass
+class EncryptedNodeState:
+    """Hold runtime state for an encrypted Freeplane wrapper node.
+
+    The raw lxml tree keeps Freeplane's persisted wrapper node unchanged.
+    When a password is available, the decrypted subtree is stored separately
+    and can be exposed through Node accessors without losing round-trip
+    fidelity when saving the map later.
+
+    Attributes:
+        wrapper_node: The original wrapper node from the loaded lxml tree.
+        decrypted_root: The decrypted subtree root, if available.
+        password: The password that successfully decrypted the subtree.
+        original_payload: The original ENCRYPTED_CONTENT value from the file.
+        is_unlocked: Whether decrypted_root currently holds valid content.
+        is_dirty: Whether the decrypted subtree was modified in memory.
+    """
+
+    wrapper_node: object
+    decrypted_root: object = None
+    password: str = ""
+    original_payload: str = ""
+    is_unlocked: bool = False
+    is_dirty: bool = False
+    encryption_enabled: bool = True
+
+
 
 
 #
@@ -184,6 +218,7 @@ class Mindmap(object):
             path='',
             mtype='freeplane',
             version='1.3.0',
+            encryption_passwords=None,
             _id='',
             log_level="",
             ):
@@ -466,6 +501,12 @@ class Mindmap(object):
 
             # build parent map (using ElementTree nodes)
             self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
+            self._preferred_passwords = []
+            self._encrypted_nodes = {}
+            self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+            if encryption_passwords:
+                self.set_passwords(encryption_passwords)
+            self._register_encrypted_nodes()
 
 
 
@@ -491,6 +532,11 @@ class Mindmap(object):
         # of parent nodes of valid node objects (using ElementTree nodes as
         # keys and values)
         self._parentmap = {}
+        self._preferred_passwords = []
+        self._encrypted_nodes = {}
+        self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+        if encryption_passwords:
+            self.set_passwords(encryption_passwords)
 
         # create map element as XML node containing the version information
         self._mindmap = ET.Element('map') 
@@ -640,6 +686,7 @@ class Mindmap(object):
         _node3 = ET.Element('icon')
         _node3.attrib["BUILTIN"] = "yes"
         _node2.append(_node3)
+        self._register_encrypted_nodes()
 
 # MAP
 
@@ -819,6 +866,144 @@ class Mindmap(object):
     def rootnode(self):
         return Node(self._rootnode, self)
 
+    @property
+    def passwords(self):
+        """
+        Return the map-specific list of preferred encryption passwords.
+        """
+        return list(self._preferred_passwords)
+
+    def set_passwords(self, passwords):
+        """
+        Replace the map-specific list of preferred encryption passwords.
+
+        Args:
+            passwords: Iterable of password strings in preferred order.
+        """
+        self._preferred_passwords = []
+        for password in passwords:
+            self.add_password(password)
+
+    def add_password(self, password):
+        """
+        Add a preferred encryption password for this map.
+
+        Args:
+            password: Password string to append if not already present.
+        """
+        if password is None:
+            return
+
+        password = str(password)
+        if password and password not in self._preferred_passwords:
+            self._preferred_passwords.append(password)
+
+    def clear_passwords(self):
+        """
+        Remove all map-specific preferred encryption passwords.
+        """
+        self._preferred_passwords = []
+
+    def _register_encrypted_nodes(self):
+        """
+        Register all encrypted wrapper nodes found in the current lxml tree.
+
+        The canonical tree remains unchanged. Each wrapper node gets a runtime
+        state entry that can later hold a decrypted shadow subtree.
+        """
+        self._encrypted_nodes = {}
+
+        if self._root is None:
+            return
+
+        for wrapper_node in self._root.findall(".//node[@ENCRYPTED_CONTENT]"):
+            payload = wrapper_node.get("ENCRYPTED_CONTENT", "")
+            self._encrypted_nodes[wrapper_node] = EncryptedNodeState(
+                wrapper_node=wrapper_node,
+                original_payload=payload,
+                encryption_enabled=True,
+            )
+
+        if self._preferred_passwords:
+            self.unlock_encrypted_nodes()
+
+    def _try_decrypt_registered_node(self, wrapper_node, password):
+        """
+        Try to decrypt one registered encrypted node with a given password.
+
+        Args:
+            wrapper_node: The encrypted wrapper node from the canonical tree.
+            password: Candidate password string.
+
+        Returns:
+            bool: True if decryption succeeded, else False.
+        """
+        if self._cipher is None:
+            return False
+
+        state = self._encrypted_nodes.get(wrapper_node)
+        if state is None or not password:
+            return False
+
+        try:
+            decrypted_root = self._cipher.decrypt_subtree(wrapper_node, password)
+        except Exception:
+            return False
+
+        state.decrypted_root = decrypted_root
+        state.password = str(password)
+        state.is_unlocked = True
+        state.is_dirty = False
+        return True
+
+    def unlock_encrypted_nodes(self, passwords=None):
+        """
+        Try to unlock registered encrypted wrapper nodes with preferred passwords.
+
+        Args:
+            passwords: Optional iterable of passwords to try in order.
+
+        Returns:
+            int: Number of nodes that were successfully unlocked.
+        """
+        if passwords is None:
+            passwords = self._preferred_passwords
+
+        passwords = [str(password) for password in passwords if password]
+        unlocked_nodes = 0
+
+        for wrapper_node, state in self._encrypted_nodes.items():
+            if state.is_unlocked:
+                continue
+
+            for password in passwords:
+                if self._try_decrypt_registered_node(wrapper_node, password):
+                    unlocked_nodes += 1
+                    break
+
+        return unlocked_nodes
+
+    def _get_effective_password(self, password=''):
+        """
+        Resolve the password that should be used for an encryption operation.
+
+        Args:
+            password: Explicit password override.
+
+        Returns:
+            The explicit password or the first preferred map password.
+
+        Raises:
+            ValueError: No usable password is available.
+        """
+        if password:
+            return str(password)
+
+        if self._preferred_passwords:
+            return self._preferred_passwords[0]
+
+        raise ValueError("no password available for encryption or decryption")
+
 
     @property
     def styles(self):
@@ -969,12 +1154,10 @@ class Mindmap(object):
         # start with ALL nodes within the mindmap and strip down to the number
         # of nodes matching all given arguments
 
-        # list all nodes regardless of further properties
-        lstXmlNodes = self._root.findall(".//node")
+        lstNodes = list(self.rootnode.iter_tree())
 
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -999,15 +1182,76 @@ class Mindmap(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create reference to parent lxml node
-            #...
-
-            # apend to list
-            lstNodesRet.append(Node(_node, self))
+        for node in lstNodes:
+            lstNodesRet.append(node)
 
         return lstNodesRet
+
+    def _find_matching_node_in_copy(self, original_node, root_copy):
+        """
+        Find the counterpart of an original node inside a copied XML tree.
+        """
+        node_id = original_node.get("ID", "")
+        if not node_id:
+            return None
+        matches = root_copy.xpath(f".//node[@ID='{node_id}']")
+        if matches:
+            return matches[0]
+        return None
+
+    def _apply_encryption_states_to_tree(self, root_copy):
+        """
+        Write encrypted wrapper payloads into a copied XML tree for saving.
+        """
+        if self._cipher is None:
+            return
+
+        nodes_to_plaintext = []
+
+        for wrapper_node, state in self._encrypted_nodes.items():
+            wrapper_copy = self._find_matching_node_in_copy(wrapper_node, root_copy)
+            if wrapper_copy is None:
+                continue
+
+            payload = state.original_payload
+            if state.is_unlocked and state.decrypted_root is not None:
+                if state.encryption_enabled:
+                    password = state.password or self._get_effective_password()
+                    payload = self._cipher.encrypt(
+                        self._cipher._serialize_xml_node(state.decrypted_root),
+                        password,
+                    )
+                    state.original_payload = payload
+                    state.password = password
+                    state.is_dirty = False
+                    wrapper_node.attrib["ENCRYPTED_CONTENT"] = payload
+
+                    wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
+                    for child in list(wrapper_copy):
+                        wrapper_copy.remove(child)
+                else:
+                    wrapper_copy.attrib.pop("ENCRYPTED_CONTENT", None)
+                    for child in list(wrapper_copy):
+                        wrapper_copy.remove(child)
+                    wrapper_copy.append(copy.deepcopy(state.decrypted_root))
+                    nodes_to_plaintext.append(wrapper_node)
+            else:
+                wrapper_copy.attrib["ENCRYPTED_CONTENT"] = payload
+                for child in list(wrapper_copy):
+                    wrapper_copy.remove(child)
+
+        if nodes_to_plaintext:
+            for wrapper_node in nodes_to_plaintext:
+                state = self._encrypted_nodes.pop(wrapper_node, None)
+                if state is None or state.decrypted_root is None:
+                    continue
+
+                wrapper_node.attrib.pop("ENCRYPTED_CONTENT", None)
+                for child in list(wrapper_node):
+                    wrapper_node.remove(child)
+                wrapper_node.append(state.decrypted_root)
+
+            self._parentmap = {c: p for p in self._rootnode.iter() for c in p}
 
 
     def save(self, strPath, encoding=''):
@@ -1031,8 +1275,11 @@ class Mindmap(object):
         #
 
         # create output string
+        root_to_save = copy.deepcopy(self._root)
+        self._apply_encryption_states_to_tree(root_to_save)
+
         _outputstring = ET.tostring(
-            self._root,
+            root_to_save,
             pretty_print=True,
             method='xml',
             encoding=encoding,
@@ -1300,6 +1547,8 @@ class Node(object):
         self._map = mindmap                 # the reference to the current mindmap object
         self._node = xmlnode                # the reference to the corresponding node within the xml file
         self._branch = None                 # a pointer to be set to a detached branch (possibly later)
+        self._encrypted_owner_state = None  # shadow subtree owner state for virtual decrypted nodes
+        self._shadow_parent = None          # virtual parent for decrypted shadow nodes
         if model:
             self.model = model.Model(self)  # interface to a more user friendly access model
 
@@ -1334,6 +1583,66 @@ class Node(object):
 
     def __str__(self):
         return self.plaintext
+
+    def _encrypted_state(self):
+        """
+        Return the registered encrypted runtime state for this wrapper node.
+        """
+        if self._map is None:
+            return None
+        return self._map._encrypted_nodes.get(self._node)
+
+    def _effective_xmlnode(self):
+        """
+        Return the XML node that should be used for read access.
+        """
+        return self._node
+
+    def _write_xmlnode(self):
+        """
+        Return the XML node that should be used for write access.
+        """
+        return self._effective_xmlnode()
+
+    def _mark_encrypted_dirty(self):
+        """
+        Mark the decrypted shadow subtree as modified if this node is unlocked.
+        """
+        state = self._encrypted_owner_state or self._encrypted_state()
+        if state and state.is_unlocked:
+            state.is_dirty = True
+
+    def _virtual_child_xmlnodes(self):
+        """
+        Return the child XML nodes visible from this node.
+
+        Encrypted wrapper nodes keep their own identity after unlock; the
+        decrypted subtree root is exposed as a virtual child node instead.
+        """
+        state = self._encrypted_state()
+        if state and state.is_unlocked and state.decrypted_root is not None:
+            return [state.decrypted_root]
+        return list(self._node.findall("./node"))
+
+    def _build_child_node(self, xmlnode):
+        """
+        Create a child Node while preserving shadow subtree ownership.
+        """
+        fpnode = Node(xmlnode, self._map)
+
+        if self._encrypted_owner_state is not None:
+            fpnode._encrypted_owner_state = self._encrypted_owner_state
+            fpnode._shadow_parent = self
+        else:
+            state = self._encrypted_state()
+            if state and state.is_unlocked and state.decrypted_root is xmlnode:
+                fpnode._encrypted_owner_state = state
+                fpnode._shadow_parent = self
+            elif self._shadow_parent is not None:
+                fpnode._encrypted_owner_state = self._encrypted_owner_state
+                fpnode._shadow_parent = self
+
+        return fpnode
 
 
     @property
@@ -1382,6 +1691,123 @@ class Node(object):
             return True
         return False
 
+    @property
+    def is_encrypted(self):
+        """
+        Check whether this node is an encrypted Freeplane wrapper node.
+        """
+        return bool(self._node.get("ENCRYPTED_CONTENT", ""))
+
+    @property
+    def is_unlocked(self):
+        """
+        Check whether this encrypted wrapper node has decrypted shadow content.
+        """
+        state = self._encrypted_state()
+        if state is None:
+            return False
+        return state.is_unlocked
+
+    def unlock(self, password=''):
+        """
+        Try to unlock this encrypted wrapper node.
+
+        Args:
+            password: Optional explicit password override.
+
+        Returns:
+            bool: True if this node is unlocked after the call.
+        """
+        if not self.is_encrypted or self._map is None:
+            return False
+
+        passwords = [password] if password else self._map.passwords
+        return bool(self._map.unlock_encrypted_nodes(passwords=passwords))
+
+    def lock(self):
+        """
+        Drop decrypted shadow content for this encrypted wrapper node.
+        """
+        state = self._encrypted_state()
+        if state is None:
+            return
+
+        state.decrypted_root = None
+        state.password = ""
+        state.is_unlocked = False
+        state.is_dirty = False
+
+    def decrypt(self, password=''):
+        """
+        Unlock this encrypted wrapper node for in-memory access.
+        """
+        return self.unlock(password=password)
+
+    def set_encryption_password(self, password=''):
+        """
+        Configure encryption for this node for future save operations.
+
+        A non-empty password enables encrypted persistence. An empty string
+        neutralizes encryption for an already unlocked encrypted node so that
+        future saves write the expanded subtree in plaintext form.
+        """
+        if self._map is None:
+            return False
+
+        state = self._encrypted_state()
+
+        if password == '':
+            if state is None:
+                return True
+            if not state.is_unlocked or state.decrypted_root is None:
+                return False
+            state.password = ""
+            state.encryption_enabled = False
+            state.is_dirty = True
+            return True
+
+        if self._map._cipher is None:
+            return False
+
+        effective_password = self._map._get_effective_password(password)
+
+        if state and state.is_unlocked and state.decrypted_root is not None:
+            state.password = effective_password
+            state.encryption_enabled = True
+            state.is_dirty = True
+            return True
+
+        if state is None:
+            source_subtree = copy.deepcopy(self._node)
+            encrypted_node = self._map._cipher.encrypt_subtree(
+                source_subtree,
+                effective_password,
+            )
+
+            for child in list(self._node):
+                self._node.remove(child)
+
+            self._node.attrib["ENCRYPTED_CONTENT"] = encrypted_node.get("ENCRYPTED_CONTENT", "")
+
+            self._map._encrypted_nodes[self._node] = EncryptedNodeState(
+                wrapper_node=self._node,
+                decrypted_root=source_subtree,
+                password=effective_password,
+                original_payload=self._node.get("ENCRYPTED_CONTENT", ""),
+                is_unlocked=True,
+                is_dirty=False,
+                encryption_enabled=True,
+            )
+            return True
+
+        return self.unlock(password=effective_password)
+
+    def encrypt(self, password=''):
+        """
+        Backward-compatible alias for set_encryption_password().
+        """
+        return self.set_encryption_password(password)
+
 
     @property
     def visibletext(self):
@@ -1406,24 +1832,25 @@ class Node(object):
     @property
     def plaintext(self):
         return sanitized(
-            getCoreTextFromNode(self._node, bOnlyFirstLine=False)
+            getCoreTextFromNode(self._effective_xmlnode(), bOnlyFirstLine=False)
         )
 
 
     @plaintext.setter
     def plaintext(self, strText, modified=''):
+        xmlnode = self._write_xmlnode()
 
         # check if there is textual content to be set (other than None)
         if strText is None:
             return None
 
         # set plain text content
-        self._node.attrib['TEXT'] = strText
+        xmlnode.attrib['TEXT'] = strText
 
         # remove node's richcontent if present
-        _richcontentnode = self._node.find('richcontent')
+        _richcontentnode = xmlnode.find('richcontent')
         if _richcontentnode is not None:
-            self._node.remove(_richcontentnode)
+            xmlnode.remove(_richcontentnode)
 
 
 
@@ -1433,11 +1860,12 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
 
 
         return True
@@ -1445,7 +1873,7 @@ class Node(object):
 
     @property
     def has_internal_hyperlink(self):
-        _link = self._node.attrib.get("LINK","")
+        _link = self._effective_xmlnode().attrib.get("LINK","")
         if _link and _link[0] == "#":
             return True
         return False
@@ -1458,7 +1886,7 @@ class Node(object):
         if self.has_internal_hyperlink:
 
             # get target node id by removing leading hash char
-            _referenced_node_id = self._node.attrib.get("LINK","")[1:]
+            _referenced_node_id = self._effective_xmlnode().attrib.get("LINK","")[1:]
 
             try:
                 # find node
@@ -1508,12 +1936,13 @@ class Node(object):
 
     @property
     def hyperlink(self):
-        return self._node.attrib.get("LINK","")
+        return self._effective_xmlnode().attrib.get("LINK","")
 
 
     @hyperlink.setter
     def hyperlink(self, strLink, modified=''):
-        self._node.attrib["LINK"] = strLink
+        xmlnode = self._write_xmlnode()
+        xmlnode.attrib["LINK"] = strLink
 
 
 
@@ -1523,24 +1952,26 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
         return True
 
 
     @property
     def imagepath(self):
+        xmlnode = self._effective_xmlnode()
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
+        if xmlnode.find('hook') is None:
             self._logger.warning(f'the node "{self.id}" does not contain an in-line image.')
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = xmlnode.find('hook')
 
         # get uri attribute
         uri = hook.attrib.get("URI", "")
@@ -1566,14 +1997,15 @@ class Node(object):
 
     @property
     def imagesize(self):
+        xmlnode = self._effective_xmlnode()
 
         # check if node holds no in-line image
-        if self._node.find('hook') is None:
+        if xmlnode.find('hook') is None:
             self._logger.warning(f'the node "{self._node.id}" does not contain an in-line image.')
             return None
 
         # get hook node
-        hook = self._node.find('hook')
+        hook = xmlnode.find('hook')
 
         # get uri attribute
         size = hook.attrib.get("SIZE", "")
@@ -1638,7 +2070,8 @@ class Node(object):
         # localize XML hook element below node
         #
 
-        hook = self._node.find('./hook[@NAME="ExternalObject"]')
+        xmlnode = self._write_xmlnode()
+        hook = xmlnode.find('./hook[@NAME="ExternalObject"]')
         if hook is None:
 
             # create hook element
@@ -1650,7 +2083,7 @@ class Node(object):
                     )
 
             # add hook to node's children
-            self._node.append(hook)
+            xmlnode.append(hook)
 
         else:
 
@@ -1666,11 +2099,12 @@ class Node(object):
         #
 
         update_date_attribute_in_node(
-                node=self._node,
+                node=xmlnode,
                 date=modified,
                 key="MODIFIED",
                 )
 
+        self._mark_encrypted_dirty()
         return True
 
     @property
@@ -1701,7 +2135,7 @@ class Node(object):
     @property
     def attributes(self):
         _attribute = {}
-        _lst = self._node.findall('attribute')
+        _lst = self._effective_xmlnode().findall('attribute')
         for _attr in _lst:
             _name = _attr.get('NAME', '')
             _value = _attr.get('VALUE', '')
@@ -1717,9 +2151,7 @@ class Node(object):
         """
         This functions sets an attribute for a node
         """
-
-
-
+        xmlnode = self._write_xmlnode()
 
         #
         # IF attribute key already exists
@@ -1731,7 +2163,7 @@ class Node(object):
             # overwrite existing value
             #
 
-            _lst = self._node.findall('attribute')
+            _lst = xmlnode.findall('attribute')
             for _attr in _lst:
                 _name = _attr.get('NAME', '')
                 if key.lower() == _name.lower():
@@ -1750,7 +2182,9 @@ class Node(object):
             _attrib = ET.Element("attribute", NAME=key, VALUE=value)
 
             # append element
-            _node = self._node.append(_attrib)
+            _node = xmlnode.append(_attrib)
+
+        self._mark_encrypted_dirty()
 
 
     def remove_attribute(self,
@@ -1767,7 +2201,8 @@ class Node(object):
         # walk through all of node's xml attributes
         #
 
-        _lst = self._node.findall('attribute')
+        xmlnode = self._write_xmlnode()
+        _lst = xmlnode.findall('attribute')
         for _attr in _lst:
             _name = _attr.get('NAME', '')
 
@@ -1779,12 +2214,13 @@ class Node(object):
             #
 
             if key.lower() == _name.lower():
-                self._node.remove(_attr)
+                xmlnode.remove(_attr)
 
                 # remove entry from user's structure
                 if key in self.attributes.keys():
                     self.attributes.pop(key)
 
+                self._mark_encrypted_dirty()
                 return True
 
 
@@ -1809,20 +2245,24 @@ class Node(object):
         #
 
         if key:
+            xmlnode = self._write_xmlnode()
 
             # create element
             _attrib = ET.Element("attribute", NAME=key, VALUE=value)
 
             # append element
-            _node = self._node.append(_attrib)
+            _node = xmlnode.append(_attrib)
+
+            self._mark_encrypted_dirty()
 
         # return self.attributes
 
 
     @property
     def style(self):
-        if 'STYLE_REF' in self._node.attrib.keys():
-            return self._node.attrib['STYLE_REF']
+        xmlnode = self._effective_xmlnode()
+        if 'STYLE_REF' in xmlnode.attrib.keys():
+            return xmlnode.attrib['STYLE_REF']
         return ""
 
     @style.setter
@@ -1877,17 +2317,19 @@ class Node(object):
                     self._logger.warning('style "' + strStyle + '" not found in mindmap. make sure, style exists.')
 
         # set style reference in XML node
+        xmlnode = self._write_xmlnode()
         if strStyle:
-            self._node.attrib["STYLE_REF"] = strStyle
+            xmlnode.attrib["STYLE_REF"] = strStyle
 
         # on empty string
         else:
             # remove style from xmlnode to set to defaults
             try:
-                del self._node.attrib["STYLE_REF"]
+                del xmlnode.attrib["STYLE_REF"]
             except KeyError:
                 pass
 
+        self._mark_encrypted_dirty()
         return True
 
 
@@ -1895,10 +2337,11 @@ class Node(object):
     def creationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('CREATED'):
+        xmlnode = self._effective_xmlnode()
+        if xmlnode.get('CREATED'):
 
             # read out text content
-            text = self._node.attrib['CREATED']
+            text = xmlnode.attrib['CREATED']
 
             # convert to float time value
             _time = float(text)/1000
@@ -1913,10 +2356,11 @@ class Node(object):
     def modificationdate(self):
 
         # check for TEXT attribute
-        if self._node.get('MODIFIED'):
+        xmlnode = self._effective_xmlnode()
+        if xmlnode.get('MODIFIED'):
 
             # read out text content
-            text = self._node.attrib['MODIFIED']
+            text = xmlnode.attrib['MODIFIED']
 
             # convert to float time value
             _time = float(text)/1000
@@ -1969,12 +2413,13 @@ class Node(object):
 
     @property
     def comment(self):
+        xmlnode = self._effective_xmlnode()
 
         # check for existence of child
-        if not self._node.find('node') is None:
+        if not xmlnode.find('node') is None:
 
             # get first child
-            node = self._node.find('node')
+            node = xmlnode.find('node')
 
             # check for TEXT attribute
             if not node.get('TEXT') is None:
@@ -1987,11 +2432,12 @@ class Node(object):
 
     @property
     def details(self):
+        xmlnode = self._effective_xmlnode()
 
         _text = ''
 
         # check for details node
-        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        _lstDetailsNodes = xmlnode.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
             _text = ''.join(_lstDetailsNodes[0].itertext()).strip()
 
@@ -2000,11 +2446,12 @@ class Node(object):
 
     @details.setter
     def details(self, strDetails):
+        xmlnode = self._write_xmlnode()
 
         # remove existing details element
-        _lstDetailsNodes = self._node.findall("./richcontent[@TYPE='DETAILS']")
+        _lstDetailsNodes = xmlnode.findall("./richcontent[@TYPE='DETAILS']")
         if _lstDetailsNodes:
-            self._node.remove(_lstDetailsNodes[0])
+            xmlnode.remove(_lstDetailsNodes[0])
 
         # create new details element
         if strDetails:
@@ -2031,7 +2478,9 @@ class Node(object):
                 # '</html>\n'
 
             # append element
-            _node = self._node.append(_element)
+            _node = xmlnode.append(_element)
+
+        self._mark_encrypted_dirty()
 
         # return self.details
 
@@ -2048,7 +2497,7 @@ class Node(object):
         _text = ''
 
         # check for notes node
-        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        _lstNotesNodes = self._effective_xmlnode().findall("./richcontent[@TYPE='NOTE']")
         if _lstNotesNodes:
             _text = ''.join(_lstNotesNodes[0].itertext()).strip()
 
@@ -2065,9 +2514,10 @@ class Node(object):
         """
 
         # remove existing notes element
-        _lstNotesNodes = self._node.findall("./richcontent[@TYPE='NOTE']")
+        xmlnode = self._write_xmlnode()
+        _lstNotesNodes = xmlnode.findall("./richcontent[@TYPE='NOTE']")
         if _lstNotesNodes:
-            self._node.remove(_lstNotesNodes[0])
+            xmlnode.remove(_lstNotesNodes[0])
 
         # create new notes element
         if strNotes:
@@ -2082,11 +2532,15 @@ class Node(object):
                 _p.text = strLine
 
             # append element
-            _node = self._node.append(_element)
+            _node = xmlnode.append(_element)
+
+        self._mark_encrypted_dirty()
 
 
     @property
     def parent(self):
+        if self._shadow_parent is not None:
+            return self._shadow_parent
 
         # if non-detached node
         if self.is_map_node:
@@ -2156,7 +2610,7 @@ class Node(object):
     @property
     def icons(self):
         _icons = []
-        _lst = self._node.findall('icon')
+        _lst = self._effective_xmlnode().findall('icon')
         for _icon in _lst:
             _name = _icon.get('BUILTIN', '')
             if _name:
@@ -2183,7 +2637,8 @@ class Node(object):
             _icon = ET.Element('icon')
             _icon.attrib['BUILTIN'] = icon
 
-            self._node.append(_icon)
+            self._write_xmlnode().append(_icon)
+            self._mark_encrypted_dirty()
 
         # return self.icons
 
@@ -2220,7 +2675,8 @@ class Node(object):
         if icon:
 
             _icons = []
-            _lst = self._node.findall('icon')
+            xmlnode = self._write_xmlnode()
+            _lst = xmlnode.findall('icon')
             for _icon in _lst:
 
                 if _icon.get('BUILTIN', '').lower() == icon.lower():
@@ -2232,7 +2688,8 @@ class Node(object):
                     # remove icon from node's icon list
                     #
 
-                    self._node.remove(_icon)
+                    xmlnode.remove(_icon)
+                    self._mark_encrypted_dirty()
                     break
 
         # return self.icons
@@ -2241,10 +2698,10 @@ class Node(object):
     @property
     def children(self):
         lstNodesRet = []
-        for _node in  self._node.findall("./node"):
+        for _node in self._virtual_child_xmlnodes():
 
             # create Node instance
-            fpnode = Node(_node, self._map)
+            fpnode = self._build_child_node(_node)
 
             # update branch reference in case of detached node
             if not self.is_root_node and not self.is_map_node:
@@ -2268,7 +2725,7 @@ class Node(object):
 
     def get_child_by_index(self, idx=0):
         # check if node has children
-        _children = self._node.findall("./node")
+        _children = self._virtual_child_xmlnodes()
         if len(_children):
             # run through all child nodes
             for _i, _child in enumerate(_children):
@@ -2276,7 +2733,7 @@ class Node(object):
                 if _i == idx:
 
                     # create Node instance
-                    fpnode = Node(_child, self._map)
+                    fpnode = self._build_child_node(_child)
 
                     # update branch reference in case of detached node
                     if not self.is_root_node and not self.is_map_node:
@@ -2373,8 +2830,9 @@ class Node(object):
 
     @property
     def is_comment(self):
-        if not self._node.get('STYLE_REF') is None \
-                and self._node.attrib['STYLE_REF'] == 'klein und grau':
+        xmlnode = self._effective_xmlnode()
+        if not xmlnode.get('STYLE_REF') is None \
+                and xmlnode.attrib['STYLE_REF'] == 'klein und grau':
             return True
         return False
 
@@ -2385,14 +2843,14 @@ class Node(object):
         # if the current xmlnode has no attribute "TEXT", it is expected that
         # the text portion must reside in its richcontent child
 
-        if self._node.get('TEXT') is None:
+        if self._effective_xmlnode().get('TEXT') is None:
             return True
         return False
 
 
     @property
     def has_children(self):
-        if not self._node.findall('./node'):
+        if not self._virtual_child_xmlnodes():
             return False
         return True
 
@@ -2433,6 +2891,7 @@ class Node(object):
         track_depth=False,
         _current_depth=0,
         _node=None,
+        _current_node=None,
     ):
         """
         iterate tree structure recursively until a specified depth
@@ -2457,22 +2916,29 @@ class Node(object):
         # get node fromm input args. as the 1st user call would contain the
         # current node within the self object and the further calls are
         # internal, do a respective check.
-        if _node is None:
-            _node = self._node
+        if _current_node is None:
+            if _node is None:
+                current_node = self
+            else:
+                current_node = Node(_node, self._map)
+                current_node._encrypted_owner_state = self._encrypted_owner_state
+                current_node._shadow_parent = self._shadow_parent
+        else:
+            current_node = _current_node
 
         # return element
         if track_depth:
-            yield Node(_node, self._map), _current_depth
+            yield current_node, _current_depth
         else:
-            yield Node(_node, self._map)
+            yield current_node
 
         # proceed with next layer
-        for _child in _node.findall("node"):
-            yield from self.iter_tree(
+        for child_node in current_node.children:
+            yield from child_node.iter_tree(
                 max_depth=max_depth,
                 track_depth=track_depth,
                 _current_depth=_current_depth + 1,
-                _node=_child,
+                _current_node=child_node,
             )
 
 
@@ -2501,17 +2967,12 @@ class Node(object):
         # find list of nodes below node
         #
 
-        # list all nodes regardless of further properties
-        # starting from below the current node
-        lstXmlNodes = self._node.findall(".//node")
+        lstNodes = list(self.iter_tree())
+        if not find_in_self and lstNodes:
+            lstNodes = lstNodes[1:]
 
-        # add self to the list of nodes if desired
-        if find_in_self:
-            lstXmlNodes = [ self._node ] + lstXmlNodes
-
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -2535,17 +2996,10 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create Node instance
-            fpnode = Node(_node, self._map)
-
-            # update branch reference in case of detached node
-            if not self.is_root_node and not self.is_map_node:
+        for fpnode in lstNodes:
+            if not self.is_root_node and not self.is_map_node and fpnode._shadow_parent is None:
                 fpnode._map     = None
                 fpnode._branch  = self._branch
-
-            # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
@@ -2576,11 +3030,10 @@ class Node(object):
         #
 
         # list all nodes regardless of further properties
-        lstXmlNodes = self._node.findall("./node")
+        lstNodes = list(self.children)
 
-        # do the checks on the base of the list
-        lstXmlNodes = reduce_node_list(
-            lstXmlNodes=lstXmlNodes,
+        lstNodes = reduce_node_objects(
+            lstNodes=lstNodes,
             id=id,
             core=core,
             attrib=attrib,
@@ -2604,17 +3057,10 @@ class Node(object):
         #
 
         lstNodesRet = []
-        for _node in lstXmlNodes:
-
-            # create Node instance
-            fpnode = Node(_node, self._map)
-
-            # update branch reference in case of detached node
-            if not self.is_root_node and not self.is_map_node:
+        for fpnode in lstNodes:
+            if not self.is_root_node and not self.is_map_node and fpnode._shadow_parent is None:
                 fpnode._map     = None
                 fpnode._branch  = self._branch
-
-            # append node object
             lstNodesRet.append(fpnode)
 
         return lstNodesRet
@@ -3568,6 +4014,115 @@ def reduce_node_list(
     return lstXmlNodes
 
 
+def reduce_node_objects(
+        lstNodes=[],
+        id="",
+        core="",
+        attrib="",
+        details="",
+        notes="",
+        link="",
+        icon="",
+        style=[],
+        exact=False,
+        generalpathsep=False,
+        caseinsensitive=False,
+        keep_link_specials=False,
+        regex=False,
+    ):
+    """
+    Filter Node objects using logical node semantics.
+
+    This variant is aware of decrypted virtual subtrees exposed by unlocked
+    encrypted wrapper nodes because it relies on Node properties instead of
+    raw XML traversal.
+    """
+
+    if id:
+        _lstNodes = []
+        for node in lstNodes:
+            if id.lower() == node.id.lower():
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if core:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(core, node.plaintext, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if attrib:
+        _lstNodes = []
+        for node in lstNodes:
+            node_attributes = node.attributes
+            found = 0
+            for check_key, check_value in attrib.items():
+                if check_key not in node_attributes:
+                    break
+
+                value = node_attributes[check_key]
+                if regex and re.search(check_value, value):
+                    found += 1
+                    continue
+
+                if generalpathsep:
+                    value = value.replace("\\", "/")
+                    check_value = check_value.replace("\\", "/")
+
+                if match_textual_content(check_value, value, False, exact, caseinsensitive):
+                    found += 1
+
+            if found == len(attrib.items()):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if link:
+        _lstNodes = []
+        for node in lstNodes:
+            if not keep_link_specials:
+                node_link = node.hyperlink.replace("\\", "/").replace("%20", " ")
+            else:
+                node_link = node.hyperlink.replace("\\", "/")
+
+            if match_textual_content(link, node_link, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if icon:
+        _lstNodes = []
+        for node in lstNodes:
+            if icon in node.icons:
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if details:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(details, node.details, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if notes:
+        _lstNodes = []
+        for node in lstNodes:
+            if match_textual_content(notes, node.notes, regex, exact, caseinsensitive):
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    if style:
+        if not type(style) == list:
+            style = [style]
+        _lstNodes = []
+        for node in lstNodes:
+            node_style = node.style
+            if node_style.lower() in [_.lower() for _ in style]:
+                _lstNodes.append(node)
+        lstNodes = _lstNodes
+
+    return lstNodes
+
+
 # OLD
 
 # read text paragraph from mindmap
@@ -3661,4 +4216,3 @@ if __name__ == "__main__":
 
     # create execute class init with command line environment
     Mindmap(_id='cli')
-
