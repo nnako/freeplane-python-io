@@ -1,8 +1,8 @@
 package versions
 
 
-v...
- <date>
+v0.11.0
+ 01.05.2026
 
   - NEW: new method <node>.iter_tree() to iterate through
          all (or at least until as specified within the
