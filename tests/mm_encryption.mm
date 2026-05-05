@@ -99,7 +99,7 @@
   </head>
   <body>
     <p>
-      [ <font color="#0000ff">&lt;project_folder&gt;</font>&#160;]
+      [ <font color="#0000ff">&lt;project_folder&gt;</font> ]
     </p>
   </body>
 </html>
@@ -111,29 +111,9 @@
 </node>
 </node>
 </node>
-<node TEXT="this is a parent node" POSITION="bottom_or_right" ID="ID_1836928758" CREATED="1761499227779" MODIFIED="1761499233422">
-<node TEXT="this is an attributed node with HTML content" ID="ID_397257153" CREATED="1761499080508" MODIFIED="1761499828000">
-<attribute NAME="type" VALUE="test"/>
-<node TEXT="erster Child" ID="ID_1631506969" CREATED="1761499789712" MODIFIED="1761499794593"/>
-<node ID="ID_461595392" CREATED="1761499794778" MODIFIED="1761499820365"><richcontent TYPE="NODE">
-
-<html>
-  <head>
-    
-  </head>
-  <body>
-    <p>
-      zweiter<span style="font-weight: bold;">&#xa0;Child</span>
-    </p>
-  </body>
-</html>
-</richcontent>
-</node>
-<node TEXT="dritter Child" ID="ID_1851039008" CREATED="1761499797929" MODIFIED="1761499802191"/>
-</node>
-</node>
+<node TEXT="this is a parent node" ENCRYPTED_CONTENT="VtHrV2RxlZw= bjg4Ge30Ge60RGvYVbVueXFKTHKqiDhxRn9ybYRiG9VHRYICUdccQx+FX0Kn1fsmJ78qhlypXab9PyFS5V83dNK7WoXhGKmrEBX8+6quGmKyRyi98wVLANkgkEtJDyUaCeCpEk2cWR4QVl/n/rJ/aU1j07slXNjVRkACuCQ1j9JIFyxPzvXjn3tdkT0LNVOSzpB4DosDyu5IGvd5cBXGx06UFlrodBosRLlnWQQwXqH6DtUcNv6EZSxnnqLl3rLAWkd0URsCQ9Osvcc8QFpjje+BgPkUrkUMq+w0JIxOrs/q3Sy8ug1c++wrPo4wOQHflgs2wHx7krd1fMjrZ8p2CNIU2UwSdYarkelW+vbc0/Hrou1pwFKivTYyGoRkmkR+TDsEpKCancbGLWCWt9uOi6Yk7vngKpgsKjnobbiXytI8Udmg0nwalMZGE0vGgEKQdDAF6KSdcCj3kiunEs/uMqirLszmoh7H8baVeYBEj6ngo+cBF0FWFQ3eH5/X7jKxmg//kVFBYfZ9eiMXhtFEK8knFaNnQyBPRUrKSyvm9Nr+R3Ni9Jf1I6u55MReOB2Y17GBHs4wP6vpldrYvE268mV8P+3zD11ljc1It6F9lR4zEY16/sAR1W5esipqKs3R0zvbVyjUyh7BYZmIPMLBP/6BH3l/L26Q/7tp7obCtTFAB6gYMMDXEfpYIuhR11PRqcR4thEEmCWhZgmyT7ciAA7WBvxcqUIsn1vm6tqGGvOud1LukDfjQYaJb0Wkhx/+xWIMvA75H3CoMJoQG8+NYpZ1DK2yrFAFp9U0lErYnKpUedGf7FdxAmdUGE0d5sxkMtyKdmmB2YjLBUKLkVhNiQ==" POSITION="bottom_or_right" ID="ID_1836928758" CREATED="1761499227779" MODIFIED="1761499233422"/>
 <node TEXT="..." STYLE_REF="klein und grau" POSITION="bottom_or_right" ID="ID_646908806" CREATED="1765034975137" MODIFIED="1765034978839"/>
 <node TEXT="test" POSITION="bottom_or_right" ID="ID_67359293" CREATED="1765034979278" MODIFIED="1765034983354"/>
-<node TEXT="this is a parent node" ENCRYPTED_CONTENT="U6aIS6sBnVs= 0ztnLijlRVkEjD4seNID9ElgA94rMvxQ5wVbJFkEhzwHNYyiADeEY5pUXFjvbf7wSig9t8AIs/o5g6RKTy64TbXAXYlhJV44iNitZA5d3krnb+neBqitcmj6ARRyWb1IUMKXI4w5EamB+BLgaoon7Rc/YJrS4IlQSaOOsXGCvUKdBej0A3NxIl+w6tWNmoYf4ctJChtGYfQg/duG0uu4tWlry+GOhp4PaQzTCC1zVNKSMs+yCKrL72xETQl+7M/bVW3puBwbMp+Dx7Q8LURPo2pPs0kbzaossG8qieZAFPq7wLfI8xTfvXxcy0+C4V9/5w96YA+fSOnLfoAACYXKzl/SxBE7PKUBU6aSp9fTO7+GFMWjS0gUUGm3QOsZhvEBMmR1Xc1YmffFT0K/CzrU/4kjbi3Xdxk8DddUYQfAA6AijVNR1ZwAjYlh7lIROFRwh8ghjqj4xsyDa/Dre8dYByYNe1rDF+6dm2FUcuXBq5RRJAtTbeiT1Et/RrOvyKMe4B96iCna+NqDGrTMshDrEqIy57uCNFWH7RbGoYslH0OCO+UnE6SLick/s3JRjHR4IlNFZ7LpQAe0EWSCPj9/fL3IPFyuKaD6qC9h8CsVW1kPCWH2FZPTeJlzRA0smGxpJ+i2hITgyQUJQo2ndBvv1EImHbihYuo2u+PPk1Jim3h4ZXu/pdgICV0uPr3D4txuGVe4gh9qw++l61dZTYZy57HBjiH/AZ8hU+pfP9lwTs6BQyNXZ47arF6Q3AkjbxS0W5R8KXA70gIF5+GD+Wdu6eFdxyMBiOiq864Xf2aCk/coNsziiAWaZyL9fp3yTRpfnkVPAwYQxtFMNEhS4+GlbA==" POSITION="bottom_or_right" ID="ID_1476345788" CREATED="1761499227779" MODIFIED="1765034970950"/>
+<node TEXT="this is a parent node" ENCRYPTED_CONTENT="O9imlU31kCQ= ESnNrPvPU5v2OdZL916JgRDkx9IjXg0b9VfhUxs9sb7uZRy5lgG1nDBIjwPKoMW4YI1yi+jmh1+4dEQnb5a5730PLE1jDJeXhIvX4V1T/I7LhJ0Z2bseikIsWJnrD6h5sHUrpBviJVK1sggwRvO5hrAvjQpYjSagJetcSSELhG7lR4HrSY0ajBNcg7MQ0r33YJBKLF9543T5PTuNqcl0nqPGs5jWCWIoBpgHTPMZKGzWc6xoGcMxm4Hq9JEbt3axNtGfsfQ/d/62Mjgp9yUsnJi5aOw5trSFGIght/VQsO6+yFQMaSi4YED6+DA9BgeDdkIXrDBmBWLfaW10zsChPKMu5lx7LrIBu0ZMXjAfxe4ApwzNr6CM52+i00P60fnS9Dq/ban4HkPufKMBv7PHEU3cmMX7sBSkwnSc+cBZExmHNlxKaGprPbTCrXnET3W17PLlDrq6yEkrLDXxE32fyEcekiFoxBbLwKdyiAxxO1I0otMWOVBbNcM7aepMlWr9cC4IgOHkojz0QbqVELmcEdsx10ki2kClxg1ezat3y6F62jFYebwDRytgaS00YwE1g8/HvVMbB4EcRotCQPuZT4obPqSUbcRGly4Z1IqOBVlEJCtaoH7zG8w+gaa8+RvFaKXGf6GtRqNtU7CiHd0Sn7/lu2BbVyolBQbqWvw1Exuyj/ZJ9yphf3RVKoNJxgqtjDp7kjCO6kECldI2vXryJV4Qp/FFTd29xdHNxEl4fN+LRpAOg60t3YSx7UA8XZynfgHPdpRR9Euh3UWxOhTo/8NLNCiiPuIO9USjtZd4UcCIwHFGp4+qJmvAUNDyfXpjpbCq8pye2FbBXHyW7pI0VQ==" POSITION="bottom_or_right" ID="ID_1476345788" CREATED="1761499227779" MODIFIED="1765034970950"/>
 </node>
 </map>
