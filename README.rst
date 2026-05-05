@@ -62,6 +62,11 @@ These are the main features of the package:
   to connect nodes on (this time on a visual level). the node object's
   `add_arrowlink` method helps connecting nodes visually.
 
+**work with encrypted nodes**
+  if you own appropriate passwords, you can encrypt and decrypt nodes / trees
+  according to the PBEWithMD5AndAES algorithm which is used also inside the Freeplane
+  editor.
+
 
 installation
 ------------
