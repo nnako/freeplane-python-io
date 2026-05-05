@@ -30,6 +30,8 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         # "html2text ~= 2020.1.16",
+        # "cryptography",
+        "pycryptodome",
         "lxml",
         "pytest >= 8.0.0",
         "pytest-cov",
