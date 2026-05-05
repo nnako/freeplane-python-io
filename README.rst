@@ -96,7 +96,7 @@ usage
     # following function.
 
     # load
-    mindmap = freeplane.Mindmap('./example_IN.mm')
+    mindmap = freeplane.Mindmap('./examples/example_IN.mm')
 
     # show available node styles
     mindmap.styles
@@ -163,10 +163,58 @@ usage
 
 
     #
+    # handle encrypted nodes
+    #
+
+    # read a mindmap containing encrypted nodes
+    mm = freeplane.Mindmap("./tests/mm_encryption.mm")
+
+    # get one of those nodes. in the example, the nodes are identified by a
+    # core text starting with "this is...". the first node is encrypted using the
+    # password "test1", the 2nd one using "test".
+
+    nodes = mm.find_nodes(core="this is")
+    if len(nodes):
+
+      # show the number of hits
+      print(f"number of nodes found: {len(nodes)}")
+
+      # get the 1st node
+      node = nodes[0]
+
+      # remove the node's encryption
+      success = node.decrypt("test1")
+
+      # now, search for "this is" again on a map level and see that there are
+      # more than 2 hits, as the decrypted node / tree contains another node
+      # fitting to this search.
+
+      if success:
+
+        # search for nodes
+        nodes = mm.find_nodes(core="this is")
+
+        # again, show the number of hits
+        print(f"number of nodes found: {len(nodes)}")
+
+        # now, remove the password. when a valid password is chosen, it would
+        # be set accordingly. and the respective node would be decryptable via
+        # the Freeplane editor.
+
+        node.set_encryption_password("")
+
+        # save the mindmap and check
+        mm.save("./tests/mm_encryption.mm")
+
+
+
+    #
     # save mindmap
     #
 
     mindmap.save('./example_OUT.mm')
+
+
 
 
 development
