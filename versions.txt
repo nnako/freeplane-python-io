@@ -1,6 +1,14 @@
 package versions
 
 
+<version>
+ <date>
+
+  - FIX: serialization of '&apos;' and '&xa;' as saved using the
+         Freeplane editor stays stable within the XML output file
+         after save.
+
+
 v0.12.0
  05.05.2026
 

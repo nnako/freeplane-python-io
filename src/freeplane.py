@@ -1292,16 +1292,20 @@ class Mindmap(object):
         # sanitize string content
         #
 
-        # prior to v1.8.0 the mindmap file was not a real XML and also not
-        # consequently encoded in a specific code format. rather the encoding
-        # is a mixture between "latin1" and "windows-1252". thus, in Germany,
-        # at least the german special characters must be corrected to be
-        # properly displayed within freeplane.
+        # this sanitization takes place on the file level. not the content
+        # level. thus, a replacement of e.g. double quotes would destroy
+        # the entire XML structure and thus make the file unusable.
 
         _version = self._version.split('.')
         if int(_version[0]) == 1 and int(_version[1]) < 8:
 
-            # #160 characters representing <SPACE>
+            # prior to v1.8.0 the mindmap file was not a real XML and also not
+            # consequently encoded in a specific code format. rather the encoding
+            # is a mixture between "latin1" and "windows-1252". thus, in Germany,
+            # at least the german special characters must be corrected to be
+            # properly displayed within freeplane.
+
+            # 160 characters representing <SPACE>
             _outputstring = _outputstring.replace( chr(160),' ')
 
             # at least substitute encoded german special characters
@@ -1315,17 +1319,28 @@ class Mindmap(object):
             _outputstring = _outputstring.replace( 'Ü','&#xdc;')
             _outputstring = _outputstring.replace( 'ß','&#xdf;')
 
-            # by copy/paste from other applications into the mindmap, there
-            # might be further character sequences not wanted within this file
 
-            # alternative double quotes
-            # _outputstring = _outputstring.replace( '&#x201c;','&quot;')
-            # _outputstring = _outputstring.replace( '&#x201e;','&quot;')
+        # by copy/paste from other applications into the mindmap, there
+        # might be further character sequences not wanted within this file
 
-            # three subsequent dots (e.g. from EXCEL's auto chars)
-            # _outputstring = _outputstring.replace( '&#x2026;','...')
-            # _outputstring = _outputstring.replace( chr(0x2026);','...')
-            # _outputstring = _outputstring.replace( chr(133),'...')
+        # alternative double quotes
+        # _outputstring = _outputstring.replace( '&#x201c;','&quot;')
+        # _outputstring = _outputstring.replace( '&#x201e;','&quot;')
+
+        # three subsequent dots (e.g. from EXCEL's auto chars)
+        # _outputstring = _outputstring.replace( '&#x2026;','...')
+        # _outputstring = _outputstring.replace( chr(0x2026);','...')
+        # _outputstring = _outputstring.replace( chr(133),'...')
+
+
+        # some specifics of Freeplane itself
+
+        # decimal representation of <SPACE> back to hex representation
+        _outputstring = _outputstring.replace( '&#10;', '&#xa;')
+
+        # apostroph symbol back to serialized HTML representation
+        _outputstring = _outputstring.replace( "'", '&apos;')
+        # _outputstring = _outputstring.replace( '"', '&quot;')
 
 
 
