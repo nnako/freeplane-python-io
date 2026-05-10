@@ -2284,6 +2284,42 @@ class Node(object):
 
 
     @property
+    def min_width(self):
+        xmlnode = self._effective_xmlnode()
+        if 'MIN_WIDTH' in xmlnode.attrib.keys():
+            return int(xmlnode.attrib['MIN_WIDTH'].replace("px", "").strip())
+        return -1
+
+    @min_width.setter
+    def min_width(self, width):
+
+        # ensure type
+        if not type(width) == int:
+            width = int(width)
+
+        # set new width
+        self._node.attrib["MIN_WIDTH"] = str(width) + " px"
+        return True
+
+    @property
+    def max_width(self):
+        xmlnode = self._effective_xmlnode()
+        if 'MAX_WIDTH' in xmlnode.attrib.keys():
+            return int(xmlnode.attrib['MAX_WIDTH'].replace("px", "").strip())
+        return -1
+
+    @max_width.setter
+    def max_width(self, width):
+
+        # ensure type
+        if not type(width) == int:
+            width = int(width)
+
+        # set new width
+        self._node.attrib["MAX_WIDTH"] = str(width) + " px"
+        return True
+
+    @property
     def style(self):
         xmlnode = self._effective_xmlnode()
         if 'STYLE_REF' in xmlnode.attrib.keys():
