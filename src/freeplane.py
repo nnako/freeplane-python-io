@@ -1093,24 +1093,22 @@ class Mindmap(object):
             # set attributes
             #
 
-            # foreground color
-            _check = 'color'
-            if _check in settings.keys():
-                _sty.set('COLOR', settings[_check])
-
-            # background color
-            _check = 'bgcolor' 
-            if _check in settings.keys():
-                _sty.set('BACKGROUND_COLOR', settings[_check])
-
-            # font name
+            # font name. when there is a specific font name setting, a new sub
+            # element "font" will have to be created to carry the font's name.
             _check = 'fontname'
             if _check in settings.keys():
-                _item = ET.Element('font', NAME=settings[_check])
-                # add item to style
-                _sty.append(_item)
+                _item = _sty.find('./font')
+                if _item is None:
+                    # create new font element
+                    _item = ET.Element('font', NAME=settings[_check])
+                    _sty.append(_item)
 
-            # font size
+                else:
+                    # append to font element
+                    _item.set('NAME', settings[_check])
+
+            # font size. when there is a specific font size setting, a new sub
+            # element "font" will have to be created to carry the font's size.
             _check = 'fontsize'
             if _check in settings.keys():
                 _item = _sty.find('./font')
@@ -1121,6 +1119,18 @@ class Mindmap(object):
                 else:
                     # add size attribute to font element
                     _item.set("SIZE", settings[_check])
+
+            # foreground color. this one goes directly into the existing
+            # "stylenode".
+            _check = 'color'
+            if _check in settings.keys():
+                _sty.set('COLOR', settings[_check])
+
+            # background color. this one goes directly into the existing
+            # "stylenode".
+            _check = 'bgcolor' 
+            if _check in settings.keys():
+                _sty.set('BACKGROUND_COLOR', settings[_check])
 
             return True
 
