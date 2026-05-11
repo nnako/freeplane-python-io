@@ -534,9 +534,17 @@ class Mindmap(object):
             self._register_encrypted_nodes()
 
 
+            self._logger.info(f'mindmap "{self._path}" was found and loaded into memory.')
+
 
 
             return
+
+
+
+
+        elif self._path:
+            self._logger.warning(f'mindmap path "{self._path}" did not exist. creating a new one.')
 
 
 
