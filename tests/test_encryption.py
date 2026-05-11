@@ -32,8 +32,8 @@ import freeplane
 #import freeplane_model as model
 
 # dev
-from encryption import PBEWithMD5AndDES
-from encryption import PBEWithMD5AndTripleDES
+from encryption_MD5WithDES import PBEWithMD5AndDES
+from encryption_MD5WithDES import PBEWithMD5AndTripleDES
 
 
 

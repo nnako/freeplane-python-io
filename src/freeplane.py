@@ -94,9 +94,9 @@ except ImportError:
     model = None
 
 try:
-    import encryption
+    import encryption_MD5WithDES
 except ImportError:
-    encryption = None
+    encryption_MD5WithDES = None
 
 try:
     import encryption_AES256
@@ -221,8 +221,8 @@ class Mindmap(object):
         """
         self._ciphers = []
 
-        if encryption:
-            self._ciphers.append(encryption.PBEWithMD5AndDES())
+        if encryption_MD5WithDES:
+            self._ciphers.append(encryption_MD5WithDES.PBEWithMD5AndDES())
 
         if encryption_AES256:
             self._ciphers.append(encryption_AES256.PBEWithAES256())

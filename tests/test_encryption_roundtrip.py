@@ -1,6 +1,6 @@
 import lxml.etree as ET
 
-from encryption import PBEWithMD5AndDES
+from encryption_MD5WithDES import PBEWithMD5AndDES
 
 
 def test__encrypt_returns_freeplane_payload_and_roundtrips():
