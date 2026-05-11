@@ -63,8 +63,10 @@ These are the main features of the package:
   `add_arrowlink` method helps connecting nodes visually.
 
 **work with encrypted nodes**
-  if you own appropriate passwords, you can encrypt and decrypt nodes / trees
-  according to the PBEWithMD5AndAES algorithm which is used also inside the Freeplane
+  if you use appropriate passwords, you can encrypt and decrypt nodes / trees
+  according to Freeplane's "old" PBEWithMD5AndDES algorithm as well as the "new"
+  PBEWithAES256 algorithm. Encryption, decryption, setting of new and clearing
+  passwords for nodes is possible in the same way as it is done inside the Freeplane
   editor.
 
 
