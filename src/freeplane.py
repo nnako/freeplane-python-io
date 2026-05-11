@@ -98,6 +98,11 @@ try:
 except ImportError:
     encryption = None
 
+try:
+    import encryption_AES256
+except ImportError:
+    encryption_AES256 = None
+
 
 # version
 __version__         = '0.10.1'
@@ -174,6 +179,7 @@ class EncryptedNodeState:
         decrypted_root: The decrypted subtree root, if available.
         password: The password that successfully decrypted the subtree.
         original_payload: The original ENCRYPTED_CONTENT value from the file.
+        cipher: The cipher instance that successfully decrypted this node.
         is_unlocked: Whether decrypted_root currently holds valid content.
         is_dirty: Whether the decrypted subtree was modified in memory.
     """
@@ -182,6 +188,7 @@ class EncryptedNodeState:
     decrypted_root: object = None
     password: str = ""
     original_payload: str = ""
+    cipher: object = None
     is_unlocked: bool = False
     is_dirty: bool = False
     encryption_enabled: bool = True
@@ -203,6 +210,24 @@ class Mindmap(object):
 
     # number of available map objects this session
     _num_of_maps = 0
+
+    def _initialize_encryption_ciphers(self):
+        """
+        Register available Freeplane encryption mechanisms.
+
+        DES remains the default and is tried first for backward compatibility.
+        AES-256 is registered second so new-format nodes can be decrypted when
+        legacy DES decryption fails for the configured passwords.
+        """
+        self._ciphers = []
+
+        if encryption:
+            self._ciphers.append(encryption.PBEWithMD5AndDES())
+
+        if encryption_AES256:
+            self._ciphers.append(encryption_AES256.PBEWithAES256())
+
+        self._cipher = self._ciphers[0] if self._ciphers else None
 
     # global node id per session and incremented
     # each time a node is created will be used to
@@ -503,7 +528,7 @@ class Mindmap(object):
             self._parentmap = {c:p for p in self._rootnode.iter() for c in p}
             self._preferred_passwords = []
             self._encrypted_nodes = {}
-            self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+            self._initialize_encryption_ciphers()
             if encryption_passwords:
                 self.set_passwords(encryption_passwords)
             self._register_encrypted_nodes()
@@ -534,7 +559,7 @@ class Mindmap(object):
         self._parentmap = {}
         self._preferred_passwords = []
         self._encrypted_nodes = {}
-        self._cipher = encryption.PBEWithMD5AndDES() if encryption else None
+        self._initialize_encryption_ciphers()
         if encryption_passwords:
             self.set_passwords(encryption_passwords)
 
@@ -927,18 +952,19 @@ class Mindmap(object):
         if self._preferred_passwords:
             self.unlock_encrypted_nodes()
 
-    def _try_decrypt_registered_node(self, wrapper_node, password):
+    def _try_decrypt_registered_node(self, wrapper_node, password, cipher):
         """
         Try to decrypt one registered encrypted node with a given password.
 
         Args:
             wrapper_node: The encrypted wrapper node from the canonical tree.
             password: Candidate password string.
+            cipher: Candidate Freeplane encryption mechanism.
 
         Returns:
             bool: True if decryption succeeded, else False.
         """
-        if self._cipher is None:
+        if cipher is None:
             return False
 
         state = self._encrypted_nodes.get(wrapper_node)
@@ -946,12 +972,13 @@ class Mindmap(object):
             return False
 
         try:
-            decrypted_root = self._cipher.decrypt_subtree(wrapper_node, password)
+            decrypted_root = cipher.decrypt_subtree(wrapper_node, password)
         except Exception:
             return False
 
         state.decrypted_root = decrypted_root
         state.password = str(password)
+        state.cipher = cipher
         state.is_unlocked = True
         state.is_dirty = False
         return True
@@ -976,9 +1003,14 @@ class Mindmap(object):
             if state.is_unlocked:
                 continue
 
-            for password in passwords:
-                if self._try_decrypt_registered_node(wrapper_node, password):
-                    unlocked_nodes += 1
+            for cipher in self._ciphers:
+                unlocked = False
+                for password in passwords:
+                    if self._try_decrypt_registered_node(wrapper_node, password, cipher):
+                        unlocked_nodes += 1
+                        unlocked = True
+                        break
+                if unlocked:
                     break
 
         return unlocked_nodes
@@ -1227,12 +1259,14 @@ class Mindmap(object):
             if state.is_unlocked and state.decrypted_root is not None:
                 if state.encryption_enabled:
                     password = state.password or self._get_effective_password()
-                    payload = self._cipher.encrypt(
-                        self._cipher._serialize_xml_node(state.decrypted_root),
+                    cipher = state.cipher or self._cipher
+                    payload = cipher.encrypt(
+                        cipher._serialize_xml_node(state.decrypted_root),
                         password,
                     )
                     state.original_payload = payload
                     state.password = password
+                    state.cipher = cipher
                     state.is_dirty = False
                     wrapper_node.attrib["ENCRYPTED_CONTENT"] = payload
 
@@ -1819,6 +1853,7 @@ class Node(object):
                 decrypted_root=source_subtree,
                 password=effective_password,
                 original_payload=self._node.get("ENCRYPTED_CONTENT", ""),
+                cipher=self._map._cipher,
                 is_unlocked=True,
                 is_dirty=False,
                 encryption_enabled=True,
