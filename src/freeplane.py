@@ -3818,6 +3818,62 @@ class Node(object):
         return node
 
 
+    def move_as_child_of(
+        self,
+        node,
+        pos=-1,
+    ):
+        """
+        This functions moves the current node (or tree) below another existing
+        node, as its child.
+        """
+
+
+
+
+        #
+        # check for target node belonging to a map
+        #
+
+        # check if this node is attached to a map
+        if node.is_root_node or node.is_map_node:
+
+
+
+
+            #
+            # set node position among target children
+            #
+
+            if pos == -1:
+                node._node.append(self._node)
+            else:
+                node._node.insert(pos, self._node)
+
+
+
+
+            #
+            # update parentmap dict
+            #
+
+            # add this object as parent to new object
+            node._map._parentmap[self._node] = node._node
+
+
+
+
+        else:
+
+            self._logger.warning('could not move a node/tree as child of a detached node.')
+            return False
+
+
+
+
+        return True
+
+
 #
 # HELPERS
 #
